@@ -1,180 +1,178 @@
-# ⚖️ VerdictAI: Frictionless Dispute & Chargeback Resolution
+# ⚖️ VerdictAI — Automated & Explainable Dispute Resolution Engine
 
-> **A transparent, evidence-driven AI system for resolving contested card charges in minutes, not weeks.**
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18.0-61dafb.svg)](https://reactjs.org)
+[![React Native](https://img.shields.io/badge/React_Native-Cross_Platform-02569B.svg)](https://reactnative.dev)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-336791.svg)](https://postgresql.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0%2B-47A248.svg)](https://mongodb.com)
 
-[![GitHub Repository](https://img.shields.io/badge/GitHub-VerdictAI-181717?style=for-the-badge&logo=github)](https://github.com/AchyutPathak30/VerdictAI)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
-[![React Native](https://img.shields.io/badge/React_Native-Cross_Platform-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev)
-[![Google Gemini](https://img.shields.io/badge/AI-Google_Gemini_API-8E75B2?style=for-the-badge&logo=googlecloud&logoColor=white)](https://ai.google.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-
----
-
-## 📌 Executive Summary
-
-Today's credit card dispute and chargeback resolution process is **slow, manual, and opaque**. When a cardholder disputes a charge, analysts must manually chase down digital receipts, courier tracking logs, and customer communication records. Decisions often take weeks to arrive with little to no explanation of how they were derived, resulting in high operational costs for card issuers, lost revenue for merchants, and user frustration for cardholders.
-
-**VerdictAI** solves this challenge by automating the end-to-end dispute workflow:
-1. **Automated Evidence Ingestion:** Instantly aggregates transaction metadata, receipts, shipping/delivery confirmations, and communication threads into a structured case file.
-2. **Fair-Weighing Decision Model:** Evaluates cardholder vs. merchant evidence using objective, auditable criteria rather than subjective human calls.
-3. **Explainable AI (XAI) Layer:** Generates clear, plain-language explanations of the exact factors behind every decision—visible to both parties and logged for compliance auditing.
-4. **Human-in-the-Loop Safeguards:** Provides dispute-ops analysts with an Admin Console to review automated resolutions, escalate edge cases, and execute manual overrides before final settlement.
-
-> 💡 **Scope Clarification:** VerdictAI specifically targets charges *already disputed* by a cardholder. Upstream fraud detection is deliberately out of scope to maintain a hyper-focused, fully explainable decision engine.
+**VerdictAI** is a high-throughput, explainable AI backend and multi-client system designed to automate financial dispute and chargeback evaluations. It ingests unstructured evidence (receipts, carrier delivery logs, email threads), parses entities via NLP, applies an auditable fair-weighing scoring algorithm, and produces plain-language decision rationales using Google Gemini API.
 
 ---
 
-## 🏗️ System Architecture & Workflow
+## 📂 Repository Layout
+
+```
+VerdictAI/
+├── backend/                  # FastAPI REST API Backend
+│   ├── app/
+│   │   ├── api/              # API route handlers (disputes, evidence, decisions)
+│   │   ├── core/             # App configuration, security, DB connections
+│   │   ├── models/           # SQLAlchemy & PyDantic models
+│   │   ├── services/         # NLP parsing, Fair-Weighing & Gemini XAI services
+│   │   └── main.py           # Application entrypoint
+│   ├── tests/                # PyTest test suite
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend-web/             # React.js Admin & Merchant Operations Console
+│   ├── src/
+│   │   ├── components/       # UI components (DisputeQueue, EvidenceViewer, OverrideModal)
+│   │   ├── pages/            # Dashboard, CaseDetails, Analytics
+│   │   └── services/         # Axios API client
+│   └── package.json
+├── mobile-app/               # React Native Cardholder App
+│   ├── src/
+│   │   ├── screens/          # FileDisputeScreen, CaseTrackerScreen, RationaleView
+│   │   └── navigation/       # App Stack Navigation
+│   └── package.json
+├── docker-compose.yml        # Local orchestration (FastAPI, Postgres, Mongo, Redis)
+├── .env.example              # Template environment variables
+└── README.md
+```
+
+---
+
+## 🏗️ Technical Architecture & Data Flow
 
 ```mermaid
-flowchart TD
-    subgraph Clients["User Touchpoints"]
-        CM["📱 Card Member Mobile App\n(React Native)"]
-        ADM["💻 Admin & Merchant Console\n(React Web)"]
-    end
+sequenceDiagram
+    autonumber
+    actor CM as Card Member (Mobile)
+    actor MER as Merchant / Ops (Web)
+    participant API as FastAPI REST Gateway
+    participant NLP as spaCy / HF Ingestion Service
+    participant DB as MongoDB / PostgreSQL
+    participant ENGINE as Fair-Weighing Scorer
+    participant XAI as Gemini LLM Rationale Generator
 
-    subgraph Backend["Shared API Core (FastAPI)"]
-        API["⚡ FastAPI REST Gateway"]
-        EVI["📦 Evidence Ingestion Pipeline\n(spaCy / Hugging Face NLP)"]
-        SCORER["⚖️ Fair-Weighing Decision Engine"]
-        XAI["🧠 Explainable Reasoning Layer\n(Google Gemini / OpenRouter API)"]
-    end
-
-    subgraph Storage["Data Persistence"]
-        PG[(🐘 PostgreSQL\nTransactions & Audit Logs)]
-        MONGO[(🍃 MongoDB\nUnstructured Evidence & Files)]
-    end
-
-    CM -->|File Dispute & Track Status| API
-    ADM -->|Upload Merchant Evidence & Admin Override| API
-
-    API --> EVI
-    EVI --> MONGO
-    API --> PG
-
-    EVI --> SCORER
-    SCORER --> XAI
-    XAI -->|Structured Decision + Natural Language Rationale| API
-    API -->|Real-time Push Notifications & Audit Report| CM & ADM
+    CM->>API: POST /api/v1/disputes (Initiate Case)
+    MER->>API: POST /api/v1/evidence/upload (Submit Receipts/Tracking)
+    API->>NLP: Trigger Async Evidence Extraction
+    NLP->>DB: Store Structured Entities & Raw Artifacts
+    API->>ENGINE: Execute Weighted Scoring Algorithm
+    ENGINE->>XAI: Send Structured Evidence Matrix
+    XAI-->>ENGINE: Return Natural Language Explanation & Confidence
+    ENGINE->>DB: Persist Recommendation & Audit Log
+    API-->>CM: Real-Time Status & Plain-Language Rationale
+    API-->>MER: Merchant Resolution Breakdown
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 🔌 API Endpoint Specifications
 
-| Layer | Technology | Purpose & Usage |
-| :--- | :--- | :--- |
-| **Web Frontend** | **React.js** | Desktop-optimized console for merchants and dispute-ops admins (dense data grids, evidence upload, override queue). |
-| **Mobile Frontend** | **React Native** | Cross-platform mobile app for cardholders to file disputes, upload evidence, and receive real-time push updates. |
-| **API Backend** | **FastAPI (Python)** | Asynchronous, high-performance RESTful API powering core business logic and client integrations. |
-| **NLP & Evidence Ingestion** | **spaCy & Hugging Face** | Information extraction pipeline parsing raw receipts, tracking documents, and customer-merchant email threads. |
-| **AI Decision & XAI Engine** | **Google Gemini API / OpenRouter** | Large Language Model (LLM) powered evidence scoring and plain-language reasoning generation. |
-| **Relational Database** | **PostgreSQL** | Transactional ledger, dispute case states, user credentials, and immutable audit logs. |
-| **Document Database** | **MongoDB** | Flexible storage for unstructured evidence artifacts, raw NLP parses, and attachments. |
-| **Cloud Infrastructure** | **Render / Railway** | Containerized microservice hosting with automated CI/CD pipeline deployments. |
-| **Testing & QA** | **PyTest, Jest, Postman/Newman** | Automated backend unit testing, frontend UI component tests, and API contract verification. |
+### 1. Submit Dispute Evidence
+```http
+POST /api/v1/disputes/{dispute_id}/evidence
+Content-Type: multipart/form-data
 
----
-
-## ✨ Key Features
-
-- **⚡ Minutes-Not-Weeks Turnaround:** Drastically cuts down dispute cycle duration from 14–30 days down to a few minutes.
-- **📄 Automated Evidence Parser:** Automatically extracts key entities (timestamps, tracking numbers, itemized lists, refund policy clauses) from uploaded PDFs, images, and emails.
-- **⚖️ Objective Evidence Weighing:** Calculates weighted confidence scores balancing merchant delivery proof against cardholder claim details.
-- **🔍 Explainable AI Rationales:** Generates natural language summaries explaining *why* a dispute was approved or denied (e.g., *"Merchant provided valid carrier tracking showing signature upon delivery on Oct 12"*).
-- **🛡️ Human-in-the-Loop Admin Queue:** Ops teams retain complete control with configurable confidence thresholds triggering mandatory human analyst sign-off.
-- **📊 Comprehensive Audit Reports:** One-click compliance report generation detailing complete evidence timelines and AI reasoning pathways.
-
----
-
-## 👥 Team & Responsibilities
-
-| # | Name | Student ID | Primary Role | Key Responsibilities |
-| :-: | :--- | :-: | :--- | :--- |
-| 👑 1 | **Nirav Kachhiya** | `202512011` | **Project Lead / Backend Engineer** | Overall project coordination, architecture sign-off, core FastAPI endpoints. |
-| 🧠 2 | **Achyut Pathak** | `202512039` | **AI/NLP Engineer (Evidence Parsing)** | Auto-collection pipeline, spaCy/Transformers NLP parsing for receipts & emails. |
-| 📊 3 | **Akshay Purohit** | `202512033` | **ML Engineer (Fair-Weighing Model)** | Evidence scoring algorithms, feature weighting, and outcome recommendation model. |
-| 🔍 4 | **Darshan Prajapati** | `202512026` | **Backend Engineer (Reasoning & APIs)** | Transparent reasoning layer integration, LLM prompt engineering, dispute APIs. |
-| 💻 5 | **Rohit Peswani** | `202512115` | **Frontend Engineer (Web)** | Merchant evidence portal, Ops Admin override dashboard in React.js. |
-| 📱 6 | **Mayank Jayswal** | `202512093` | **Mobile Engineer (Card Member App)** | Cardholder React Native app, dispute submission flow, real-time notifications. |
-| ☁️ 7 | **Hardik Kansara** | `202512036` | **Cloud/DevOps & QA Engineer** | Infrastructure setup on Render/Railway, CI/CD pipelines, PyTest/Jest automation. |
-
----
-
-## 📅 Project Roadmap & Milestones
-
-The project runs for 15 weeks (August 4, 2026 – November 16, 2026):
-
+dispute_id: "DSP-2026-8941"
+evidence_type: "proof_of_delivery"
+file: [tracking_receipt.pdf]
 ```
-Phase 1: Discovery & Architecture Signoff  [Aug 04 - Aug 17]
-Phase 2: Evidence Ingestion & NLP Parsing    [Aug 18 - Sep 07]
-Phase 3: Fair-Weighing & XAI Model Engine  [Sep 08 - Sep 28]
-Phase 4: Web Console & Mobile App Dev     [Sep 29 - Oct 19]
-Phase 5: End-to-End System Integration     [Oct 20 - Nov 02]
-Phase 6: Testing, Fairness & Speed UAT     [Nov 03 - Nov 09]
-Phase 7: Cloud Deployment & Final Polish   [Nov 10 - Nov 15]
-Phase 8: Project Submission & Demo         [Nov 16, 2026]  🚀
+
+**Response (`202 Accepted`):**
+```json
+{
+  "status": "processing",
+  "dispute_id": "DSP-2026-8941",
+  "extracted_entities": {
+    "carrier": "FedEx",
+    "tracking_number": "781234567890",
+    "delivery_timestamp": "2026-10-12T14:22:00Z",
+    "signature_present": true
+  }
+}
+```
+
+### 2. Evaluate Case Resolution
+```http
+POST /api/v1/decisions/evaluate
+Content-Type: application/json
+
+{
+  "dispute_id": "DSP-2026-8941",
+  "force_reweigh": false
+}
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "dispute_id": "DSP-2026-8941",
+  "recommended_outcome": "MERCHANT_FAVOR",
+  "confidence_score": 0.94,
+  "requires_human_override": false,
+  "reasoning_summary": "Merchant submitted carrier delivery confirmation with valid recipient signature timestamped 2 days prior to dispute filing. Refund policy clause 4.2 explicitly covers digital delivery receipts.",
+  "weighted_factors": [
+    { "factor": "carrier_signature_match", "weight": 0.45, "score": 1.0 },
+    { "factor": "cardholder_claim_consistency", "weight": 0.35, "score": 0.2 },
+    { "factor": "merchant_history_rating", "weight": 0.20, "score": 0.9 }
+  ]
+}
 ```
 
 ---
 
-## 🚀 Getting Started
+## ⚡ Quickstart & Local Setup
 
 ### Prerequisites
+- **Docker & Docker Compose** (Recommended) OR **Python 3.10+**, **Node.js 18+**, **PostgreSQL 14**, **MongoDB 6**
 
-- **Python:** `3.10+`
-- **Node.js:** `v18+` & `npm` / `yarn`
-- **PostgreSQL:** `v14+`
-- **MongoDB:** `v6+`
-- **Google Gemini API Key** or **OpenRouter API Key**
-
-### 1. Repository Setup
+### Option A: Docker Compose (Fastest)
 
 ```bash
+# Clone the repository
 git clone https://github.com/AchyutPathak30/VerdictAI.git
 cd VerdictAI
+
+# Copy environment settings
+cp .env.example .env
+
+# Spin up all containers (FastAPI, Postgres, Mongo, Web Dashboard)
+docker-compose up --build
 ```
+> Access FastAPI Docs at `http://localhost:8000/docs` and Web Admin Console at `http://localhost:3000`.
 
-### 2. Backend Installation (FastAPI)
+---
 
+### Option B: Manual Local Installation
+
+#### 1. Backend Setup (FastAPI)
 ```bash
 cd backend
 python -m venv venv
-# On Windows:
+
+# Activate Virtual Environment
+# Windows:
 .\venv\Scripts\activate
-# On Linux/macOS:
+# Linux/macOS:
 source venv/bin/activate
 
 pip install -r requirements.txt
-```
-
-Create a `.env` file in the `backend/` root:
-```env
-PORT=8000
-DATABASE_URL=postgresql://user:password@localhost:5432/verdictai_db
-MONGODB_URI=mongodb://localhost:27017/verdictai_evidence
-GEMINI_API_KEY=your_google_gemini_api_key_here
-```
-
-Run the backend development server:
-```bash
 uvicorn app.main:app --reload --port 8000
 ```
-> Interactive API Docs will be available at `http://localhost:8000/docs`.
 
-### 3. Web Console Setup (React)
-
+#### 2. Web Admin Portal Setup (React)
 ```bash
 cd ../frontend-web
 npm install
 npm start
 ```
-> Web console will open at `http://localhost:3000`.
 
-### 4. Mobile App Setup (React Native)
-
+#### 3. Cardholder Mobile App (React Native)
 ```bash
 cd ../mobile-app
 npm install
@@ -183,29 +181,59 @@ npx react-native run-android # or run-ios
 
 ---
 
-## 🧪 Testing
+## ⚙️ Environment Configuration
 
-Run backend tests:
+Create a `.env` file in the root directory:
+
+```env
+# Application Settings
+ENVIRONMENT=development
+LOG_LEVEL=info
+SECRET_KEY=super-secret-jwt-key-change-in-production
+
+# Core API Gateway
+HOST=0.0.0.0
+PORT=8000
+
+# Database URLs
+DATABASE_URL=postgresql://verdict_user:verdict_pass@localhost:5432/verdictai_db
+MONGODB_URI=mongodb://localhost:27017/verdictai_evidence
+
+# AI & LLM Engine Keys
+GEMINI_API_KEY=your_google_gemini_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key_fallback
+```
+
+---
+
+## 🧪 Running Unit & Integration Tests
+
 ```bash
+# Backend Test Suite (PyTest)
 cd backend
-pytest -v
+pytest tests/ -v --cov=app
+
+# Frontend Web Component Tests (Jest)
+cd ../frontend-web
+npm test -- --watchAll=false
 ```
 
-Run frontend web unit tests:
-```bash
-cd frontend-web
-npm test
-```
+---
+
+## 👥 Core Team & Project Structure
+
+| Role | Engineer | Domain Responsibility |
+| :--- | :--- | :--- |
+| **Project Lead** | **Nirav Kachhiya** (`202512011`) | Core API Architecture & Backend Coordination |
+| **AI/NLP Engineer** | **Achyut Pathak** (`202512039`) | Unstructured Evidence Parser (spaCy/Transformers) |
+| **ML Engineer** | **Akshay Purohit** (`202512033`) | Fair-Weighing Algorithm & Scoring Matrix |
+| **Backend Engineer** | **Darshan Prajapati** (`202512026`) | Explainable AI (XAI) & Gemini Integration Layer |
+| **Frontend Engineer (Web)** | **Rohit Peswani** (`202512115`) | Admin Override Queue & Merchant Portal (React) |
+| **Mobile Engineer** | **Mayank Jayswal** (`202512093`) | Card Member Dispute Tracking App (React Native) |
+| **DevOps & QA** | **Hardik Kansara** (`202512036`) | Docker Infrastructure, CI/CD & Automated Testing |
 
 ---
 
 ## 📜 License
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
-
----
-
-## 📬 Contact & Support
-
-- **Repository Owner:** [Achyut Pathak](https://github.com/AchyutPathak30)
-- **Project Repository:** [VerdictAI on GitHub](https://github.com/AchyutPathak30/VerdictAI)
+This project is licensed under the **MIT License**. See `LICENSE` for details.
