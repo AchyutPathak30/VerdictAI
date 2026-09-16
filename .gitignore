@@ -32,7 +32,6 @@ Thumbs.db
 *.doc
 *.tex
 *.csv
-docs/
 
 # Node / Mobile
 node_modules/
