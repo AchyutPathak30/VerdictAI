@@ -1,0 +1,2923 @@
+{
+  "dataset_name": "VerdictAI Synthetic Chargeback Scenarios (E2E)",
+  "author": "Hardik Kansara",
+  "total_cases": 102,
+  "cases": [
+    {
+      "scenario_id": "SYN-001",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "merchant_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_001",
+      "cardholder_id": "usr_syn_001",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 49.99,
+            "currency": "USD",
+            "receipt_number": "INV-2026-6189",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 49.99
+              }
+            ],
+            "transaction_amount": 49.99
+          }
+        },
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "BlueDart",
+            "tracking_number": "219789652177",
+            "status": "DELIVERED",
+            "shipped_date": "2026-09-02T09:00:00Z",
+            "delivery_date": "2026-09-05T15:30:00Z",
+            "signed_by": "A. RESIDENT",
+            "delivery_address_match": true
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-002",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "merchant_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_002",
+      "cardholder_id": "usr_syn_002",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 199.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-9809",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 199.0
+              }
+            ],
+            "transaction_amount": 199.0
+          }
+        },
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "UPS",
+            "tracking_number": "135286406299",
+            "status": "DELIVERED",
+            "shipped_date": "2026-09-02T09:00:00Z",
+            "delivery_date": "2026-09-05T15:30:00Z",
+            "signed_by": "A. RESIDENT",
+            "delivery_address_match": true
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-003",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "merchant_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_003",
+      "cardholder_id": "usr_syn_003",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 899.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-9305",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 899.0
+              }
+            ],
+            "transaction_amount": 899.0
+          }
+        },
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "BlueDart",
+            "tracking_number": "958116908981",
+            "status": "DELIVERED",
+            "shipped_date": "2026-09-02T09:00:00Z",
+            "delivery_date": "2026-09-05T15:30:00Z",
+            "signed_by": "A. RESIDENT",
+            "delivery_address_match": true
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-004",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "merchant_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_004",
+      "cardholder_id": "usr_syn_004",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 2499.5,
+            "currency": "USD",
+            "receipt_number": "INV-2026-7030",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 2499.5
+              }
+            ],
+            "transaction_amount": 2499.5
+          }
+        },
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "FedEx",
+            "tracking_number": "469300974210",
+            "status": "DELIVERED",
+            "shipped_date": "2026-09-02T09:00:00Z",
+            "delivery_date": "2026-09-05T15:30:00Z",
+            "signed_by": "A. RESIDENT",
+            "delivery_address_match": true
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-005",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "merchant_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_005",
+      "cardholder_id": "usr_syn_005",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "total": 7800.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3211",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 7800.0
+              }
+            ],
+            "transaction_amount": 7800.0
+          }
+        },
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "USPS",
+            "tracking_number": "741360873770",
+            "status": "DELIVERED",
+            "shipped_date": "2026-09-02T09:00:00Z",
+            "delivery_date": "2026-09-05T15:30:00Z",
+            "signed_by": "A. RESIDENT",
+            "delivery_address_match": true
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-006",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "merchant_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_006",
+      "cardholder_id": "usr_syn_006",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 15250.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-2583",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 15250.0
+              }
+            ],
+            "transaction_amount": 15250.0
+          }
+        },
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "DHL",
+            "tracking_number": "770660787919",
+            "status": "DELIVERED",
+            "shipped_date": "2026-09-02T09:00:00Z",
+            "delivery_date": "2026-09-05T15:30:00Z",
+            "signed_by": "A. RESIDENT",
+            "delivery_address_match": true
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-007",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_007",
+      "cardholder_id": "usr_syn_007",
+      "cardholder_statement": "Package never arrived; carrier says it was returned.",
+      "evidence": [
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "USPS",
+            "tracking_number": "348485581010",
+            "status": "RETURNED",
+            "shipped_date": "2026-09-02T09:00:00Z"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "My parcel was returned to sender and I still have no refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-008",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_008",
+      "cardholder_id": "usr_syn_008",
+      "cardholder_statement": "Package never arrived; carrier says it was returned.",
+      "evidence": [
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "UPS",
+            "tracking_number": "541090772733",
+            "status": "RETURNED",
+            "shipped_date": "2026-09-02T09:00:00Z"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "My parcel was returned to sender and I still have no refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-009",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_009",
+      "cardholder_id": "usr_syn_009",
+      "cardholder_statement": "Package never arrived; carrier says it was returned.",
+      "evidence": [
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "BlueDart",
+            "tracking_number": "598382761210",
+            "status": "RETURNED",
+            "shipped_date": "2026-09-02T09:00:00Z"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "My parcel was returned to sender and I still have no refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-010",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_010",
+      "cardholder_id": "usr_syn_010",
+      "cardholder_statement": "Package never arrived; carrier says it was returned.",
+      "evidence": [
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "FedEx",
+            "tracking_number": "150250747359",
+            "status": "RETURNED",
+            "shipped_date": "2026-09-02T09:00:00Z"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "My parcel was returned to sender and I still have no refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-011",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_011",
+      "cardholder_id": "usr_syn_011",
+      "cardholder_statement": "Package never arrived; carrier says it was returned.",
+      "evidence": [
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "FedEx",
+            "tracking_number": "417918449112",
+            "status": "RETURNED",
+            "shipped_date": "2026-09-02T09:00:00Z"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "My parcel was returned to sender and I still have no refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-012",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_012",
+      "cardholder_id": "usr_syn_012",
+      "cardholder_statement": "Package never arrived; carrier says it was returned.",
+      "evidence": [
+        {
+          "evidence_type": "COURIER_TRACKING",
+          "source": "COURIER_CARRIER",
+          "actor": "CARRIER:synthetic",
+          "raw_payload": {
+            "carrier": "FedEx",
+            "tracking_number": "240409369265",
+            "status": "RETURNED",
+            "shipped_date": "2026-09-02T09:00:00Z"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "My parcel was returned to sender and I still have no refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-013",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "missing_primary",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_013",
+      "cardholder_id": "usr_syn_013",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-014",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "missing_primary",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_014",
+      "cardholder_id": "usr_syn_014",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-015",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "missing_primary",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_015",
+      "cardholder_id": "usr_syn_015",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-016",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "missing_primary",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_016",
+      "cardholder_id": "usr_syn_016",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-017",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "missing_primary",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_017",
+      "cardholder_id": "usr_syn_017",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-018",
+      "dispute_reason": "PRODUCT_NOT_RECEIVED",
+      "profile": "missing_primary",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_018",
+      "cardholder_id": "usr_syn_018",
+      "cardholder_statement": "I never received my order.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-019",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "merchant_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_019",
+      "cardholder_id": "usr_syn_019",
+      "cardholder_statement": "The item looks different from the listing.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 49.99,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3858",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 49.99
+              }
+            ],
+            "transaction_amount": 49.99
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-020",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "merchant_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_020",
+      "cardholder_id": "usr_syn_020",
+      "cardholder_statement": "The item looks different from the listing.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 199.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3300",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 199.0
+              }
+            ],
+            "transaction_amount": 199.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-021",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "merchant_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_021",
+      "cardholder_id": "usr_syn_021",
+      "cardholder_statement": "The item looks different from the listing.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 899.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-2971",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 899.0
+              }
+            ],
+            "transaction_amount": 899.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-022",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "merchant_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_022",
+      "cardholder_id": "usr_syn_022",
+      "cardholder_statement": "The item looks different from the listing.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 2499.5,
+            "currency": "USD",
+            "receipt_number": "INV-2026-2000",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 2499.5
+              }
+            ],
+            "transaction_amount": 2499.5
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-023",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "merchant_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_023",
+      "cardholder_id": "usr_syn_023",
+      "cardholder_statement": "The item looks different from the listing.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 7800.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-4630",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 7800.0
+              }
+            ],
+            "transaction_amount": 7800.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-024",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "merchant_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_024",
+      "cardholder_id": "usr_syn_024",
+      "cardholder_statement": "The item looks different from the listing.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 15250.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-7091",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 15250.0
+              }
+            ],
+            "transaction_amount": 15250.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-025",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_025",
+      "cardholder_id": "usr_syn_025",
+      "cardholder_statement": "Product arrived broken and the seller ignores me.",
+      "evidence": [
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "The screen was cracked on arrival, I sent photos and asked for a refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-026",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_026",
+      "cardholder_id": "usr_syn_026",
+      "cardholder_statement": "Product arrived broken and the seller ignores me.",
+      "evidence": [
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "The screen was cracked on arrival, I sent photos and asked for a refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-027",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_027",
+      "cardholder_id": "usr_syn_027",
+      "cardholder_statement": "Product arrived broken and the seller ignores me.",
+      "evidence": [
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "The screen was cracked on arrival, I sent photos and asked for a refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-028",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_028",
+      "cardholder_id": "usr_syn_028",
+      "cardholder_statement": "Product arrived broken and the seller ignores me.",
+      "evidence": [
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "The screen was cracked on arrival, I sent photos and asked for a refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-029",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_029",
+      "cardholder_id": "usr_syn_029",
+      "cardholder_statement": "Product arrived broken and the seller ignores me.",
+      "evidence": [
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "The screen was cracked on arrival, I sent photos and asked for a refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-030",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_030",
+      "cardholder_id": "usr_syn_030",
+      "cardholder_statement": "Product arrived broken and the seller ignores me.",
+      "evidence": [
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "The screen was cracked on arrival, I sent photos and asked for a refund.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-031",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "missing_primary",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_031",
+      "cardholder_id": "usr_syn_031",
+      "cardholder_statement": "Product arrived broken.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-032",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "missing_primary",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_032",
+      "cardholder_id": "usr_syn_032",
+      "cardholder_statement": "Product arrived broken.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-033",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "missing_primary",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_033",
+      "cardholder_id": "usr_syn_033",
+      "cardholder_statement": "Product arrived broken.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-034",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "missing_primary",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_034",
+      "cardholder_id": "usr_syn_034",
+      "cardholder_statement": "Product arrived broken.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-035",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "missing_primary",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_035",
+      "cardholder_id": "usr_syn_035",
+      "cardholder_statement": "Product arrived broken.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-036",
+      "dispute_reason": "PRODUCT_DAMAGED_OR_DEFECTIVE",
+      "profile": "missing_primary",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_036",
+      "cardholder_id": "usr_syn_036",
+      "cardholder_statement": "Product arrived broken.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-037",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "merchant_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_037",
+      "cardholder_id": "usr_syn_037",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": true,
+            "auth_type": "BIOMETRIC_3DS"
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-038",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "merchant_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_038",
+      "cardholder_id": "usr_syn_038",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": true,
+            "auth_type": "BIOMETRIC_3DS"
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-039",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "merchant_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_039",
+      "cardholder_id": "usr_syn_039",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": true,
+            "auth_type": "BIOMETRIC_3DS"
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-040",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "merchant_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_040",
+      "cardholder_id": "usr_syn_040",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": true,
+            "auth_type": "BIOMETRIC_3DS"
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-041",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "merchant_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_041",
+      "cardholder_id": "usr_syn_041",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": true,
+            "auth_type": "BIOMETRIC_3DS"
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-042",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "merchant_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_042",
+      "cardholder_id": "usr_syn_042",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": true,
+            "auth_type": "BIOMETRIC_3DS"
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-043",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_043",
+      "cardholder_id": "usr_syn_043",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": false,
+            "auth_type": "NONE"
+          }
+        },
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 49.99,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "6517"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-044",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_044",
+      "cardholder_id": "usr_syn_044",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": false,
+            "auth_type": "NONE"
+          }
+        },
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "amount": 199.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "2867"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-045",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_045",
+      "cardholder_id": "usr_syn_045",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": false,
+            "auth_type": "NONE"
+          }
+        },
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 899.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "6932"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-046",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_046",
+      "cardholder_id": "usr_syn_046",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": false,
+            "auth_type": "NONE"
+          }
+        },
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 2499.5,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "2209"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-047",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_047",
+      "cardholder_id": "usr_syn_047",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": false,
+            "auth_type": "NONE"
+          }
+        },
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 7800.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "3158"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-048",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "cardholder_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_048",
+      "cardholder_id": "usr_syn_048",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [
+        {
+          "evidence_type": "IDENTITY_VERIFICATION",
+          "source": "PAYMENT_GATEWAY",
+          "actor": "SYSTEM:issuer_bank",
+          "raw_payload": {
+            "auth_success": false,
+            "auth_type": "NONE"
+          }
+        },
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "amount": 15250.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "6494"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-049",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "missing_primary",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_049",
+      "cardholder_id": "usr_syn_049",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-050",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "missing_primary",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_050",
+      "cardholder_id": "usr_syn_050",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-051",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "missing_primary",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_051",
+      "cardholder_id": "usr_syn_051",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-052",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "missing_primary",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_052",
+      "cardholder_id": "usr_syn_052",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-053",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "missing_primary",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_053",
+      "cardholder_id": "usr_syn_053",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-054",
+      "dispute_reason": "FRAUD_UNRECOGNIZED_CHARGE",
+      "profile": "missing_primary",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_054",
+      "cardholder_id": "usr_syn_054",
+      "cardholder_statement": "I do not recognise this charge.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-055",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "cardholder_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_055",
+      "cardholder_id": "usr_syn_055",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "amount": 49.99,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "3838"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-056",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "cardholder_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_056",
+      "cardholder_id": "usr_syn_056",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "amount": 199.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "8634"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-057",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "cardholder_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_057",
+      "cardholder_id": "usr_syn_057",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "amount": 899.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "4576"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-058",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "cardholder_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_058",
+      "cardholder_id": "usr_syn_058",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "amount": 2499.5,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "2886"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-059",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "cardholder_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_059",
+      "cardholder_id": "usr_syn_059",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "amount": 7800.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "1419"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-060",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "cardholder_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_060",
+      "cardholder_id": "usr_syn_060",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "amount": 15250.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "2872"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-061",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "missing_primary",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_061",
+      "cardholder_id": "usr_syn_061",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 49.99,
+            "currency": "USD",
+            "receipt_number": "INV-2026-7950",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 49.99
+              }
+            ],
+            "transaction_amount": 49.99
+          }
+        }
+      ],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-062",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "missing_primary",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_062",
+      "cardholder_id": "usr_syn_062",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 199.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-5724",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 199.0
+              }
+            ],
+            "transaction_amount": 199.0
+          }
+        }
+      ],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-063",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "missing_primary",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_063",
+      "cardholder_id": "usr_syn_063",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 899.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3562",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 899.0
+              }
+            ],
+            "transaction_amount": 899.0
+          }
+        }
+      ],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-064",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "missing_primary",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_064",
+      "cardholder_id": "usr_syn_064",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 2499.5,
+            "currency": "USD",
+            "receipt_number": "INV-2026-2428",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 2499.5
+              }
+            ],
+            "transaction_amount": 2499.5
+          }
+        }
+      ],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-065",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "missing_primary",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_065",
+      "cardholder_id": "usr_syn_065",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 7800.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-5870",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 7800.0
+              }
+            ],
+            "transaction_amount": 7800.0
+          }
+        }
+      ],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-066",
+      "dispute_reason": "DUPLICATE_PROCESSING",
+      "profile": "missing_primary",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_066",
+      "cardholder_id": "usr_syn_066",
+      "cardholder_statement": "I was charged twice for one order.",
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 15250.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-4428",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 15250.0
+              }
+            ],
+            "transaction_amount": 15250.0
+          }
+        }
+      ],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-067",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_067",
+      "cardholder_id": "usr_syn_067",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 49.99,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "1144"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "I cancelled on 2026-08-15 and was still billed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-068",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_068",
+      "cardholder_id": "usr_syn_068",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 199.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "7113"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "I cancelled on 2026-08-15 and was still billed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-069",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_069",
+      "cardholder_id": "usr_syn_069",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "amount": 899.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "6737"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "I cancelled on 2026-08-15 and was still billed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-070",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_070",
+      "cardholder_id": "usr_syn_070",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "amount": 2499.5,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "1480"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "I cancelled on 2026-08-15 and was still billed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-071",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_071",
+      "cardholder_id": "usr_syn_071",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 7800.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "2036"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "I cancelled on 2026-08-15 and was still billed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-072",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_072",
+      "cardholder_id": "usr_syn_072",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "amount": 15250.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "2405"
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "CARDHOLDER",
+          "actor": "CARDHOLDER:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Cardholder",
+                "role": "CARDHOLDER",
+                "content": "I cancelled on 2026-08-15 and was still billed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-073",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_073",
+      "cardholder_id": "usr_syn_073",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "total": 49.99,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3464",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 49.99
+              }
+            ],
+            "transaction_amount": 49.99
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "No cancellation request was ever received; the renewal is valid.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-074",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_074",
+      "cardholder_id": "usr_syn_074",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 199.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-2838",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 199.0
+              }
+            ],
+            "transaction_amount": 199.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "No cancellation request was ever received; the renewal is valid.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-075",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_075",
+      "cardholder_id": "usr_syn_075",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 899.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3991",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 899.0
+              }
+            ],
+            "transaction_amount": 899.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "No cancellation request was ever received; the renewal is valid.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-076",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_076",
+      "cardholder_id": "usr_syn_076",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 2499.5,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3897",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 2499.5
+              }
+            ],
+            "transaction_amount": 2499.5
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "No cancellation request was ever received; the renewal is valid.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-077",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_077",
+      "cardholder_id": "usr_syn_077",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 7800.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-6105",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 7800.0
+              }
+            ],
+            "transaction_amount": 7800.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "No cancellation request was ever received; the renewal is valid.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-078",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_078",
+      "cardholder_id": "usr_syn_078",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 15250.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-1420",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 15250.0
+              }
+            ],
+            "transaction_amount": 15250.0
+          }
+        },
+        {
+          "evidence_type": "REFUND_POLICY_TERMS",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "policy": "Item sold as described; 30-day return window, not exercised."
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "No cancellation request was ever received; the renewal is valid.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-079",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_079",
+      "cardholder_id": "usr_syn_079",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-080",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_080",
+      "cardholder_id": "usr_syn_080",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-081",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_081",
+      "cardholder_id": "usr_syn_081",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-082",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_082",
+      "cardholder_id": "usr_syn_082",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-083",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_083",
+      "cardholder_id": "usr_syn_083",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-084",
+      "dispute_reason": "SUBSCRIPTION_CANCELLED_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_084",
+      "cardholder_id": "usr_syn_084",
+      "cardholder_statement": "I cancelled my subscription but was billed again.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-085",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_085",
+      "cardholder_id": "usr_syn_085",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 49.99,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "9916"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-086",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_086",
+      "cardholder_id": "usr_syn_086",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "amount": 199.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "9391"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-087",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_087",
+      "cardholder_id": "usr_syn_087",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 899.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "6745"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-088",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_088",
+      "cardholder_id": "usr_syn_088",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "amount": 2499.5,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "3047"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-089",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_089",
+      "cardholder_id": "usr_syn_089",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "amount": 7800.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "0321"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-090",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "cardholder_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_090",
+      "cardholder_id": "usr_syn_090",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [
+        {
+          "evidence_type": "BANK_STATEMENT",
+          "source": "CARDHOLDER",
+          "actor": "USER:synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "amount": 15250.0,
+            "currency": "USD",
+            "transaction_date": "2026-09-01T10:05:00Z",
+            "card_last_four": "0636"
+          }
+        }
+      ],
+      "expected_resolution": "CARD_MEMBER_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-091",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_091",
+      "cardholder_id": "usr_syn_091",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 49.99,
+            "currency": "USD",
+            "receipt_number": "INV-2026-5761",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 49.99
+              }
+            ],
+            "transaction_amount": 49.99
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "The invoiced total matches the order you confirmed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-092",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_092",
+      "cardholder_id": "usr_syn_092",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "UrbanCart Retail",
+            "total": 199.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-2045",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 199.0
+              }
+            ],
+            "transaction_amount": 199.0
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "The invoiced total matches the order you confirmed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-093",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_093",
+      "cardholder_id": "usr_syn_093",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 899.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-5809",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 899.0
+              }
+            ],
+            "transaction_amount": 899.0
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "The invoiced total matches the order you confirmed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-094",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_094",
+      "cardholder_id": "usr_syn_094",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Nimbus Streaming Co",
+            "total": 2499.5,
+            "currency": "USD",
+            "receipt_number": "INV-2026-3734",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 2499.5
+              }
+            ],
+            "transaction_amount": 2499.5
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "The invoiced total matches the order you confirmed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-095",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_095",
+      "cardholder_id": "usr_syn_095",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Apex Electronics Direct",
+            "total": 7800.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-5119",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 7800.0
+              }
+            ],
+            "transaction_amount": 7800.0
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "The invoiced total matches the order you confirmed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-096",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "merchant_proof",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_096",
+      "cardholder_id": "usr_syn_096",
+      "cardholder_statement": null,
+      "evidence": [
+        {
+          "evidence_type": "RECEIPT_INVOICE",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:m_synthetic",
+          "raw_payload": {
+            "merchant_name": "Helix Fitness Club",
+            "total": 15250.0,
+            "currency": "USD",
+            "receipt_number": "INV-2026-8156",
+            "receipt_date": "2026-09-01T10:00:00Z",
+            "line_items": [
+              {
+                "description": "Order item",
+                "quantity": 1,
+                "unit_price": 15250.0
+              }
+            ],
+            "transaction_amount": 15250.0
+          }
+        },
+        {
+          "evidence_type": "COMMUNICATION_LOG",
+          "source": "MERCHANT",
+          "actor": "MERCHANT:synthetic",
+          "raw_payload": {
+            "channel": "EMAIL",
+            "messages": [
+              {
+                "sender": "Merchant",
+                "role": "MERCHANT",
+                "content": "The invoiced total matches the order you confirmed.",
+                "timestamp": "2026-09-06T11:00:00Z"
+              }
+            ]
+          }
+        }
+      ],
+      "expected_resolution": "MERCHANT_FAVOUR"
+    },
+    {
+      "scenario_id": "SYN-097",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 49.99,
+      "transaction_id": "txn_syn_097",
+      "cardholder_id": "usr_syn_097",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-098",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 199.0,
+      "transaction_id": "txn_syn_098",
+      "cardholder_id": "usr_syn_098",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-099",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 899.0,
+      "transaction_id": "txn_syn_099",
+      "cardholder_id": "usr_syn_099",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-100",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 2499.5,
+      "transaction_id": "txn_syn_100",
+      "cardholder_id": "usr_syn_100",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-101",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 7800.0,
+      "transaction_id": "txn_syn_101",
+      "cardholder_id": "usr_syn_101",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    },
+    {
+      "scenario_id": "SYN-102",
+      "dispute_reason": "INCORRECT_AMOUNT_CHARGED",
+      "profile": "missing_primary",
+      "disputed_amount": 15250.0,
+      "transaction_id": "txn_syn_102",
+      "cardholder_id": "usr_syn_102",
+      "cardholder_statement": "I was charged more than the agreed price.",
+      "evidence": [],
+      "expected_resolution": "ESCALATE"
+    }
+  ]
+}
