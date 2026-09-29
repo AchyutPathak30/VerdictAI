@@ -1,11 +1,11 @@
 {
-  "validation_timestamp": "2026-09-13T23:57:31Z",
+  "validation_timestamp": "2026-09-29T16:13:53Z",
   "metrics": {
     "total_cases": 56,
     "accuracy_pct": 100.0,
     "false_positive_rate_pct": 0.0,
     "escalation_rate_pct": 25.0,
-    "avg_latency_ms": 0.01,
+    "avg_latency_ms": 11.55,
     "nfr_14_compliant": true
   },
   "details": [
@@ -16,7 +16,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 83.3,
       "is_correct": true,
-      "latency_ms": 0.09
+      "latency_ms": 633.2
     },
     {
       "case_id": "CAS-202609-002",
@@ -25,16 +25,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 84.3,
       "is_correct": true,
-      "latency_ms": 0.03
+      "latency_ms": 0.67
     },
     {
       "case_id": "CAS-202609-003",
       "category": "CAT-01",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 43.3,
+      "confidence": 38.3,
       "is_correct": true,
-      "latency_ms": 0.02
+      "latency_ms": 0.42
     },
     {
       "case_id": "CAS-202609-004",
@@ -43,7 +43,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 83.1,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.38
     },
     {
       "case_id": "CAS-202609-005",
@@ -52,7 +52,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 83.3,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.35
     },
     {
       "case_id": "CAS-202609-006",
@@ -61,7 +61,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 84.7,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.37
     },
     {
       "case_id": "CAS-202609-007",
@@ -70,16 +70,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 85.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.31
     },
     {
       "case_id": "CAS-202609-008",
       "category": "CAT-01",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.29
     },
     {
       "case_id": "CAS-202609-009",
@@ -88,7 +88,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 78.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.24
     },
     {
       "case_id": "CAS-202609-010",
@@ -97,16 +97,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 81.2,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.2
     },
     {
       "case_id": "CAS-202609-011",
       "category": "CAT-02",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 49.3,
+      "confidence": 44.3,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.2
     },
     {
       "case_id": "CAS-202609-012",
@@ -115,7 +115,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 77.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.2
     },
     {
       "case_id": "CAS-202609-013",
@@ -124,7 +124,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 77.2,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.22
     },
     {
       "case_id": "CAS-202609-014",
@@ -133,7 +133,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 81.4,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.22
     },
     {
       "case_id": "CAS-202609-015",
@@ -142,16 +142,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 83.8,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.22
     },
     {
       "case_id": "CAS-202609-016",
       "category": "CAT-02",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.19
     },
     {
       "case_id": "CAS-202609-017",
@@ -160,7 +160,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 78.9,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.18
     },
     {
       "case_id": "CAS-202609-018",
@@ -169,16 +169,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 79.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.18
     },
     {
       "case_id": "CAS-202609-019",
       "category": "CAT-03",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 38.7,
+      "confidence": 33.7,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.4
     },
     {
       "case_id": "CAS-202609-020",
@@ -187,7 +187,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 80.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.32
     },
     {
       "case_id": "CAS-202609-021",
@@ -196,7 +196,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 79.9,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.38
     },
     {
       "case_id": "CAS-202609-022",
@@ -205,7 +205,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 81.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.33
     },
     {
       "case_id": "CAS-202609-023",
@@ -214,16 +214,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 81.4,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.31
     },
     {
       "case_id": "CAS-202609-024",
       "category": "CAT-03",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.32
     },
     {
       "case_id": "CAS-202609-025",
@@ -232,7 +232,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 75.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.29
     },
     {
       "case_id": "CAS-202609-026",
@@ -241,16 +241,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 79.4,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.29
     },
     {
       "case_id": "CAS-202609-027",
       "category": "CAT-04",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 36.9,
+      "confidence": 31.9,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.28
     },
     {
       "case_id": "CAS-202609-028",
@@ -259,7 +259,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 75.1,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.28
     },
     {
       "case_id": "CAS-202609-029",
@@ -268,7 +268,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 75.3,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.27
     },
     {
       "case_id": "CAS-202609-030",
@@ -277,7 +277,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 76.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.25
     },
     {
       "case_id": "CAS-202609-031",
@@ -286,16 +286,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 79.9,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.23
     },
     {
       "case_id": "CAS-202609-032",
       "category": "CAT-04",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.19
     },
     {
       "case_id": "CAS-202609-033",
@@ -304,7 +304,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 86.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.17
     },
     {
       "case_id": "CAS-202609-034",
@@ -313,16 +313,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 86.4,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.17
     },
     {
       "case_id": "CAS-202609-035",
       "category": "CAT-05",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 49.3,
+      "confidence": 44.3,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.17
     },
     {
       "case_id": "CAS-202609-036",
@@ -331,7 +331,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 88.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-037",
@@ -340,7 +340,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 88.8,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-038",
@@ -349,7 +349,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 89.9,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-039",
@@ -358,16 +358,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 89.9,
       "is_correct": true,
-      "latency_ms": 0.02
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-040",
       "category": "CAT-05",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-041",
@@ -376,7 +376,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 79.7,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.16
     },
     {
       "case_id": "CAS-202609-042",
@@ -385,16 +385,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 83.3,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-043",
       "category": "CAT-06",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 39.5,
+      "confidence": 34.5,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-044",
@@ -403,7 +403,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 80.7,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.16
     },
     {
       "case_id": "CAS-202609-045",
@@ -412,7 +412,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 82.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-046",
@@ -421,7 +421,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 81.8,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-047",
@@ -430,16 +430,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 85.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-048",
       "category": "CAT-06",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.14
     },
     {
       "case_id": "CAS-202609-049",
@@ -448,7 +448,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 77.8,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-050",
@@ -457,16 +457,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 80.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.15
     },
     {
       "case_id": "CAS-202609-051",
       "category": "CAT-07",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 45.5,
+      "confidence": 40.5,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.38
     },
     {
       "case_id": "CAS-202609-052",
@@ -475,7 +475,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 80.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.24
     },
     {
       "case_id": "CAS-202609-053",
@@ -484,7 +484,7 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 81.9,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.28
     },
     {
       "case_id": "CAS-202609-054",
@@ -493,7 +493,7 @@
       "predicted": "CARD_MEMBER_FAVOUR",
       "confidence": 82.6,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.24
     },
     {
       "case_id": "CAS-202609-055",
@@ -502,16 +502,16 @@
       "predicted": "MERCHANT_FAVOUR",
       "confidence": 85.1,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.22
     },
     {
       "case_id": "CAS-202609-056",
       "category": "CAT-07",
       "ground_truth": "ESCALATE",
       "predicted": "ESCALATE",
-      "confidence": 35.0,
+      "confidence": 30.0,
       "is_correct": true,
-      "latency_ms": 0.01
+      "latency_ms": 0.3
     }
   ]
 }
