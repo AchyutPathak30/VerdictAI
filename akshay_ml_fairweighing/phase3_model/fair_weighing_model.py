@@ -128,8 +128,10 @@ class FairWeighingModel:
         confidence = max(cm_norm, mr_norm)
 
         # Apply primary evidence penalty if missing
+        # Calibrated from 15.0 to 20.0 to ensure statement-only CAT-02 and CAT-05
+        # cases route to MANUAL_REVIEW_QUEUE per SRS FR-17 and AC-09.
         if not has_primary:
-            confidence = max(30.0, confidence - 15.0)
+            confidence = max(30.0, confidence - 20.0)
 
         confidence = round(confidence, 1)
 
@@ -141,7 +143,7 @@ class FairWeighingModel:
         else:
             resolution = "MERCHANT_FAVOUR"
 
-        # Generate Plain-Language Explanation
+        # Generate Plain-Language Explanation via Transparent Reasoning Engine & Guardrails
         explanation, factors = self._generate_explanation(
             case_data=case_data,
             resolution=resolution,
@@ -182,14 +184,38 @@ class FairWeighingModel:
     ) -> Tuple[str, List[str]]:
         
         cat_name = case_data.get("dispute_category_name", "Dispute")
-        
-        # Formulate top factors
+        cat_id = case_data.get("dispute_category_id", "CAT-01")
+
+        # Try generating via the centralized Transparent Reasoning Engine & Guardrails
+        try:
+            from backend.app.services.reasoning_layer.engine import transparent_reasoning_engine
+            from backend.app.services.reasoning_layer.schemas import ReasoningRequest
+
+            req = ReasoningRequest(
+                case_id=case_data.get("case_id", "UNKNOWN_CASE"),
+                category_id=cat_id,
+                category_name=cat_name,
+                recommended_resolution=resolution,
+                confidence_score=confidence,
+                card_member_score=cm_score,
+                merchant_score=mr_score,
+                disputed_amount=case_data.get("amount"),
+                currency=case_data.get("currency", "INR"),
+                factor_breakdown=breakdown,
+                raw_statement=case_data.get("cardholder_statement")
+            )
+            out = transparent_reasoning_engine.generate_reasoning(req)
+            return out.summary, out.contributing_factors
+        except Exception as e:
+            logger.debug(f"TransparentReasoningEngine delegation fallback: {e}")
+
+        # Standalone fallback explanation
         factors = []
         for f in breakdown:
-            if f["status"] == "Present":
-                factors.append(f"{f['evidence_type']} provided (Favours: {f['favours']}, Quality: {int(f['quality_score']*100)}%)")
+            if f.get("status") == "Present":
+                factors.append(f"{f.get('evidence_type', 'Evidence')} provided (Favours: {f.get('favours', 'NEUTRAL')}, Quality: {int(f.get('quality_score', 0.0)*100)}%)")
             else:
-                factors.append(f"{f['evidence_type']} missing")
+                factors.append(f"{f.get('evidence_type', 'Evidence')} missing")
 
         if len(factors) < 3:
             factors.append("Transaction metadata verified")
@@ -232,6 +258,7 @@ class FairWeighingModel:
             summary = f"The dispute for {cat_name} has been routed to the Admin Review Queue (Confidence: {confidence}%). The available evidence requires manual review before a final decision can be made."
 
         return summary, factors
+
 
 
 if __name__ == "__main__":
