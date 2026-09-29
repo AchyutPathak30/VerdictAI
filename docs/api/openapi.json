@@ -1,0 +1,2347 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "VerdictAI: Frictionless Dispute & Chargeback Resolution",
+    "description": "\n    # \u2696\ufe0f VerdictAI REST API Gateway\n    **Frictionless Dispute & Chargeback Resolution Platform**\n    \n    *Engineered for Card Members (Mobile), Merchants (Web), and Dispute-Ops Analysts/Admins (Web).*\n    \n    ### API Capabilities:\n    * **Dispute Lifecycle Operations:** Case file creation, query filtering, state machine transitions.\n    * **Polymorphic Evidence Storage:** Ingestion of binary documents (PDF/JPG/PNG) & structured JSON with SHA-256 integrity hashes.\n    * **Dispute-Ops Admin Queue:** Filterable review queue & audited manual overrides.\n    * **Cryptographic Audit Engine:** Tamper-evident hash-chained logs.\n    ",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/system/status": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get System Status",
+        "description": "Returns real-time system operational metrics and active case counts.",
+        "operationId": "get_system_status_api_v1_system_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transactions/cardholder/{cardholder_id}": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get Cardholder Transactions",
+        "description": "Fetch all cardholder transactions eligible for dispute challenge (SRS FR-06).",
+        "operationId": "get_cardholder_transactions_api_v1_transactions_cardholder__cardholder_id__get",
+        "parameters": [
+          {
+            "name": "cardholder_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cardholder Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionDTO"
+                  },
+                  "title": "Response Get Cardholder Transactions Api V1 Transactions Cardholder  Cardholder Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transactions/{transaction_id}": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get Transaction By Id",
+        "description": "Fetch a single transaction record by its unique ID.",
+        "operationId": "get_transaction_by_id_api_v1_transactions__transaction_id__get",
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Transaction Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes": {
+      "post": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "File a new dispute",
+        "description": "Creates a new cardholder dispute case file, registers transaction records,\ncalculates SLA deadlines, and establishes the cryptographic audit trail (SRS FR-06, FR-09, UC-01).",
+        "operationId": "create_dispute_api_v1_disputes_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedCaseFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "List and filter disputes",
+        "description": "Retrieves a paginated list of unified case files with multi-criteria filtering (SRS FR-22, FR-25).",
+        "operationId": "list_disputes_api_v1_disputes_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DisputeStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by current dispute status",
+              "title": "Status"
+            },
+            "description": "Filter by current dispute status"
+          },
+          {
+            "name": "cardholder_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by cardholder user ID",
+              "title": "Cardholder Id"
+            },
+            "description": "Filter by cardholder user ID"
+          },
+          {
+            "name": "merchant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by merchant ID",
+              "title": "Merchant Id"
+            },
+            "description": "Filter by merchant ID"
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DisputeReason"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by dispute reason category",
+              "title": "Reason"
+            },
+            "description": "Filter by dispute reason category"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search by case ID or reference number",
+              "title": "Search"
+            },
+            "description": "Search by case ID or reference number"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}": {
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Get Unified Case File details",
+        "description": "Retrieves the complete, tamper-evident case file combining PostgreSQL transactional data\nand MongoDB polymorphic evidence items (SRS FR-26, SIR-01).",
+        "operationId": "get_dispute_api_v1_disputes__dispute_id__get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedCaseFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/status": {
+      "patch": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Transition dispute lifecycle status",
+        "description": "Validates and performs deterministic state transitions across the dispute lifecycle (SRS FR-30, FR-32).",
+        "operationId": "transition_status_api_v1_disputes__dispute_id__status_patch",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StateTransitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/audit-trail": {
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Get cryptographic audit trail",
+        "description": "Returns the full audit log chain and cryptographic integrity verification status (SRS FR-21, FR-32).",
+        "operationId": "get_dispute_audit_trail_api_v1_disputes__dispute_id__audit_trail_get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/score": {
+      "post": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Evaluate dispute using Fair-Weighing ML Model (SIR-07, FR-15, UC-03)",
+        "description": "Synchronous ML inference endpoint per SRS SIR-07 and UC-03.\nEvaluates evidence against the calibrated category rubric, produces confidence score,\nrecommendation, and plain-language explanation, automatically advances lifecycle state,\npersists resolution, and logs model version and factor weights in the audit chain.",
+        "operationId": "score_dispute_api_v1_disputes__dispute_id__score_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Identity of the actor triggering the evaluation",
+              "default": "SYSTEM:fair_weighing_engine",
+              "title": "Actor"
+            },
+            "description": "Identity of the actor triggering the evaluation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnifiedCaseFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/resolution": {
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Get AI scoring resolution details (FR-18, FR-21)",
+        "description": "Retrieves the persisted resolution record, factor breakdown, and justification summary.",
+        "operationId": "get_dispute_resolution_api_v1_disputes__dispute_id__resolution_get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/upload": {
+      "post": {
+        "tags": [
+          "Evidence"
+        ],
+        "summary": "Upload evidence document or image",
+        "description": "Ingests binary evidence files (invoices, carrier tracking receipts, chat logs),\nenforces file size limits (10MB for cardholders, 25MB for merchants),\ncomputes deterministic SHA-256 hash checksums, and updates MongoDB case record (SRS FR-08, FR-14, AC-04).",
+        "operationId": "upload_evidence_file_api_v1_evidence_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_evidence_file_api_v1_evidence_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePayloadModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/payload": {
+      "post": {
+        "tags": [
+          "Evidence"
+        ],
+        "summary": "Attach structured evidence payload (JSON)",
+        "description": "Attaches structured carrier tracking telemetry, invoice details, or communication transcripts (SRS FR-11, FR-12).",
+        "operationId": "attach_structured_evidence_api_v1_evidence_payload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StructuredEvidenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePayloadModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/statement": {
+      "post": {
+        "tags": [
+          "Evidence"
+        ],
+        "summary": "Submit written narrative statement",
+        "description": "Attaches or updates the cardholder narrative statement or merchant response statement.",
+        "operationId": "submit_statement_api_v1_evidence_statement_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementSubmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/{dispute_id}/items": {
+      "get": {
+        "tags": [
+          "Evidence"
+        ],
+        "summary": "List all evidence items for a dispute",
+        "description": "Retrieves all attached evidence payload models stored in MongoDB for the dispute.",
+        "operationId": "list_dispute_evidence_api_v1_evidence__dispute_id__items_get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EvidencePayloadModel"
+                  },
+                  "title": "Response List Dispute Evidence Api V1 Evidence  Dispute Id  Items Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/queue": {
+      "get": {
+        "tags": [
+          "Admin & Operations"
+        ],
+        "summary": "Get prioritized admin review queue",
+        "description": "Returns prioritized cases requiring human oversight (confidence < 50% or explicit escalation) (SRS FR-17, FR-25, US-AD-01).",
+        "operationId": "get_admin_queue_api_v1_admin_queue_get",
+        "parameters": [
+          {
+            "name": "status_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Queue status filter",
+              "default": "MANUAL_REVIEW_QUEUE",
+              "title": "Status Filter"
+            },
+            "description": "Queue status filter"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/disputes/{dispute_id}/override": {
+      "post": {
+        "tags": [
+          "Admin & Operations"
+        ],
+        "summary": "Manual decision override with mandatory audit reasoning",
+        "description": "Executes a manual admin override on an automated or flagged decision.\nEnforces mandatory written justification per SRS FR-27 and AC-13.",
+        "operationId": "override_dispute_decision_api_v1_admin_disputes__dispute_id__override_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/disputes/{dispute_id}/assign": {
+      "post": {
+        "tags": [
+          "Admin & Operations"
+        ],
+        "summary": "Assign dispute to an operations analyst",
+        "description": "Assigns a dispute case to a specific Dispute-Ops analyst (SRS FR-28).",
+        "operationId": "assign_dispute_api_v1_admin_disputes__dispute_id__assign_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCaseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports/audit": {
+      "get": {
+        "tags": [
+          "Admin & Operations"
+        ],
+        "summary": "Generate compliance audit summary report",
+        "description": "Generates downloadable compliance and audit summary covering decisions, overrides, and timelines (SRS FR-29, AC-15).",
+        "operationId": "get_audit_report_api_v1_admin_reports_audit_get",
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date filter (YYYY-MM-DD)",
+              "title": "Date From"
+            },
+            "description": "Start date filter (YYYY-MM-DD)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date filter (YYYY-MM-DD)",
+              "title": "Date To"
+            },
+            "description": "End date filter (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reasoning/capabilities": {
+      "get": {
+        "tags": [
+          "Reasoning & XAI"
+        ],
+        "summary": "Get Reasoning Engine status and guardrail capabilities",
+        "description": "Returns runtime operational capabilities, active model provider (Google Gemini 2.0 Flash XAI\nvs Deterministic Safe Fallback), and configured hallucination guardrail verification rules.",
+        "operationId": "get_reasoning_capabilities_api_v1_reasoning_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningCapabilitiesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reasoning/generate": {
+      "post": {
+        "tags": [
+          "Reasoning & XAI"
+        ],
+        "summary": "Generate explainable reasoning from scoring factors",
+        "description": "Direct inference endpoint generating transparent plain-language rationales\n(cardholder, merchant, and objective summary) for arbitrary dispute scoring payloads.\nAll outputs are deterministically audited by HallucinationGuardrail before dispatch.",
+        "operationId": "generate_reasoning_api_v1_reasoning_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasoningGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reasoning/case/{dispute_id}/generate": {
+      "post": {
+        "tags": [
+          "Reasoning & XAI"
+        ],
+        "summary": "Generate and persist reasoning for an existing dispute case",
+        "description": "Generates, audits, and persists explainable reasoning for an existing dispute case.\nCoordinates between CaseService, FairWeighingScoringService, and PostgreSQL audit chain.",
+        "operationId": "generate_case_reasoning_api_v1_reasoning_case__dispute_id__generate_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Actor identity triggering the explanation generation",
+              "default": "SYSTEM:reasoning_api",
+              "title": "Actor"
+            },
+            "description": "Actor identity triggering the explanation generation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reasoning/case/{dispute_id}": {
+      "get": {
+        "tags": [
+          "Reasoning & XAI"
+        ],
+        "summary": "Retrieve stored reasoning for a dispute case",
+        "description": "Retrieves previously evaluated explainable reasoning, factor breakdown, and\nguardrail verification status for an existing dispute case.",
+        "operationId": "get_case_reasoning_api_v1_reasoning_case__dispute_id__get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reasoning/audit-guardrails": {
+      "post": {
+        "tags": [
+          "Reasoning & XAI"
+        ],
+        "summary": "Audit plain-language text against policy guardrails (PII, settlement promises, bias)",
+        "description": "Pre-submission audit endpoint enabling web (e.g. Admin override textarea) and mobile clients\nto audit narrative justification text against strict policy rules prior to persistent storage.\nEnforces PII redaction, prohibits unauthorized settlement promises, and detects adversarial bias.",
+        "operationId": "audit_text_guardrails_api_v1_reasoning_audit_guardrails_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardrailAuditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardrailAuditResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health Check",
+        "description": "Standard liveness health-check endpoint for cloud container orchestration.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Root",
+        "description": "API Gateway root endpoint providing navigational links.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminOverrideRequest": {
+        "properties": {
+          "override_decision": {
+            "$ref": "#/components/schemas/ResolutionOutcome",
+            "description": "Overridden outcome",
+            "example": "FAVOR_CARDHOLDER"
+          },
+          "mandatory_reason": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Mandatory Reason",
+            "description": "Mandatory written justification for override (SRS FR-27, AC-13)",
+            "example": "Carrier GPS confirms parcel was delivered to incorrect geographic coordinate 0.4 miles away."
+          },
+          "admin_id": {
+            "type": "string",
+            "title": "Admin Id",
+            "description": "ID of the Dispute-Ops Administrator",
+            "example": "adm_marcus_01"
+          },
+          "admin_name": {
+            "type": "string",
+            "title": "Admin Name",
+            "description": "Name of the administrator",
+            "default": "Dispute-Ops Admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "override_decision",
+          "mandatory_reason",
+          "admin_id"
+        ],
+        "title": "AdminOverrideRequest"
+      },
+      "AssignCaseRequest": {
+        "properties": {
+          "analyst_id": {
+            "type": "string",
+            "title": "Analyst Id",
+            "description": "ID of the analyst assigned to this case",
+            "example": "ana_elena_02"
+          },
+          "analyst_name": {
+            "type": "string",
+            "title": "Analyst Name",
+            "description": "Name of the analyst",
+            "example": "Elena Vance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analyst_id",
+          "analyst_name"
+        ],
+        "title": "AssignCaseRequest"
+      },
+      "Body_upload_evidence_file_api_v1_evidence_upload_post": {
+        "properties": {
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id",
+            "description": "Target dispute ID"
+          },
+          "evidence_type": {
+            "$ref": "#/components/schemas/EvidenceType",
+            "description": "Type of evidence"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EvidenceSource",
+            "description": "Submitting party"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "description": "Actor identifier",
+            "default": "SYSTEM_UPLOAD"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Evidence file (PDF, JPG, PNG)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "evidence_type",
+          "source",
+          "file"
+        ],
+        "title": "Body_upload_evidence_file_api_v1_evidence_upload_post"
+      },
+      "CaseFileHeader": {
+        "properties": {
+          "case_file_id": {
+            "type": "string",
+            "title": "Case File Id"
+          },
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id"
+          },
+          "case_reference_number": {
+            "type": "string",
+            "title": "Case Reference Number"
+          },
+          "current_status": {
+            "$ref": "#/components/schemas/DisputeStatus"
+          },
+          "dispute_reason": {
+            "$ref": "#/components/schemas/DisputeReason"
+          },
+          "disputed_amount": {
+            "type": "number",
+            "title": "Disputed Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sla_deadline": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Sla Deadline"
+          },
+          "is_sealed": {
+            "type": "boolean",
+            "title": "Is Sealed",
+            "default": false
+          },
+          "sealed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sealed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_file_id",
+          "dispute_id",
+          "case_reference_number",
+          "current_status",
+          "dispute_reason",
+          "disputed_amount",
+          "sla_deadline"
+        ],
+        "title": "CaseFileHeader"
+      },
+      "DisputeCreateRequest": {
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "title": "Transaction Id",
+            "description": "ID of the disputed transaction",
+            "example": "txn_001"
+          },
+          "cardholder_id": {
+            "type": "string",
+            "title": "Cardholder Id",
+            "description": "ID of the cardholder filing the dispute",
+            "example": "usr_alice_01"
+          },
+          "dispute_reason": {
+            "$ref": "#/components/schemas/DisputeReason",
+            "description": "Categorized reason for dispute",
+            "example": "PRODUCT_NOT_RECEIVED"
+          },
+          "disputed_amount": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Disputed Amount",
+            "description": "Amount contested in dispute",
+            "example": 1249.5
+          },
+          "cardholder_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cardholder Statement",
+            "description": "Free-text narrative from the cardholder",
+            "example": "Package never delivered to residence."
+          },
+          "merchant_sla_hours": {
+            "type": "integer",
+            "maximum": 168.0,
+            "minimum": 1.0,
+            "title": "Merchant Sla Hours",
+            "description": "Merchant evidence window in hours (default 48h)",
+            "default": 48
+          }
+        },
+        "type": "object",
+        "required": [
+          "transaction_id",
+          "cardholder_id",
+          "dispute_reason",
+          "disputed_amount"
+        ],
+        "title": "DisputeCreateRequest"
+      },
+      "DisputeListResponse": {
+        "properties": {
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total matching disputes"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number",
+            "default": 1
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "description": "Items per page",
+            "default": 20
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total pages"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UnifiedCaseFile"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "List of case files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_count",
+          "total_pages"
+        ],
+        "title": "DisputeListResponse"
+      },
+      "DisputeReason": {
+        "type": "string",
+        "enum": [
+          "FRAUD_UNRECOGNIZED_CHARGE",
+          "PRODUCT_NOT_RECEIVED",
+          "PRODUCT_DAMAGED_OR_DEFECTIVE",
+          "SUBSCRIPTION_CANCELLED_CHARGED",
+          "DUPLICATE_PROCESSING",
+          "INCORRECT_AMOUNT_CHARGED"
+        ],
+        "title": "DisputeReason"
+      },
+      "DisputeStatus": {
+        "type": "string",
+        "enum": [
+          "SUBMITTED",
+          "EVIDENCE_PENDING",
+          "EVIDENCE_INGESTED",
+          "IN_ANALYSIS",
+          "SCORING_EVALUATED",
+          "AUTO_RESOLVED",
+          "MANUAL_REVIEW_QUEUE",
+          "ADMIN_OVERRIDDEN",
+          "RESOLUTION_NOTIFIED",
+          "CLOSED",
+          "REJECTED"
+        ],
+        "title": "DisputeStatus"
+      },
+      "EvidencePayloadModel": {
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "title": "Evidence Id"
+          },
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id"
+          },
+          "evidence_type": {
+            "$ref": "#/components/schemas/EvidenceType"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EvidenceSource"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "mime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime Type"
+          },
+          "file_size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Size Bytes"
+          },
+          "sha256_checksum": {
+            "type": "string",
+            "title": "Sha256 Checksum"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          },
+          "raw_payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Raw Payload"
+          },
+          "nlp_extracted_entities": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Nlp Extracted Entities"
+          },
+          "ocr_extracted_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocr Extracted Text"
+          },
+          "confidence_rating": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence Rating",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "dispute_id",
+          "evidence_type",
+          "source",
+          "sha256_checksum"
+        ],
+        "title": "EvidencePayloadModel",
+        "description": "Polymorphic evidence item stored within MongoDB.\nCapable of storing dynamic multi-modal data with verified SHA-256 hash."
+      },
+      "EvidenceSource": {
+        "type": "string",
+        "enum": [
+          "CARDHOLDER",
+          "MERCHANT",
+          "PAYMENT_GATEWAY",
+          "COURIER_CARRIER",
+          "SYSTEM_AUTOMATION"
+        ],
+        "title": "EvidenceSource"
+      },
+      "EvidenceType": {
+        "type": "string",
+        "enum": [
+          "RECEIPT_INVOICE",
+          "COURIER_TRACKING",
+          "COMMUNICATION_LOG",
+          "REFUND_POLICY_TERMS",
+          "BANK_STATEMENT",
+          "IDENTITY_VERIFICATION",
+          "SYSTEM_AUDIT_PROOF"
+        ],
+        "title": "EvidenceType"
+      },
+      "GuardrailAuditRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text",
+            "description": "Plain-language text to audit against policy guardrails",
+            "example": "Merchant failed to deliver merchandise per order receipt."
+          },
+          "expected_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Amount",
+            "description": "Expected disputed amount for monetary sanity checking"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "description": "Currency symbol/code",
+            "default": "INR"
+          },
+          "contributing_factors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contributing Factors",
+            "description": "Associated factor descriptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "GuardrailAuditRequest"
+      },
+      "GuardrailAuditResponse": {
+        "properties": {
+          "passed": {
+            "type": "boolean",
+            "title": "Passed",
+            "description": "True if text strictly complies with all policies"
+          },
+          "violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Violations",
+            "description": "List of detected policy violations"
+          },
+          "sanitized_text": {
+            "type": "string",
+            "title": "Sanitized Text",
+            "description": "Scrubbed and sanitized text"
+          },
+          "checked_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Checked Rules",
+            "description": "List of guardrail verification rules applied"
+          },
+          "audited_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Audited At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passed",
+          "sanitized_text"
+        ],
+        "title": "GuardrailAuditResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ReasoningCapabilitiesResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "default": "VerdictAI Transparent Reasoning & XAI Explanation Layer"
+          },
+          "owner": {
+            "type": "string",
+            "title": "Owner",
+            "default": "Darshan Prajapati (Backend Engineer - Reasoning & APIs)"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1.0.0"
+          },
+          "gemini_xai_available": {
+            "type": "boolean",
+            "title": "Gemini Xai Available",
+            "default": false
+          },
+          "active_engine": {
+            "type": "string",
+            "title": "Active Engine",
+            "default": "DETERMINISTIC_SAFE_FALLBACK"
+          },
+          "guardrails_active": {
+            "type": "boolean",
+            "title": "Guardrails Active",
+            "default": true
+          },
+          "enforced_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enforced Rules"
+          },
+          "srs_requirements_covered": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Srs Requirements Covered"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "title": "ReasoningCapabilitiesResponse"
+      },
+      "ReasoningGenerateRequest": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id",
+            "description": "Unique case reference identifier",
+            "example": "CASE-2026-00001"
+          },
+          "category_id": {
+            "type": "string",
+            "title": "Category Id",
+            "description": "Dispute category identifier (e.g. CAT-01)",
+            "default": "CAT-01",
+            "example": "CAT-01"
+          },
+          "category_name": {
+            "type": "string",
+            "title": "Category Name",
+            "description": "Human-readable dispute category name",
+            "default": "Item Not Received",
+            "example": "Item Not Received"
+          },
+          "recommended_resolution": {
+            "type": "string",
+            "title": "Recommended Resolution",
+            "description": "CARD_MEMBER_FAVOUR | MERCHANT_FAVOUR | ESCALATE",
+            "example": "CARD_MEMBER_FAVOUR"
+          },
+          "confidence_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Confidence Score",
+            "description": "Calculated model confidence percentage (0.0 - 100.0)",
+            "example": 85.0
+          },
+          "card_member_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Card Member Score",
+            "description": "Normalized card member score (0.0 - 100.0)",
+            "default": 0.0,
+            "example": 78.5
+          },
+          "merchant_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Merchant Score",
+            "description": "Normalized merchant score (0.0 - 100.0)",
+            "default": 0.0,
+            "example": 25.0
+          },
+          "disputed_amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disputed Amount",
+            "description": "Disputed financial transaction amount",
+            "example": 1250.0
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "description": "Transaction currency code",
+            "default": "INR",
+            "example": "INR"
+          },
+          "factor_breakdown": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Factor Breakdown",
+            "description": "Detailed item-level score contributions"
+          },
+          "raw_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Statement",
+            "description": "Cardholder dispute statement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "recommended_resolution",
+          "confidence_score"
+        ],
+        "title": "ReasoningGenerateRequest"
+      },
+      "ReasoningResponse": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Objective, neutral plain-language justification for both parties"
+          },
+          "cardholder_rationale": {
+            "type": "string",
+            "title": "Cardholder Rationale",
+            "description": "Cardholder-facing plain-language rationale"
+          },
+          "merchant_rationale": {
+            "type": "string",
+            "title": "Merchant Rationale",
+            "description": "Merchant-facing evidence evaluation rationale"
+          },
+          "contributing_factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 3,
+            "title": "Contributing Factors",
+            "description": "At least 3 factors cited per SRS AC-10"
+          },
+          "generator_source": {
+            "type": "string",
+            "title": "Generator Source",
+            "description": "GEMINI_XAI | DETERMINISTIC_SAFE_FALLBACK",
+            "default": "DETERMINISTIC_SAFE_FALLBACK"
+          },
+          "guardrails_applied": {
+            "type": "boolean",
+            "title": "Guardrails Applied",
+            "description": "Indicates whether deterministic policy guardrails ran",
+            "default": true
+          },
+          "guardrail_violations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Guardrail Violations",
+            "description": "Any caught and mitigated violations"
+          },
+          "confidence_score_pct": {
+            "type": "number",
+            "title": "Confidence Score Pct",
+            "description": "Confidence score associated with this reasoning"
+          },
+          "recommended_resolution": {
+            "type": "string",
+            "title": "Recommended Resolution",
+            "description": "Recommended resolution string"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id",
+            "description": "Associated case file ID if linked"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At",
+            "description": "Timestamp of explanation generation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "cardholder_rationale",
+          "merchant_rationale",
+          "contributing_factors",
+          "confidence_score_pct",
+          "recommended_resolution"
+        ],
+        "title": "ReasoningResponse"
+      },
+      "ResolutionOutcome": {
+        "type": "string",
+        "enum": [
+          "FAVOR_CARDHOLDER",
+          "FAVOR_MERCHANT",
+          "SPLIT_LIABILITY",
+          "MERCHANT_ACCEPTED"
+        ],
+        "title": "ResolutionOutcome"
+      },
+      "StateTransitionRequest": {
+        "properties": {
+          "target_status": {
+            "$ref": "#/components/schemas/DisputeStatus",
+            "description": "Desired lifecycle status"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "description": "Identity of the actor triggering the transition",
+            "example": "DISPUTE_OPS_ANALYST:alex"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Reason",
+            "description": "Reason for status transition",
+            "example": "Evidence collection completed, starting AI scoring."
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_status",
+          "actor",
+          "reason"
+        ],
+        "title": "StateTransitionRequest"
+      },
+      "StatementSubmissionRequest": {
+        "properties": {
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id",
+            "description": "Target dispute ID"
+          },
+          "statement_type": {
+            "type": "string",
+            "title": "Statement Type",
+            "description": "CARDHOLDER or MERCHANT",
+            "example": "CARDHOLDER"
+          },
+          "statement_text": {
+            "type": "string",
+            "minLength": 5,
+            "title": "Statement Text",
+            "description": "Full text statement"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author",
+            "description": "Author of the statement",
+            "example": "Alice Smith"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "statement_type",
+          "statement_text",
+          "author"
+        ],
+        "title": "StatementSubmissionRequest"
+      },
+      "StructuredEvidenceRequest": {
+        "properties": {
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id",
+            "description": "Target dispute ID"
+          },
+          "evidence_type": {
+            "$ref": "#/components/schemas/EvidenceType",
+            "description": "Category of evidence"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EvidenceSource",
+            "description": "Submitting party"
+          },
+          "raw_payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Raw Payload",
+            "description": "Structured metadata/evidence payload"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "description": "Actor attaching the evidence",
+            "default": "SYSTEM"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name",
+            "description": "Original filename if applicable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "evidence_type",
+          "source"
+        ],
+        "title": "StructuredEvidenceRequest"
+      },
+      "SystemStatusResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "operational"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "default": "VerdictAI REST API Gateway"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1.0.0"
+          },
+          "active_disputes_count": {
+            "type": "integer",
+            "title": "Active Disputes Count",
+            "default": 0
+          },
+          "uptime_status": {
+            "type": "string",
+            "title": "Uptime Status",
+            "default": "99.5%+"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "title": "SystemStatusResponse"
+      },
+      "TransactionDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "merchant_id": {
+            "type": "string",
+            "title": "Merchant Id"
+          },
+          "merchant_name": {
+            "type": "string",
+            "title": "Merchant Name"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "title": "Cardholder Name"
+          },
+          "payment_method": {
+            "type": "string",
+            "title": "Payment Method"
+          },
+          "transaction_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Transaction Timestamp"
+          },
+          "is_disputed": {
+            "type": "boolean",
+            "title": "Is Disputed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "merchant_id",
+          "merchant_name",
+          "amount",
+          "cardholder_name",
+          "payment_method",
+          "transaction_timestamp"
+        ],
+        "title": "TransactionDTO"
+      },
+      "TransactionSummary": {
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "title": "Transaction Id"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "USD"
+          },
+          "merchant_id": {
+            "type": "string",
+            "title": "Merchant Id"
+          },
+          "merchant_name": {
+            "type": "string",
+            "title": "Merchant Name"
+          },
+          "cardholder_id": {
+            "type": "string",
+            "title": "Cardholder Id"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "title": "Cardholder Name"
+          },
+          "payment_method": {
+            "type": "string",
+            "title": "Payment Method"
+          },
+          "transaction_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Transaction Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "transaction_id",
+          "amount",
+          "merchant_id",
+          "merchant_name",
+          "cardholder_id",
+          "cardholder_name",
+          "payment_method",
+          "transaction_timestamp"
+        ],
+        "title": "TransactionSummary"
+      },
+      "UnifiedCaseFile": {
+        "properties": {
+          "header": {
+            "$ref": "#/components/schemas/CaseFileHeader"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionSummary"
+          },
+          "cardholder_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cardholder Statement"
+          },
+          "merchant_response_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merchant Response Statement"
+          },
+          "evidence_items": {
+            "items": {
+              "$ref": "#/components/schemas/EvidencePayloadModel"
+            },
+            "type": "array",
+            "title": "Evidence Items"
+          },
+          "case_hash_sha256": {
+            "type": "string",
+            "title": "Case Hash Sha256",
+            "default": ""
+          },
+          "audit_chain_length": {
+            "type": "integer",
+            "title": "Audit Chain Length",
+            "default": 0
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "header",
+          "transaction"
+        ],
+        "title": "UnifiedCaseFile",
+        "description": "Consolidated, tamper-evident case file aggregating transactional data,\npolymorphic evidence from MongoDB, scoring inputs, and audit chain."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

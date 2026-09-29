@@ -65,7 +65,7 @@ class CaseFileBuilder:
             txn_timestamp = utc_now()
 
         transaction = TransactionSummary(
-            transaction_id=str(transaction_data.get("id", "")),
+            transaction_id=str(transaction_data.get("id") or transaction_data.get("transaction_id", "")),
             amount=float(transaction_data.get("amount", 0.0)),
             currency=transaction_data.get("currency", "USD"),
             merchant_id=str(transaction_data.get("merchant_id", "")),
