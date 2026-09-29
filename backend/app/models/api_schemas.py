@@ -91,3 +91,61 @@ class SystemStatusResponse(BaseModel):
     active_disputes_count: int = 0
     uptime_status: str = "99.5%+"
     timestamp: datetime = Field(default_factory=utc_now)
+
+
+# ─── Reasoning Layer & Hallucination Guardrail Schemas (Phase 3 Deliverables) ───
+
+class ReasoningGenerateRequest(BaseModel):
+    case_id: str = Field(..., description="Unique case reference identifier", json_schema_extra={"example": "CASE-2026-00001"})
+    category_id: str = Field("CAT-01", description="Dispute category identifier (e.g. CAT-01)", json_schema_extra={"example": "CAT-01"})
+    category_name: str = Field("Item Not Received", description="Human-readable dispute category name", json_schema_extra={"example": "Item Not Received"})
+    recommended_resolution: str = Field(..., description="CARD_MEMBER_FAVOUR | MERCHANT_FAVOUR | ESCALATE", json_schema_extra={"example": "CARD_MEMBER_FAVOUR"})
+    confidence_score: float = Field(..., ge=0.0, le=100.0, description="Calculated model confidence percentage (0.0 - 100.0)", json_schema_extra={"example": 85.0})
+    card_member_score: float = Field(0.0, ge=0.0, le=100.0, description="Normalized card member score (0.0 - 100.0)", json_schema_extra={"example": 78.5})
+    merchant_score: float = Field(0.0, ge=0.0, le=100.0, description="Normalized merchant score (0.0 - 100.0)", json_schema_extra={"example": 25.0})
+    disputed_amount: Optional[float] = Field(None, gt=0, description="Disputed financial transaction amount", json_schema_extra={"example": 1250.0})
+    currency: str = Field("INR", description="Transaction currency code", json_schema_extra={"example": "INR"})
+    factor_breakdown: List[Dict[str, Any]] = Field(default_factory=list, description="Detailed item-level score contributions")
+    raw_statement: Optional[str] = Field(None, description="Cardholder dispute statement")
+
+
+class ReasoningResponse(BaseModel):
+    summary: str = Field(..., description="Objective, neutral plain-language justification for both parties")
+    cardholder_rationale: str = Field(..., description="Cardholder-facing plain-language rationale")
+    merchant_rationale: str = Field(..., description="Merchant-facing evidence evaluation rationale")
+    contributing_factors: List[str] = Field(..., min_length=3, description="At least 3 factors cited per SRS AC-10")
+    generator_source: str = Field("DETERMINISTIC_SAFE_FALLBACK", description="GEMINI_XAI | DETERMINISTIC_SAFE_FALLBACK")
+    guardrails_applied: bool = Field(True, description="Indicates whether deterministic policy guardrails ran")
+    guardrail_violations: List[str] = Field(default_factory=list, description="Any caught and mitigated violations")
+    confidence_score_pct: float = Field(..., description="Confidence score associated with this reasoning")
+    recommended_resolution: str = Field(..., description="Recommended resolution string")
+    case_id: Optional[str] = Field(None, description="Associated case file ID if linked")
+    generated_at: datetime = Field(default_factory=utc_now, description="Timestamp of explanation generation")
+
+
+class GuardrailAuditRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="Plain-language text to audit against policy guardrails", json_schema_extra={"example": "Merchant failed to deliver merchandise per order receipt."})
+    expected_amount: Optional[float] = Field(None, description="Expected disputed amount for monetary sanity checking")
+    currency: str = Field("INR", description="Currency symbol/code")
+    contributing_factors: Optional[List[str]] = Field(None, description="Associated factor descriptions")
+
+
+class GuardrailAuditResponse(BaseModel):
+    passed: bool = Field(..., description="True if text strictly complies with all policies")
+    violations: List[str] = Field(default_factory=list, description="List of detected policy violations")
+    sanitized_text: str = Field(..., description="Scrubbed and sanitized text")
+    checked_rules: List[str] = Field(default_factory=list, description="List of guardrail verification rules applied")
+    audited_at: datetime = Field(default_factory=utc_now)
+
+
+class ReasoningCapabilitiesResponse(BaseModel):
+    service: str = "VerdictAI Transparent Reasoning & XAI Explanation Layer"
+    owner: str = "Darshan Prajapati (Backend Engineer - Reasoning & APIs)"
+    version: str = "1.0.0"
+    gemini_xai_available: bool = False
+    active_engine: str = "DETERMINISTIC_SAFE_FALLBACK"
+    guardrails_active: bool = True
+    enforced_rules: List[str] = Field(default_factory=list)
+    srs_requirements_covered: List[str] = Field(default_factory=list)
+    timestamp: datetime = Field(default_factory=utc_now)
+
