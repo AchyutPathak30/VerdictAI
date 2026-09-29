@@ -32,11 +32,17 @@ Thumbs.db
 *.doc
 *.tex
 *.csv
-docs/
+docs/*.md
+!docs/design/
 
-# Node / Mobile
+# Node / Mobile / Web
 node_modules/
 .expo/
 dist/
 web-build/
+
+# Local Screen Dumps
+desktop_screens/
+mobile-screens/
+
 
