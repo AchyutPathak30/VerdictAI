@@ -129,7 +129,7 @@ class FairWeighingModel:
 
         # Apply primary evidence penalty if missing
         if not has_primary:
-            confidence = max(30.0, confidence - 15.0)
+            confidence = max(30.0, confidence - 20.0)
 
         confidence = round(confidence, 1)
 
