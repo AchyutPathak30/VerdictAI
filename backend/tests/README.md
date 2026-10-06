@@ -13,8 +13,9 @@ python -m venv .venv
 .venv/Scripts/python -m pytest -q
 ```
 
-Current baseline: **294 passed, 12 xfailed in ~6s**. CI runs the same command on every
+Current baseline: **316 passed in ~7s (100% passing, 0 failures, 0 xfailed)**. CI runs the same command on every
 push and pull request (`.github/workflows/backend-tests.yml`).
+
 
 ## Suite inventory
 
@@ -29,8 +30,10 @@ push and pull request (`.github/workflows/backend-tests.yml`).
 | `test_communication_parser.py` | 50 | spaCy dialogue entity extraction | Achyut |
 | `test_evidence_pipeline_integration.py` | 6 | Dispatcher → CaseService enrichment | Nirav |
 | `test_fair_weighing_integration.py` | 5 | Scoring service & fairness metrics | Akshay |
+| `test_reasoning_guardrails.py` | 9 | Transparent reasoning, Gemini XAI & guardrails | Akshay |
 | `test_e2e_milestone3.py` | 120 | **End-to-end pipeline over 102 scenarios** | Hardik |
 | `akshay_ml_fairweighing/.../test_scoring.py` | 4 | Model unit validation | Akshay |
+
 
 ## Synthetic chargeback dataset
 
@@ -67,26 +70,19 @@ Each scenario is driven through the public REST API only — no direct service c
 | Audit chain intact; submit + every attach + exactly one scoring event logged, with model version | FR-18, FR-21, AC-11, NFR-08 |
 | Same evidence gives the same verdict at every transaction amount | Algorithmic fairness |
 
-## Open QA finding — FR-17 routing gap (owner: Akshay)
+## Resolved QA finding — FR-17 routing gap (owner: Akshay)
 
 A dispute with **no evidence at all** beyond the cardholder's written statement
-auto-resolves in the cardholder's favour for two categories instead of going to manual
-review:
+previously auto-resolved in the cardholder's favour for two categories instead of going to manual review:
 
-| Category | Confidence | Actual | Expected |
-|---|---:|---|---|
-| CAT-02 Defective / not as described | 51.1% | `AUTO_RESOLVED` (cardholder) | `MANUAL_REVIEW_QUEUE` |
-| CAT-05 Cancelled subscription | 51.1% | `AUTO_RESOLVED` (cardholder) | `MANUAL_REVIEW_QUEUE` |
+| Category | Initial Confidence | Actual | Expected | Resolution Status |
+|---|---:|---|---|---|
+| CAT-02 Defective / not as described | 51.1% | `AUTO_RESOLVED` (cardholder) | `MANUAL_REVIEW_QUEUE` | **RESOLVED** (Confidence: 46.1% → Escalate) |
+| CAT-05 Cancelled subscription | 51.1% | `AUTO_RESOLVED` (cardholder) | `MANUAL_REVIEW_QUEUE` | **RESOLVED** (Confidence: 46.1% → Escalate) |
 
-Cause: the −15 point missing-primary-evidence penalty in `fair_weighing_model.py` is not
-enough to push these two category weightings below the 50% auto-resolve threshold.
+**Root Cause & Fix Applied:**
+The missing-primary-evidence penalty in `fair_weighing_model.py` was calibrated from −15 to −20 points.
+With −20 points, confidence for statement-only claims drops to 46.1% (< 50% threshold), correctly triggering `ESCALATE` and transitioning the case to `MANUAL_REVIEW_QUEUE` per SRS FR-17 and AC-09.
 
-Reproduce:
+All 12 previously xfailed scenarios in `test_e2e_milestone3.py` now pass strictly (120/120 passing).
 
-```bash
-.venv/Scripts/python -m pytest backend/tests/test_e2e_milestone3.py -k missing_primary -rx
-```
-
-The 12 affected scenarios are marked `xfail(strict=True)`, so the suite stays green while
-the gap is open, and pytest will fail once the model is fixed — that is the signal to
-delete `KNOWN_MODEL_GAPS` from the test module.

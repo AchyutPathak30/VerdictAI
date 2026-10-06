@@ -80,8 +80,9 @@ $$\text{Norm}_{CM} = \frac{\text{Score}_{CM}}{\text{Total}} \times 100, \quad \t
 $$\text{Confidence Score } C = \max(\text{Norm}_{CM}, \text{Norm}_{MR})$$
 
 ### 3.4 Penalties & Floor Caps
-- **Primary Evidence Missing Penalty:** $-15$ points to $C$.
+- **Primary Evidence Missing Penalty:** $-20$ points to $C$ (calibrated from $-15$ to ensure statement-only claims in CAT-02 and CAT-05 escalate to `MANUAL_REVIEW_QUEUE` per SRS FR-17 and AC-09).
 - **Low Confidence Threshold:** If $C < 50$, Recommendation = `ESCALATE`.
+
 
 ---
 

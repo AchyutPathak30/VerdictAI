@@ -24,8 +24,9 @@ FIXTURE = os.path.join(os.path.dirname(__file__), "fixtures", "synthetic_dispute
 with open(FIXTURE) as f:
     SCENARIOS = json.load(f)["cases"]
 
-# Model defect resolved: with penalty calibrated to -20.0, statement-only cases properly
-# escalate below the 50% threshold to MANUAL_REVIEW_QUEUE (FR-17, AC-09).
+# Model defect previously found by this suite has been resolved:
+# Missing-primary penalty calibrated to -20 points; statement-only CAT-02 and CAT-05 cases
+# now correctly drop below 50% confidence and escalate to MANUAL_REVIEW_QUEUE (FR-17, AC-09).
 KNOWN_MODEL_GAPS = set()
 
 OUTCOME_FOR = {
