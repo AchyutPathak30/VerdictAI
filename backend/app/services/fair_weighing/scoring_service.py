@@ -293,6 +293,37 @@ class FairWeighingScoringService:
         else:
             outcome = ResolutionOutcome.SPLIT_LIABILITY
 
+        # Generate transparent dual-perspective rationales and enforce guardrails (Phase 3 Integration)
+        cardholder_rationale = explanation
+        merchant_rationale = explanation
+        generator_source = "DETERMINISTIC_SAFE_FALLBACK"
+        guardrails_applied = True
+        guardrail_violations: List[str] = []
+        try:
+            from backend.app.services.reasoning_layer import transparent_reasoning_engine, ReasoningRequest
+            reasoning_req = ReasoningRequest(
+                case_id=dispute_id,
+                category_id=cat_id,
+                category_name=cat_name,
+                recommended_resolution=resolution_str,
+                confidence_score=confidence,
+                card_member_score=eval_result["card_member_score"],
+                merchant_score=eval_result["merchant_score"],
+                disputed_amount=case_file.header.disputed_amount,
+                currency=case_file.header.currency,
+                factor_breakdown=eval_result.get("factor_breakdown", []),
+                raw_statement=case_file.cardholder_statement
+            )
+            reasoning_out = transparent_reasoning_engine.generate_reasoning(reasoning_req)
+            explanation = reasoning_out.summary
+            cardholder_rationale = reasoning_out.cardholder_rationale
+            merchant_rationale = reasoning_out.merchant_rationale
+            generator_source = reasoning_out.generator_source
+            guardrails_applied = reasoning_out.guardrails_applied
+            guardrail_violations = reasoning_out.guardrail_violations
+        except Exception as e:
+            logger.warning(f"Transparent reasoning layer invocation failed: {e}. Defaulting to base explanation.")
+
         resolution_id = str(uuid.uuid4())
         resolution_data = {
             "id": resolution_id,
@@ -308,7 +339,13 @@ class FairWeighingScoringService:
                 "merchant_score": eval_result["merchant_score"],
                 "contributing_factors": eval_result["contributing_factors"],
                 "factor_breakdown": eval_result["factor_breakdown"],
-                "audit_trail": eval_result["audit_trail"]
+                "audit_trail": eval_result["audit_trail"],
+                "summary": explanation,
+                "cardholder_rationale": cardholder_rationale,
+                "merchant_rationale": merchant_rationale,
+                "generator_source": generator_source,
+                "guardrails_applied": guardrails_applied,
+                "guardrail_violations": guardrail_violations
             },
             "resolved_by_type": "SYSTEM_AUTOMATION",
             "resolved_by_user_id": None,
@@ -317,6 +354,21 @@ class FairWeighingScoringService:
 
         # Store in dispute_resolutions table
         db_manager.insert_pg_record("dispute_resolutions", dispute_id, resolution_data)
+
+        # Cache in dispute_reasoning table
+        db_manager.insert_pg_record("dispute_reasoning", dispute_id, {
+            "dispute_id": dispute_id,
+            "summary": explanation,
+            "cardholder_rationale": cardholder_rationale,
+            "merchant_rationale": merchant_rationale,
+            "contributing_factors": eval_result["contributing_factors"],
+            "generator_source": generator_source,
+            "guardrails_applied": guardrails_applied,
+            "guardrail_violations": guardrail_violations,
+            "confidence_score_pct": confidence,
+            "recommended_resolution": resolution_str
+        })
+
 
         # Advance Lifecycle State Machine
         curr_status = DisputeStatus(dispute_rec["current_status"])

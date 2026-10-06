@@ -13,7 +13,7 @@ python -m venv .venv
 .venv/Scripts/python -m pytest -q
 ```
 
-Current baseline: **316 passed in ~7s (100% passing, 0 failures, 0 xfailed)**. CI runs the same command on every
+Current baseline: **337 passed in ~3s (100% passing, 0 failures, 0 xfailed)**. CI runs the same command on every
 push and pull request (`.github/workflows/backend-tests.yml`).
 
 
@@ -28,11 +28,14 @@ push and pull request (`.github/workflows/backend-tests.yml`).
 | `test_receipt_parser.py` | 33 | Receipt text/JSON parsing | Achyut |
 | `test_courier_tracking_parser.py` | 42 | Courier tracking & anomalies | Achyut |
 | `test_communication_parser.py` | 50 | spaCy dialogue entity extraction | Achyut |
+| `test_disputes_api.py` | 9 | Case-creation, filtering, lifecycle & audit trail REST APIs | Darshan |
 | `test_evidence_pipeline_integration.py` | 6 | Dispatcher → CaseService enrichment | Nirav |
 | `test_fair_weighing_integration.py` | 5 | Scoring service & fairness metrics | Akshay |
-| `test_reasoning_guardrails.py` | 9 | Transparent reasoning, Gemini XAI & guardrails | Akshay |
+| `test_reasoning_layer_api.py` / `test_reasoning_api.py` | 12 | Transparent reasoning, case-linked XAI & guardrail audit APIs | Darshan |
+| `test_reasoning_guardrails.py` | 10 | Transparent reasoning, Gemini XAI & guardrails | Akshay / Darshan |
 | `test_e2e_milestone3.py` | 120 | **End-to-end pipeline over 102 scenarios** | Hardik |
 | `akshay_ml_fairweighing/.../test_scoring.py` | 4 | Model unit validation | Akshay |
+
 
 
 ## Synthetic chargeback dataset

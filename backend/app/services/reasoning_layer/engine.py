@@ -1,10 +1,10 @@
 """
 VerdictAI Transparent Reasoning Engine (Google Gemini XAI + Guardrails)
 Project: Frictionless Dispute & Chargeback Resolution
-Author: Akshay Purohit (202512033) - ML Engineer (Fair-Weighing Model)
-Collaborator: Darshan Prajapati (Backend Engineer - Reasoning & APIs)
-Phase: Phase 3 / Cycle 4 - Transparent Reasoning Engine
-Coverage: SRS FR-19, FR-20, SIR-07, AC-10, NFR-02, NFR-13
+Author: Darshan Prajapati (Backend Engineer - Reasoning & APIs) & Akshay Purohit (ML Engineer)
+Collaborator: Nirav Kachhiya (Cryptographic Auditing & Policy Enforcer)
+Phase: Phase 3 / Cycle 4 - Transparent Reasoning Engine & APIs
+Coverage: SRS FR-19, FR-20, SIR-07, AC-10, NFR-02, NFR-13, NFR-14
 """
 
 import os
@@ -204,6 +204,141 @@ class TransparentReasoningEngine:
             recommended_resolution=req.recommended_resolution
         )
 
+    def generate_for_case(
+        self,
+        dispute_id: str,
+        actor: str = "SYSTEM:reasoning_engine"
+    ) -> ReasoningOutput:
+        """
+        Generates structured, explainable reasoning for an existing dispute case.
+        Integrates with CaseService, FairWeighingScoringService, and database layers.
+        Enriches case resolution record and records cryptographic audit trail (Phase 3 & Phase 5 prep).
+        """
+        from backend.app.core.db import db_manager
+        from backend.app.services.case_builder.service import case_service
+        from backend.app.services.audit_engine.audit import audit_engine
+
+        case_file = case_service.get_unified_case_file(dispute_id)
+        if not case_file:
+            raise ValueError(f"Dispute case '{dispute_id}' not found.")
+
+        # Ensure case has been evaluated
+        res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+        if not res_rec:
+            # Score the case first
+            scored_case = case_service.evaluate_scoring(dispute_id, actor=actor)
+            res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+            if not res_rec:
+                raise ValueError(f"Failed to score dispute case '{dispute_id}' prior to reasoning generation.")
+            case_file = scored_case
+
+        reasoning_payload = res_rec.get("reasoning_payload", {})
+        category_name = case_file.header.dispute_reason.value if hasattr(case_file.header.dispute_reason, "value") else str(case_file.header.dispute_reason)
+        category_id = "CAT-01"
+        try:
+            from backend.app.services.fair_weighing.scoring_service import DISPUTE_REASON_TO_CATEGORY
+            cat_info = DISPUTE_REASON_TO_CATEGORY.get(case_file.header.dispute_reason, {})
+            if cat_info:
+                category_id = cat_info.get("id", "CAT-01")
+                category_name = cat_info.get("name", category_name)
+        except Exception:
+            pass
+
+        rec_resolution = reasoning_payload.get("recommended_resolution", "ESCALATE")
+        confidence_pct = float(reasoning_payload.get("confidence_score_pct", 50.0))
+        cm_score = float(reasoning_payload.get("card_member_score", 50.0))
+        mr_score = float(reasoning_payload.get("merchant_score", 50.0))
+        factor_breakdown = reasoning_payload.get("factor_breakdown", [])
+
+        req = ReasoningRequest(
+            case_id=dispute_id,
+            category_id=category_id,
+            category_name=category_name,
+            recommended_resolution=rec_resolution,
+            confidence_score=confidence_pct,
+            card_member_score=cm_score,
+            merchant_score=mr_score,
+            disputed_amount=case_file.header.disputed_amount,
+            currency=case_file.header.currency,
+            factor_breakdown=factor_breakdown,
+            raw_statement=case_file.cardholder_statement
+        )
+
+        output = self.generate_reasoning(req)
+
+        # Store in dispute_reasoning table
+        output_dict = output.model_dump()
+        output_dict["dispute_id"] = dispute_id
+        db_manager.insert_pg_record("dispute_reasoning", dispute_id, output_dict)
+
+        # Enrich dispute_resolutions record
+        res_rec["justification_summary"] = output.summary
+        if "reasoning_payload" not in res_rec:
+            res_rec["reasoning_payload"] = {}
+        res_rec["reasoning_payload"]["summary"] = output.summary
+        res_rec["reasoning_payload"]["cardholder_rationale"] = output.cardholder_rationale
+        res_rec["reasoning_payload"]["merchant_rationale"] = output.merchant_rationale
+        res_rec["reasoning_payload"]["generator_source"] = output.generator_source
+        res_rec["reasoning_payload"]["guardrails_applied"] = output.guardrails_applied
+        res_rec["reasoning_payload"]["guardrail_violations"] = output.guardrail_violations
+        db_manager.update_pg_record("dispute_resolutions", dispute_id, res_rec)
+
+        # Cryptographic audit log
+        audit_engine.log_event(
+            dispute_id=dispute_id,
+            performed_by=actor,
+            action_type="GENERATE_TRANSPARENT_REASONING",
+            previous_state={"reasoning_generator_source": None},
+            new_state={
+                "reasoning_generator_source": output.generator_source,
+                "guardrails_applied": output.guardrails_applied,
+                "contributing_factors_count": len(output.contributing_factors)
+            },
+            state_delta={
+                "summary": output.summary[:80] + "..." if len(output.summary) > 80 else output.summary
+            }
+        )
+
+        return output
+
+    def get_stored_reasoning(self, dispute_id: str) -> Optional[ReasoningOutput]:
+        """
+        Retrieves stored transparent reasoning for a dispute case from cache or dispute resolution.
+        """
+        from backend.app.core.db import db_manager
+
+        # Check dedicated dispute_reasoning store
+        rec = db_manager.get_pg_record("dispute_reasoning", dispute_id)
+        if rec:
+            data = {k: v for k, v in rec.items() if k != "dispute_id"}
+            return ReasoningOutput(**data)
+
+        # Fallback to dispute_resolutions table
+        res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+        if res_rec and "reasoning_payload" in res_rec:
+            rp = res_rec["reasoning_payload"]
+            summary = res_rec.get("justification_summary") or rp.get("summary", "")
+            cm_rat = rp.get("cardholder_rationale") or summary
+            mr_rat = rp.get("merchant_rationale") or summary
+            factors = rp.get("contributing_factors", [])
+            if len(factors) < 3:
+                factors = self.build_factors_list(rp.get("factor_breakdown", []))
+
+            return ReasoningOutput(
+                summary=summary,
+                cardholder_rationale=cm_rat,
+                merchant_rationale=mr_rat,
+                contributing_factors=factors,
+                generator_source=rp.get("generator_source", "DETERMINISTIC_SAFE_FALLBACK"),
+                guardrails_applied=rp.get("guardrails_applied", True),
+                guardrail_violations=rp.get("guardrail_violations", []),
+                confidence_score_pct=float(rp.get("confidence_score_pct", 50.0)),
+                recommended_resolution=rp.get("recommended_resolution", "ESCALATE")
+            )
+
+        return None
+
 
 # Global singleton instance
 transparent_reasoning_engine = TransparentReasoningEngine()
+
