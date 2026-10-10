@@ -332,3 +332,8 @@ export const REPORTS_ANALYTICS_DATA = {
     { id: 'EXP-9912', reportName: 'Historical Dispute Log', format: 'PDF', generationDate: 'Oct 15, 2023', fileSize: '15.2 MB', status: 'Completed' },
   ] as AuditExportItem[]
 };
+
+export const EVIDENCE_FILES = DSP_1041_DETAILS.evidence;
+export const AUDIT_TRAIL = CHB_99281_OVERRIDE_DATA.auditTrail;
+export const REASONING_FACTORS = DSP_1041_DETAILS.aiScoring.factors;
+export const AUDIT_EXPORTS = REPORTS_ANALYTICS_DATA.auditExports;
