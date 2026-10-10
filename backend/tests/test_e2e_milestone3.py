@@ -24,14 +24,10 @@ FIXTURE = os.path.join(os.path.dirname(__file__), "fixtures", "synthetic_dispute
 with open(FIXTURE) as f:
     SCENARIOS = json.load(f)["cases"]
 
-# Model defect found by this suite: with no evidence beyond the cardholder statement, the
-# missing-primary penalty still leaves confidence at 51.1% for CAT-02 / CAT-05, so the case
-# auto-resolves for the cardholder instead of going to MANUAL_REVIEW_QUEUE (FR-17, AC-09).
-# strict=True: once the model is fixed these start passing and pytest flags the stale marker.
-KNOWN_MODEL_GAPS = {
-    ("PRODUCT_DAMAGED_OR_DEFECTIVE", "missing_primary"),
-    ("SUBSCRIPTION_CANCELLED_CHARGED", "missing_primary"),
-}
+# Model defect previously found by this suite has been resolved:
+# Missing-primary penalty calibrated to -20 points; statement-only CAT-02 and CAT-05 cases
+# now correctly drop below 50% confidence and escalate to MANUAL_REVIEW_QUEUE (FR-17, AC-09).
+KNOWN_MODEL_GAPS = set()
 
 OUTCOME_FOR = {
     "CARD_MEMBER_FAVOUR": "FAVOR_CARDHOLDER",
