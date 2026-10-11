@@ -4,8 +4,9 @@ Author: Hardik Kansara (202512036) - Cloud/DevOps & QA Engineer
 
 Drives every synthetic scenario in fixtures/synthetic_disputes.json through the
 public REST API only: file dispute -> attach evidence (parsers) -> synchronous
-Fair-Weighing scoring -> lifecycle routing -> resolution + Merkle audit trail.
-Coverage: SIR-07, FR-15 to FR-21, AC-08 to AC-11, NFR-08.
+Fair-Weighing scoring -> lifecycle routing -> transparent reasoning (explain) ->
+resolution + Merkle audit trail.
+Coverage: SIR-07, FR-15 to FR-21, AC-08 to AC-11, NFR-02, NFR-08, NFR-13.
 """
 
 import json
@@ -23,11 +24,6 @@ from backend.app.services.audit_engine.audit import audit_engine
 FIXTURE = os.path.join(os.path.dirname(__file__), "fixtures", "synthetic_disputes.json")
 with open(FIXTURE) as f:
     SCENARIOS = json.load(f)["cases"]
-
-# Model defect previously found by this suite has been resolved:
-# Missing-primary penalty calibrated to -20 points; statement-only CAT-02 and CAT-05 cases
-# now correctly drop below 50% confidence and escalate to MANUAL_REVIEW_QUEUE (FR-17, AC-09).
-KNOWN_MODEL_GAPS = set()
 
 OUTCOME_FOR = {
     "CARD_MEMBER_FAVOUR": "FAVOR_CARDHOLDER",
@@ -72,19 +68,15 @@ def run_scenario(client, s):
     return resp.json(), elapsed
 
 
-def _param(s):
-    marks = []
-    if (s["dispute_reason"], s["profile"]) in KNOWN_MODEL_GAPS:
-        marks.append(pytest.mark.xfail(strict=True, reason="Model auto-resolves statement-only case (FR-17)"))
-    return pytest.param(s, id=s["scenario_id"], marks=marks)
-
-
 def test_dataset_has_100_plus_scenarios():
     assert len(SCENARIOS) >= 100
     assert len({s["dispute_reason"] for s in SCENARIOS}) == 6
 
 
-@pytest.mark.parametrize("scenario", [_param(s) for s in SCENARIOS])
+SCENARIO_IDS = [s["scenario_id"] for s in SCENARIOS]
+
+
+@pytest.mark.parametrize("scenario", SCENARIOS, ids=SCENARIO_IDS)
 def test_end_to_end_pipeline(client, scenario):
     case, elapsed = run_scenario(client, scenario)
     dispute_id = case["header"]["dispute_id"]
@@ -123,6 +115,53 @@ def test_end_to_end_pipeline(client, scenario):
     if expected_status == "MANUAL_REVIEW_QUEUE":
         queue = client.get("/api/v1/admin/queue").json()["items"]
         assert any(item["header"]["dispute_id"] == dispute_id for item in queue)
+
+
+@pytest.mark.parametrize("scenario", SCENARIOS, ids=SCENARIO_IDS)
+def test_explain_step_reasoning_layer(client, scenario):
+    """Phase 5 "Explain" step: reasoning must agree with the scorer and pass every guardrail."""
+    case, _ = run_scenario(client, scenario)
+    dispute_id = case["header"]["dispute_id"]
+    scored = case["resolution"]["reasoning_payload"]
+
+    resp = client.post(f"/api/v1/reasoning/case/{dispute_id}/generate")
+    assert resp.status_code == 200, resp.text
+    reasoning = resp.json()
+
+    # Explanation must describe the verdict the model actually produced
+    assert reasoning["recommended_resolution"] == scored["recommended_resolution"]
+    assert reasoning["confidence_score_pct"] == scored["confidence_score_pct"]
+
+    # FR-19/20 / NFR-02: neutral summary plus a rationale for each party
+    for field in ("summary", "cardholder_rationale", "merchant_rationale"):
+        assert len(reasoning[field]) > 20
+
+    # AC-10: at least three cited factors
+    assert len(reasoning["contributing_factors"]) >= 3
+
+    # NFR-13: guardrails ran and nothing slipped through; re-auditing the text independently agrees
+    assert reasoning["guardrails_applied"] is True
+    assert reasoning["guardrail_violations"] == []
+    for field in ("summary", "cardholder_rationale", "merchant_rationale"):
+        audit = client.post("/api/v1/reasoning/audit-guardrails", json={
+            "text": reasoning[field],
+            "expected_amount": scenario["disputed_amount"],
+            "currency": "USD",
+            "contributing_factors": reasoning["contributing_factors"],
+        }).json()
+        assert audit["passed"] is True, f"{field}: {audit['violations']}"
+
+    # Stored copy is what clients will fetch later
+    stored = client.get(f"/api/v1/reasoning/case/{dispute_id}")
+    assert stored.status_code == 200
+    assert stored.json()["summary"] == reasoning["summary"]
+
+    # Explain step is on the tamper-evident chain, after scoring
+    trail = client.get(f"/api/v1/disputes/{dispute_id}/audit-trail").json()
+    assert trail["is_chain_intact"] is True
+    actions = [e["action_type"] for e in trail["audit_logs"]]
+    assert actions.count("GENERATE_TRANSPARENT_REASONING") == 1
+    assert actions.index("GENERATE_TRANSPARENT_REASONING") > actions.index("AI_SCORING_EVALUATED")
 
 
 GROUPS = defaultdict(list)
