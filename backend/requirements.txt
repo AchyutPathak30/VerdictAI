@@ -7,3 +7,6 @@ fastapi>=0.100.0
 uvicorn>=0.22.0
 httpx>=0.24.0
 python-multipart>=0.0.6
+
+# Optional at runtime: enables Gemini explanations when GEMINI_API_KEY is set
+google-generativeai>=0.3.0

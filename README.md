@@ -107,7 +107,7 @@ VerdictAI/
 │   ├── architecture/                     # High-Level Architecture & Database ERDs
 │   ├── brd/                              # Business Requirements Document (BRD)
 │   └── api/                              # OpenAPI Specification (Swagger)
-├── docker-compose.yml                    # Multi-container orchestration (FastAPI, Postgres, Mongo)
+├── docker-compose.yml                    # Local stack: FastAPI API + React web console
 ├── .env.example                          # Template environment variables
 └── README.md
 ```
@@ -177,8 +177,13 @@ cp .env.example .env
 
 ### 3. Run via Docker Compose
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
+- API + Swagger docs: http://localhost:8000/docs
+- Web console: http://localhost:5173
+
+Point the web console at a deployed API by building with
+`--build-arg VITE_API_BASE_URL=https://<your-api>/api/v1`.
 
 ### 4. Running Backend Tests Locally
 ```bash
