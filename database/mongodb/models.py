@@ -68,7 +68,8 @@ class EvidencePayloadModel(BaseModel):
         file_name: Optional[str] = None,
         mime_type: Optional[str] = None,
         nlp_entities: Optional[Dict[str, Any]] = None,
-        ocr_text: Optional[str] = None
+        ocr_text: Optional[str] = None,
+        confidence_rating: Optional[float] = None
     ) -> "EvidencePayloadModel":
         """Generates evidence model with automatic SHA-256 integrity hash."""
         serialized = json.dumps(raw_payload, sort_keys=True, default=str).encode("utf-8")
@@ -85,7 +86,8 @@ class EvidencePayloadModel(BaseModel):
             sha256_checksum=payload_hash,
             raw_payload=raw_payload,
             nlp_extracted_entities=nlp_entities or {},
-            ocr_extracted_text=ocr_text
+            ocr_extracted_text=ocr_text,
+            confidence_rating=confidence_rating if confidence_rating is not None else 1.0
         )
 
 

@@ -14,6 +14,11 @@ from backend.app.services.nlp.communication_parser import (
     CommunicationAnalysis,
     MessageSegment,
 )
+from backend.app.services.nlp.evidence_summarizer import (
+    EvidenceHighlightExtractor,
+    EvidenceSummary,
+    EvidenceHighlight,
+)
 
 __all__ = [
     "EntityExtractor",
@@ -21,4 +26,7 @@ __all__ = [
     "CommunicationLogParser",
     "CommunicationAnalysis",
     "MessageSegment",
+    "EvidenceHighlightExtractor",
+    "EvidenceSummary",
+    "EvidenceHighlight",
 ]

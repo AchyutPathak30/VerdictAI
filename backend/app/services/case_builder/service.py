@@ -16,6 +16,8 @@ from backend.app.services.case_builder.builder import CaseFileBuilder
 from backend.app.services.state_machine.state_machine import DisputeStateMachine
 from backend.app.services.audit_engine.audit import audit_engine
 from backend.app.core.db import db_manager
+from backend.app.services.parsers.dispatcher import evidence_dispatcher
+from backend.app.services.nlp.evidence_summarizer import EvidenceHighlightExtractor, EvidenceSummary
 from database.mongodb.models import EvidencePayloadModel, EvidenceType, EvidenceSource, MongoCaseDocument
 
 
@@ -107,6 +109,12 @@ class CaseService:
         if not dispute_record:
             raise ValueError(f"Dispute {dispute_id} not found.")
 
+        # Enrich evidence payload via NLP Evidence Parser Pipeline
+        nlp_entities, confidence_score, _ = evidence_dispatcher.enrich_payload(
+            evidence_type=evidence_type,
+            raw_payload=raw_payload,
+        )
+
         evidence_id = f"evi_{uuid.uuid4().hex[:12]}"
         evidence = EvidencePayloadModel.create_with_hash(
             evidence_id=evidence_id,
@@ -114,7 +122,9 @@ class CaseService:
             evidence_type=evidence_type,
             source=source,
             raw_payload=raw_payload,
-            file_name=file_name
+            file_name=file_name,
+            nlp_entities=nlp_entities,
+            confidence_rating=confidence_score,
         )
 
         mongo_data = db_manager.get_mongo_doc("case_documents", dispute_id) or {
@@ -171,6 +181,33 @@ class CaseService:
             evidence_items=evidence_items,
             resolution_data=res_data
         )
+
+    def extract_case_evidence_highlights(self, dispute_id: str) -> Optional[EvidenceSummary]:
+        """
+        Parses all attached evidence items for a dispute and extracts
+        an aggregated highlight summary using EvidenceHighlightExtractor.
+        """
+        mongo_data = db_manager.get_mongo_doc("case_documents", dispute_id) or {}
+        evidence_items = [
+            EvidencePayloadModel(**item) for item in mongo_data.get("evidence_items", [])
+        ]
+        if not evidence_items:
+            return None
+
+        parsed_items = []
+        for item in evidence_items:
+            parsed = evidence_dispatcher.parse(
+                evidence_type=item.evidence_type,
+                raw_payload=item.raw_payload,
+            )
+            if parsed:
+                parsed_items.append(parsed)
+
+        if not parsed_items:
+            return None
+
+        extractor = EvidenceHighlightExtractor()
+        return extractor.extract_highlights(parsed_items)
 
 
 case_service = CaseService()
