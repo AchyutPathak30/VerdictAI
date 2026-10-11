@@ -1,7 +1,8 @@
 # VerdictAI — QA & Test Harness
 
 Owner: Hardik Kansara (202512036) — Cloud/DevOps & QA Engineer
-Covers Milestone 3 (System Integration & End-to-End Validation).
+Covers Milestone 3 (System Integration & End-to-End Validation) and the Phase 5
+Submit → Parse → Score → Explain → Resolve flow.
 
 ## Running the suite
 
@@ -13,9 +14,9 @@ python -m venv .venv
 .venv/Scripts/python -m pytest -q
 ```
 
-Current baseline: **337 passed in ~3s (100% passing, 0 failures, 0 xfailed)**. CI runs the same command on every
-push and pull request (`.github/workflows/backend-tests.yml`).
-
+Current baseline: **439 passed in ~14s**. CI (`.github/workflows/ci.yml`) runs this suite on
+every push and pull request, alongside the web console build, the mobile app type-check,
+and a Docker image build.
 
 ## Suite inventory
 
@@ -31,12 +32,10 @@ push and pull request (`.github/workflows/backend-tests.yml`).
 | `test_disputes_api.py` | 9 | Case-creation, filtering, lifecycle & audit trail REST APIs | Darshan |
 | `test_evidence_pipeline_integration.py` | 6 | Dispatcher → CaseService enrichment | Nirav |
 | `test_fair_weighing_integration.py` | 5 | Scoring service & fairness metrics | Akshay |
-| `test_reasoning_layer_api.py` / `test_reasoning_api.py` | 12 | Transparent reasoning, case-linked XAI & guardrail audit APIs | Darshan |
+| `test_reasoning_api.py` | 12 | Transparent reasoning, case-linked XAI & guardrail audit APIs | Darshan |
 | `test_reasoning_guardrails.py` | 10 | Transparent reasoning, Gemini XAI & guardrails | Akshay / Darshan |
-| `test_e2e_milestone3.py` | 120 | **End-to-end pipeline over 102 scenarios** | Hardik |
+| `test_e2e_milestone3.py` | 222 | **End-to-end pipeline + reasoning layer over 102 scenarios** | Hardik |
 | `akshay_ml_fairweighing/.../test_scoring.py` | 4 | Model unit validation | Akshay |
-
-
 
 ## Synthetic chargeback dataset
 
@@ -62,6 +61,7 @@ run for real rather than being stubbed.
 
 Each scenario is driven through the public REST API only — no direct service calls:
 `POST /disputes` → `POST /evidence/payload` (per item) → `POST /disputes/{id}/score` →
+`POST /reasoning/case/{id}/generate` → `GET /reasoning/case/{id}` →
 `GET /disputes/{id}/audit-trail` → `GET /disputes/{id}/resolution` → `GET /admin/queue`.
 
 | Check | Requirement |
@@ -71,6 +71,10 @@ Each scenario is driven through the public REST API only — no direct service c
 | Auto-resolve only at ≥ 50% confidence, otherwise manual review queue | FR-17, AC-09 |
 | Explanation present and citing ≥ 3 contributing factors | FR-19, FR-20, AC-10 |
 | Audit chain intact; submit + every attach + exactly one scoring event logged, with model version | FR-18, FR-21, AC-11, NFR-08 |
+| Reasoning repeats the scorer's verdict and confidence exactly | FR-19, FR-20 |
+| Neutral summary plus a separate cardholder and merchant rationale | NFR-02 |
+| Guardrails applied with zero violations; independent re-audit of every text passes | NFR-13 |
+| Reasoning is persisted and logged on the audit chain after scoring | FR-21, NFR-08 |
 | Same evidence gives the same verdict at every transaction amount | Algorithmic fairness |
 
 ## Resolved QA finding — FR-17 routing gap (owner: Akshay)
