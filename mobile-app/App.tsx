@@ -6,7 +6,7 @@ import RootNavigator from './src/navigation/RootNavigator';
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0E1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <RootNavigator />
     </GestureHandlerRootView>
   );

@@ -22,7 +22,7 @@ export default function DisputeSuccessScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bgDeep} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.bgDeep} />
 
       <View style={styles.content}>
         {/* Success Icon */}
@@ -61,19 +61,26 @@ export default function DisputeSuccessScreen({ navigation, route }: Props) {
         <TouchableOpacity
           style={styles.primaryBtn}
           onPress={() => {
-            navigation.reset({ index: 0, routes: [{ name: 'DisputeWizard' }] });
+            (navigation as any).navigate('HomeTab', {
+              screen: 'DisputeDetail',
+              params: { disputeId: caseId },
+            });
           }}
           activeOpacity={0.85}
         >
-          <Text style={styles.primaryBtnText}>Track Case Status</Text>
+          <Text style={styles.primaryBtnText}>Track Case Status →</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryBtn}
-          onPress={() => navigation.reset({ index: 0, routes: [{ name: 'DisputeWizard' }] })}
+          onPress={() => {
+            (navigation as any).navigate('HomeTab', {
+              screen: 'MyDisputes',
+            });
+          }}
           activeOpacity={0.85}
         >
-          <Text style={styles.secondaryBtnText}>Return to Home</Text>
+          <Text style={styles.secondaryBtnText}>Return to Disputes</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -94,44 +101,76 @@ function Step({ n, text }: { n: string; text: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgDeep },
   content: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    padding: Spacing.xl, gap: Spacing.lg,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.lg,
   },
   iconRing: {
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: '#0A2A1A', borderWidth: 2, borderColor: Colors.statusResolved,
-    alignItems: 'center', justifyContent: 'center',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 2,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadow.card,
   },
-  icon: { fontSize: 48 },
+  icon: { fontSize: 44 },
   title: { fontSize: Typography['2xl'], fontWeight: Typography.extrabold, color: Colors.textPrimary },
-  subtitle: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  subtitle: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
   caseCard: {
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.xl,
-    borderWidth: 1, borderColor: Colors.border, width: '100%', gap: Spacing.md, ...Shadow.card,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    width: '100%',
+    gap: Spacing.md,
+    ...Shadow.card,
   },
   caseRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   caseLabel: { fontSize: Typography.sm, color: Colors.textSecondary },
   caseValue: { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.textPrimary },
-  divider: { height: 1, backgroundColor: Colors.divider },
+  divider: { height: 1, backgroundColor: Colors.border },
   nextStepsCard: {
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.border, width: '100%', gap: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    width: '100%',
+    gap: Spacing.md,
+    ...Shadow.card,
   },
-  nextTitle: { fontSize: Typography.base, fontWeight: Typography.semibold, color: Colors.textPrimary },
+  nextTitle: { fontSize: Typography.base, fontWeight: Typography.bold, color: Colors.textPrimary },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
   stepBadge: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepNum: { fontSize: Typography.xs, fontWeight: Typography.bold, color: '#fff' },
   stepText: { flex: 1, fontSize: Typography.sm, color: Colors.textSecondary, lineHeight: 20 },
   primaryBtn: {
-    backgroundColor: Colors.primary, borderRadius: Radius.lg,
-    paddingVertical: Spacing.base, width: '100%', alignItems: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.base,
+    width: '100%',
+    alignItems: 'center',
+    ...Shadow.card,
   },
   primaryBtnText: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#fff' },
   secondaryBtn: {
-    borderRadius: Radius.lg, paddingVertical: Spacing.sm, width: '100%', alignItems: 'center',
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.sm,
+    width: '100%',
+    alignItems: 'center',
   },
-  secondaryBtnText: { fontSize: Typography.base, color: Colors.textSecondary },
+  secondaryBtnText: { fontSize: Typography.base, color: Colors.textSecondary, fontWeight: Typography.semibold },
 });

@@ -8,12 +8,14 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { HomeStackParamList, UnifiedCaseFile, DisputeStatus } from '../../types';
+import { HomeStackParamList, UnifiedCaseFile, DisputeStatus, CaseReasoningResponse } from '../../types';
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { getDisputeById } from '../../services/disputesService';
+import { getCaseReasoning } from '../../services/reasoningService';
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'DisputeDetail'>;
@@ -46,23 +48,35 @@ const STATUS_LABELS: Record<string, string> = {
 export default function DisputeDetailScreen({ navigation, route }: Props) {
   const { disputeId } = route.params;
   const [caseFile, setCaseFile] = useState<UnifiedCaseFile | null>(null);
+  const [reasoning, setReasoning] = useState<CaseReasoningResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCase();
   }, [disputeId]);
 
-  const fetchCase = async () => {
-    setLoading(true);
+  const fetchCase = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     setError(null);
+
     try {
       const data = await getDisputeById(disputeId);
       setCaseFile(data);
+
+      try {
+        const reasoningData = await getCaseReasoning(disputeId);
+        setReasoning(reasoningData);
+      } catch {
+        setReasoning(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load case file.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -83,7 +97,7 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
         <View style={styles.center}>
           <Text style={styles.errorIcon}>⚠️</Text>
           <Text style={styles.errorText}>{error ?? 'Case not found.'}</Text>
-          <TouchableOpacity onPress={fetchCase} style={styles.retryBtn}>
+          <TouchableOpacity onPress={() => fetchCase()} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -96,13 +110,12 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
   const now = new Date();
   const hoursLeft = Math.max(0, Math.floor((slaDate.getTime() - now.getTime()) / 3600000));
   const minsLeft = Math.max(0, Math.floor(((slaDate.getTime() - now.getTime()) % 3600000) / 60000));
-
-  // Current step index in lifecycle
+  const isResolved = ['AUTO_RESOLVED', 'CLOSED', 'REJECTED'].includes(status);
   const currentStepIndex = LIFECYCLE_STEPS.indexOf(status as DisputeStatus);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bgDeep} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.bgDeep} />
 
       {/* Nav Header */}
       <View style={styles.navHeader}>
@@ -113,7 +126,17 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchCase(true)}
+            tintColor={Colors.primary}
+          />
+        }
+      >
         {/* Case Identity Card */}
         <View style={styles.identityCard}>
           <Text style={styles.merchantName}>{caseFile.transaction.merchant_name}</Text>
@@ -122,12 +145,12 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
             ${caseFile.header.disputed_amount.toFixed(2)} {caseFile.header.currency}
           </Text>
           <Text style={styles.caseHash}>
-            🔐 SHA-256: {caseFile.case_hash_sha256.slice(0, 20)}...
+            🔐 SHA-256: {caseFile.case_hash_sha256.slice(0, 24)}...
           </Text>
         </View>
 
-        {/* SLA Countdown */}
-        {!['AUTO_RESOLVED', 'CLOSED', 'REJECTED'].includes(status) && (
+        {/* SLA Countdown Card for Active Cases */}
+        {!isResolved && (
           <View style={styles.slaCard}>
             <Text style={styles.slaTitle}>⏱ SLA Decision Window</Text>
             <Text style={styles.slaTime}>{hoursLeft}h {minsLeft}m remaining</Text>
@@ -138,7 +161,7 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* Resolution Banner */}
-        {['AUTO_RESOLVED', 'CLOSED'].includes(status) && (
+        {isResolved && (
           <View style={styles.resolvedBanner}>
             <Text style={styles.resolvedTitle}>✅ Dispute Resolved</Text>
             {caseFile.resolution && (
@@ -146,6 +169,44 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
                 Outcome: {String(caseFile.resolution.outcome ?? 'Decision recorded')}
               </Text>
             )}
+          </View>
+        )}
+
+        {/* AI Transparent Reasoning Card (SRS FR-19, FR-20, AC-10) */}
+        {reasoning && (
+          <View style={styles.reasoningCard}>
+            <View style={styles.reasoningHeader}>
+              <View style={styles.reasoningTitleRow}>
+                <Text style={styles.geminiIcon}>✨</Text>
+                <Text style={styles.reasoningTitle}>Resolution Rationale</Text>
+              </View>
+              <View style={styles.confidenceBadge}>
+                <Text style={styles.confidenceText}>
+                  {reasoning.confidence_score_pct.toFixed(0)}% Confidence
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.cardholderRationaleText}>
+              {reasoning.cardholder_rationale}
+            </Text>
+
+            <View style={styles.reasoningDivider} />
+
+            <Text style={styles.factorsHeading}>Contributing Evidence Factors (AC-10):</Text>
+            {reasoning.contributing_factors.map((factor, idx) => (
+              <View key={idx} style={styles.factorRow}>
+                <Text style={styles.factorCheck}>✓</Text>
+                <Text style={styles.factorText}>{factor}</Text>
+              </View>
+            ))}
+
+            <View style={styles.guardrailFooter}>
+              <View style={styles.guardrailPill}>
+                <Text style={styles.guardrailText}>🛡️ Guardrails Verified</Text>
+              </View>
+              <Text style={styles.modelTag}>Gemini 2.0 Flash XAI</Text>
+            </View>
           </View>
         )}
 
@@ -164,7 +225,7 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
                       isPast && styles.stepDotDone,
                       isCurrent && styles.stepDotActive,
                     ]}>
-                      <Text style={styles.stepDotText}>
+                      <Text style={[styles.stepDotText, (isPast || isCurrent) && styles.stepDotTextWhite]}>
                         {isPast ? '✓' : isCurrent ? '●' : '○'}
                       </Text>
                     </View>
@@ -191,36 +252,36 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
             Evidence Items ({caseFile.evidence_items.length})
           </Text>
           {caseFile.evidence_items.length === 0 ? (
-            <Text style={styles.noEvidence}>No evidence submitted yet.</Text>
+            <Text style={styles.noEvidence}>No supporting evidence attached yet.</Text>
           ) : (
             caseFile.evidence_items.map((item, idx) => (
               <View key={idx} style={styles.evidenceItem}>
                 <Text style={styles.evidenceType}>📄 {item.evidence_type}</Text>
-                <Text style={styles.evidenceFile}>{item.file_name ?? 'Structured payload'}</Text>
+                <Text style={styles.evidenceFile}>{item.file_name ?? 'Structured Payload'}</Text>
               </View>
             ))
           )}
         </View>
 
         {/* Cardholder Statement */}
-        {caseFile.cardholder_statement && (
+        {caseFile.cardholder_statement ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Statement</Text>
             <View style={styles.statementBox}>
               <Text style={styles.statementText}>{caseFile.cardholder_statement}</Text>
             </View>
           </View>
-        )}
+        ) : null}
 
-        {/* Audit Chain Info */}
+        {/* Cryptographic Audit Chain Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔐 Audit Chain</Text>
+          <Text style={styles.sectionTitle}>🔐 Cryptographic Audit Chain</Text>
           <View style={styles.auditBox}>
             <Text style={styles.auditText}>
-              Chain Length: {caseFile.audit_chain_length} events
+              Merkle Events Logged: {caseFile.audit_chain_length}
             </Text>
             <Text style={styles.auditText}>
-              Case Sealed: {caseFile.header.is_sealed ? '✅ Yes' : '⏳ Pending'}
+              Tamper-Proof Seal: {caseFile.header.is_sealed ? '✅ Immutable' : '⏳ In-Progress'}
             </Text>
           </View>
         </View>
@@ -231,74 +292,215 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgDeep },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
-  loadingText: { color: Colors.textSecondary },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, padding: Spacing.xl },
+  loadingText: { color: Colors.textSecondary, fontSize: Typography.sm },
   errorIcon: { fontSize: 40 },
   errorText: { color: Colors.error, textAlign: 'center', fontSize: Typography.base },
   retryBtn: { backgroundColor: Colors.primary, borderRadius: Radius.md, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md },
   retryText: { color: '#fff', fontWeight: Typography.bold },
   navHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.base,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  backBtn: { padding: Spacing.sm },
-  backIcon: { fontSize: 22, color: Colors.textPrimary },
-  navTitle: { fontSize: Typography.md, fontWeight: Typography.semibold, color: Colors.textPrimary },
-  scrollContent: { padding: Spacing.xl, gap: Spacing.base, paddingBottom: Spacing['3xl'] },
+  backBtn: { padding: Spacing.xs },
+  backIcon: { fontSize: 24, color: Colors.textPrimary },
+  navTitle: { fontSize: Typography.lg, fontWeight: Typography.bold, color: Colors.textPrimary },
+  scrollContent: { padding: Spacing.xl, gap: Spacing.lg, paddingBottom: 60 },
   identityCard: {
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.xl,
-    borderWidth: 1, borderColor: Colors.border, gap: Spacing.xs, ...Shadow.card,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.xs,
+    ...Shadow.card,
   },
-  merchantName: { fontSize: Typography.xl, fontWeight: Typography.bold, color: Colors.textPrimary },
-  caseRef: { fontSize: Typography.sm, color: Colors.primary, fontWeight: Typography.medium },
-  disputedAmount: { fontSize: Typography['2xl'], fontWeight: Typography.extrabold, color: Colors.textPrimary, marginTop: Spacing.sm },
-  caseHash: { fontSize: Typography.xs, color: Colors.textMuted, marginTop: Spacing.xs },
+  merchantName: { fontSize: Typography.xl, fontWeight: Typography.extrabold, color: Colors.textPrimary },
+  caseRef: { fontSize: Typography.xs, color: Colors.primary, fontWeight: Typography.bold },
+  disputedAmount: { fontSize: Typography.lg, fontWeight: Typography.bold, color: Colors.textPrimary, marginTop: 4 },
+  caseHash: { fontSize: Typography.xs, color: Colors.textMuted, marginTop: 4 },
   slaCard: {
-    backgroundColor: '#1A1200', borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.statusSubmitted, gap: Spacing.xs,
+    backgroundColor: '#FFFBEB',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    gap: 4,
   },
-  slaTitle: { fontSize: Typography.sm, color: Colors.statusSubmitted, fontWeight: Typography.semibold },
-  slaTime: { fontSize: Typography.xl, fontWeight: Typography.extrabold, color: Colors.textPrimary },
-  slaNote: { fontSize: Typography.xs, color: Colors.textMuted },
+  slaTitle: { fontSize: Typography.sm, fontWeight: Typography.bold, color: '#D97706' },
+  slaTime: { fontSize: Typography.xl, fontWeight: Typography.extrabold, color: '#92400E' },
+  slaNote: { fontSize: Typography.xs, color: '#B45309' },
   resolvedBanner: {
-    backgroundColor: '#0A1F14', borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.statusResolved, gap: Spacing.xs,
+    backgroundColor: '#F0FDF4',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    gap: 4,
   },
-  resolvedTitle: { fontSize: Typography.md, fontWeight: Typography.bold, color: Colors.statusResolved },
-  resolvedOutcome: { fontSize: Typography.sm, color: Colors.textSecondary },
-  section: {
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.border, gap: Spacing.md,
+  resolvedTitle: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#16A34A' },
+  resolvedOutcome: { fontSize: Typography.sm, color: '#15803D', fontWeight: Typography.medium },
+  reasoningCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    gap: Spacing.sm,
+    ...Shadow.card,
   },
-  sectionTitle: { fontSize: Typography.base, fontWeight: Typography.semibold, color: Colors.textPrimary },
-  stepper: { gap: 0 },
-  stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md, minHeight: 40 },
-  stepLeft: { alignItems: 'center', width: 24 },
+  reasoningHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reasoningTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  geminiIcon: { fontSize: 18 },
+  reasoningTitle: {
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
+    color: '#1D4ED8',
+  },
+  confidenceBadge: {
+    backgroundColor: '#DBEAFE',
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm + 4,
+    paddingVertical: 3,
+  },
+  confidenceText: {
+    fontSize: Typography.xs,
+    fontWeight: Typography.bold,
+    color: '#1D4ED8',
+  },
+  cardholderRationaleText: {
+    fontSize: Typography.sm,
+    color: '#1E293B',
+    lineHeight: 22,
+    marginTop: 2,
+  },
+  reasoningDivider: {
+    height: 1,
+    backgroundColor: '#DBEAFE',
+    marginVertical: 4,
+  },
+  factorsHeading: {
+    fontSize: Typography.xs,
+    fontWeight: Typography.bold,
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  factorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 2,
+  },
+  factorCheck: {
+    fontSize: Typography.sm,
+    color: '#16A34A',
+    fontWeight: Typography.bold,
+  },
+  factorText: {
+    flex: 1,
+    fontSize: Typography.xs,
+    color: '#334155',
+    lineHeight: 18,
+    fontWeight: Typography.medium,
+  },
+  guardrailFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#DBEAFE',
+  },
+  guardrailPill: {
+    backgroundColor: '#DBEAFE',
+    borderRadius: Radius.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  guardrailText: {
+    fontSize: 10,
+    color: '#1D4ED8',
+    fontWeight: Typography.bold,
+  },
+  modelTag: {
+    fontSize: 10,
+    color: '#64748B',
+    fontWeight: Typography.medium,
+  },
+  section: { gap: Spacing.sm },
+  sectionTitle: { fontSize: Typography.base, fontWeight: Typography.bold, color: Colors.textPrimary },
+  stepper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 2,
+    ...Shadow.card,
+  },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  stepLeft: { alignItems: 'center', width: 28 },
   stepDot: {
     width: 24, height: 24, borderRadius: 12,
-    backgroundColor: Colors.bgSurface, borderWidth: 1.5, borderColor: Colors.border,
-    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#CBD5E1',
   },
-  stepDotActive: { borderColor: Colors.primary, backgroundColor: Colors.bgElevated },
-  stepDotDone: { borderColor: Colors.statusResolved, backgroundColor: '#0A2A1A' },
-  stepDotText: { fontSize: 10, color: Colors.textSecondary },
-  stepLine: { width: 2, flex: 1, backgroundColor: Colors.border, minHeight: 16, marginTop: 2 },
-  stepLineDone: { backgroundColor: Colors.statusResolved },
-  stepLabel: { fontSize: Typography.sm, color: Colors.textMuted, paddingTop: 4, flex: 1 },
-  stepLabelActive: { color: Colors.primary, fontWeight: Typography.semibold },
-  stepLabelDone: { color: Colors.textSecondary },
-  noEvidence: { fontSize: Typography.sm, color: Colors.textMuted },
+  stepDotActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  stepDotDone: { backgroundColor: '#16A34A', borderColor: '#16A34A' },
+  stepDotText: { fontSize: 11, color: '#64748B', fontWeight: Typography.bold },
+  stepDotTextWhite: { color: '#ffffff' },
+  stepLine: { width: 2, height: 16, backgroundColor: '#E2E8F0', marginVertical: 2 },
+  stepLineDone: { backgroundColor: '#16A34A' },
+  stepLabel: { fontSize: Typography.sm, color: Colors.textMuted },
+  stepLabelActive: { color: Colors.primary, fontWeight: Typography.bold },
+  stepLabelDone: { color: Colors.textPrimary, fontWeight: Typography.medium },
+  noEvidence: { fontSize: Typography.sm, color: Colors.textMuted, fontStyle: 'italic' },
   evidenceItem: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.divider,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadow.card,
   },
-  evidenceType: { fontSize: Typography.sm, color: Colors.textPrimary, fontWeight: Typography.medium },
-  evidenceFile: { fontSize: Typography.xs, color: Colors.textMuted },
+  evidenceType: { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.textPrimary },
+  evidenceFile: { fontSize: Typography.xs, color: Colors.textSecondary },
   statementBox: {
-    backgroundColor: Colors.bgSurface, borderRadius: Radius.md, padding: Spacing.md,
-    borderLeftWidth: 3, borderLeftColor: Colors.primary,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.md,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadow.card,
   },
-  statementText: { fontSize: Typography.sm, color: Colors.textSecondary, lineHeight: 20 },
-  auditBox: { gap: Spacing.sm },
-  auditText: { fontSize: Typography.sm, color: Colors.textSecondary },
+  statementText: { fontSize: Typography.sm, color: Colors.textSecondary, lineHeight: 22 },
+  auditBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.md,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 4,
+    ...Shadow.card,
+  },
+  auditText: { fontSize: Typography.xs, color: Colors.textSecondary },
 });

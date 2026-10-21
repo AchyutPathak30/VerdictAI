@@ -117,6 +117,20 @@ export interface DisputeListResponse {
   items: UnifiedCaseFile[];
 }
 
+export interface CaseReasoningResponse {
+  summary: string;
+  cardholder_rationale: string;
+  merchant_rationale: string;
+  contributing_factors: string[];
+  generator_source: string;
+  guardrails_applied: boolean;
+  guardrail_violations?: string[];
+  confidence_score_pct: number;
+  recommended_resolution: string;
+  case_id: string;
+  generated_at?: string;
+}
+
 // ─── Navigation Types ─────────────────────────────────────────────────────
 
 export type RootStackParamList = {
