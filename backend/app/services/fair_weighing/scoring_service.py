@@ -301,6 +301,12 @@ class FairWeighingScoringService:
         guardrail_violations: List[str] = []
         try:
             from backend.app.services.reasoning_layer import transparent_reasoning_engine, ReasoningRequest
+            cat_info = DISPUTE_REASON_TO_CATEGORY.get(
+                case_file.header.dispute_reason,
+                {"id": "CAT-01", "name": "Dispute"}
+            )
+            cat_id = cat_info["id"]
+            cat_name = cat_info["name"]
             reasoning_req = ReasoningRequest(
                 case_id=dispute_id,
                 category_id=cat_id,
