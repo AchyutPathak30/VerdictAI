@@ -10,7 +10,6 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,7 +24,6 @@ type Props = {
 };
 
 const DEMO_CARDHOLDER_ID = 'usr_alice_01';
-const DEMO_CARDHOLDER_NAME = 'Alice Smith';
 
 const DISPUTE_REASONS: { value: DisputeReason; label: string; icon: string }[] = [
   { value: 'PRODUCT_NOT_RECEIVED', label: 'Item Not Received', icon: '📦' },
@@ -47,7 +45,12 @@ export default function DisputeWizardScreen({ navigation }: Props) {
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [selectedReason, setSelectedReason] = useState<DisputeReason | null>(null);
   const [statement, setStatement] = useState('');
-  const [evidenceFile, setEvidenceFile] = useState<{ name: string; uri: string; size: number; mimeType: string } | null>(null);
+  const [evidenceFile, setEvidenceFile] = useState<{
+    name: string;
+    uri: string;
+    size: number;
+    mimeType: string;
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -79,7 +82,12 @@ export default function DisputeWizardScreen({ navigation }: Props) {
           Alert.alert('File Too Large', 'Maximum file size is 10MB for cardholders (SRS FR-08).');
           return;
         }
-        setEvidenceFile({ name: asset.name, uri: asset.uri, size: asset.size ?? 0, mimeType: asset.mimeType ?? 'application/octet-stream' });
+        setEvidenceFile({
+          name: asset.name,
+          uri: asset.uri,
+          size: asset.size ?? 0,
+          mimeType: asset.mimeType ?? 'application/octet-stream',
+        });
       }
     } catch {
       Alert.alert('Error', 'Could not pick document. Please try again.');
@@ -93,7 +101,6 @@ export default function DisputeWizardScreen({ navigation }: Props) {
     }
     setSubmitting(true);
     try {
-      // Step 1: Create dispute case
       const caseFile = await createDispute({
         transaction_id: selectedTxn.id,
         cardholder_id: DEMO_CARDHOLDER_ID,
@@ -103,7 +110,6 @@ export default function DisputeWizardScreen({ navigation }: Props) {
         merchant_sla_hours: 48,
       });
 
-      // Step 2: Upload evidence file if provided
       if (evidenceFile) {
         await uploadEvidence({
           disputeId: caseFile.header.dispute_id,
@@ -129,17 +135,20 @@ export default function DisputeWizardScreen({ navigation }: Props) {
   const canProceed = () => {
     if (step === 1) return !!selectedTxn;
     if (step === 2) return !!selectedReason;
-    if (step === 3) return true; // evidence is optional
+    if (step === 3) return true;
     return true;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bgDeep} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.bgDeep} />
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (step === 1 ? navigation.goBack() : setStep((s) => (s - 1) as WizardStep))}>
+        <TouchableOpacity
+          onPress={() => (step === 1 ? navigation.goBack() : setStep((s) => (s - 1) as WizardStep))}
+          style={styles.backBtn}
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>File a Dispute</Text>
@@ -160,7 +169,7 @@ export default function DisputeWizardScreen({ navigation }: Props) {
             {loadingTxns ? (
               <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xl }} />
             ) : transactions.length === 0 ? (
-              <Text style={styles.noData}>No transactions available to dispute.</Text>
+              <Text style={styles.noData}>No eligible settled transactions found.</Text>
             ) : (
               transactions.map((txn) => (
                 <TouchableOpacity
@@ -178,9 +187,11 @@ export default function DisputeWizardScreen({ navigation }: Props) {
                   </View>
                   <View style={styles.txnRight}>
                     <Text style={styles.txnAmount}>${txn.amount.toFixed(2)}</Text>
-                    {selectedTxn?.id === txn.id && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
+                    {selectedTxn?.id === txn.id ? (
+                      <View style={styles.checkCircle}>
+                        <Text style={styles.checkmark}>✓</Text>
+                      </View>
+                    ) : null}
                   </View>
                 </TouchableOpacity>
               ))
@@ -201,10 +212,19 @@ export default function DisputeWizardScreen({ navigation }: Props) {
                 activeOpacity={0.8}
               >
                 <Text style={styles.reasonIcon}>{reason.icon}</Text>
-                <Text style={[styles.reasonLabel, selectedReason === reason.value && styles.reasonLabelSelected]}>
+                <Text
+                  style={[
+                    styles.reasonLabel,
+                    selectedReason === reason.value && styles.reasonLabelSelected,
+                  ]}
+                >
                   {reason.label}
                 </Text>
-                {selectedReason === reason.value && <Text style={styles.checkmark}>✓</Text>}
+                {selectedReason === reason.value ? (
+                  <View style={styles.checkCircle}>
+                    <Text style={styles.checkmark}>✓</Text>
+                  </View>
+                ) : null}
               </TouchableOpacity>
             ))}
           </View>
@@ -215,7 +235,7 @@ export default function DisputeWizardScreen({ navigation }: Props) {
           <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>Attach Evidence</Text>
             <Text style={styles.stepSubtitle}>
-              Upload supporting documents (optional but strengthens your case)
+              Upload supporting documents (receipt, tracking, or correspondence).
             </Text>
 
             <TouchableOpacity style={styles.uploadBox} onPress={pickDocument} activeOpacity={0.8}>
@@ -231,7 +251,7 @@ export default function DisputeWizardScreen({ navigation }: Props) {
                 style={styles.removeFile}
                 onPress={() => setEvidenceFile(null)}
               >
-                <Text style={styles.removeFileText}>Remove file ✕</Text>
+                <Text style={styles.removeFileText}>Remove attached file ✕</Text>
               </TouchableOpacity>
             )}
 
@@ -254,28 +274,40 @@ export default function DisputeWizardScreen({ navigation }: Props) {
           <View style={styles.stepContent}>
             <Text style={styles.stepTitle}>Review & Confirm</Text>
             <Text style={styles.stepSubtitle}>
-              Please verify your dispute details before submitting.
+              Please verify your dispute claim before submitting.
             </Text>
 
             <View style={styles.reviewCard}>
               <ReviewRow label="Merchant" value={selectedTxn.merchant_name} />
-              <ReviewRow label="Amount" value={`$${selectedTxn.amount.toFixed(2)} ${selectedTxn.currency}`} />
-              <ReviewRow label="Transaction Date" value={new Date(selectedTxn.transaction_timestamp).toLocaleDateString()} />
-              <ReviewRow label="Reason" value={DISPUTE_REASONS.find(r => r.value === selectedReason)?.label ?? selectedReason} />
-              <ReviewRow label="Evidence" value={evidenceFile ? evidenceFile.name : 'None attached'} />
-              <ReviewRow label="SLA Window" value="48 hours (merchant response)" />
+              <ReviewRow
+                label="Amount"
+                value={`$${selectedTxn.amount.toFixed(2)} ${selectedTxn.currency}`}
+              />
+              <ReviewRow
+                label="Transaction Date"
+                value={new Date(selectedTxn.transaction_timestamp).toLocaleDateString()}
+              />
+              <ReviewRow
+                label="Reason"
+                value={DISPUTE_REASONS.find((r) => r.value === selectedReason)?.label ?? selectedReason}
+              />
+              <ReviewRow
+                label="Evidence"
+                value={evidenceFile ? evidenceFile.name : 'None attached'}
+              />
+              <ReviewRow label="Merchant SLA" value="48 hours response window" />
             </View>
 
             <View style={styles.warningBox}>
               <Text style={styles.warningText}>
-                ⚠️ By submitting, you confirm this dispute is filed in good faith. VerdictAI will create an immutable, cryptographically sealed case record.
+                ⚠️ By submitting, you confirm this dispute is filed in good faith. VerdictAI will generate an immutable, cryptographically sealed case record.
               </Text>
             </View>
           </View>
         )}
       </ScrollView>
 
-      {/* Bottom Action */}
+      {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
         {step < 4 ? (
           <TouchableOpacity
@@ -317,78 +349,148 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgDeep },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  backIcon: { fontSize: 22, color: Colors.textPrimary },
-  headerTitle: { fontSize: Typography.md, fontWeight: Typography.semibold, color: Colors.textPrimary },
-  stepCounter: { fontSize: Typography.sm, color: Colors.textSecondary },
-  progressBar: { height: 3, backgroundColor: Colors.border, marginHorizontal: Spacing.xl },
-  progressFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: Radius.full },
+  backBtn: { padding: Spacing.xs },
+  backIcon: { fontSize: 24, color: Colors.textPrimary },
+  headerTitle: { fontSize: Typography.lg, fontWeight: Typography.bold, color: Colors.textPrimary },
+  stepCounter: { fontSize: Typography.sm, color: Colors.primary, fontWeight: Typography.bold },
+  progressBar: { height: 4, backgroundColor: '#E2E8F0', width: '100%' },
+  progressFill: { height: 4, backgroundColor: Colors.primary },
   scrollContent: { padding: Spacing.xl, paddingBottom: 100 },
   stepContent: { gap: Spacing.md },
-  stepTitle: { fontSize: Typography.xl, fontWeight: Typography.bold, color: Colors.textPrimary },
-  stepSubtitle: { fontSize: Typography.sm, color: Colors.textSecondary },
-  noData: { color: Colors.textMuted, fontSize: Typography.sm, textAlign: 'center', marginTop: Spacing.xl },
+  stepTitle: { fontSize: Typography['2xl'], fontWeight: Typography.extrabold, color: Colors.textPrimary },
+  stepSubtitle: { fontSize: Typography.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
+  noData: { color: Colors.textMuted, textAlign: 'center', marginTop: Spacing.xl },
   txnCard: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1.5, borderColor: Colors.border, ...Shadow.card,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    ...Shadow.card,
   },
-  txnCardSelected: { borderColor: Colors.primary, backgroundColor: Colors.bgElevated },
-  txnLeft: { gap: 2 },
-  txnMerchant: { fontSize: Typography.base, fontWeight: Typography.semibold, color: Colors.textPrimary },
-  txnDate: { fontSize: Typography.xs, color: Colors.textMuted },
-  txnMethod: { fontSize: Typography.xs, color: Colors.textSecondary },
+  txnCardSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: '#EFF6FF',
+  },
+  txnLeft: { gap: 2, flex: 1 },
+  txnMerchant: { fontSize: Typography.base, fontWeight: Typography.bold, color: Colors.textPrimary },
+  txnDate: { fontSize: Typography.xs, color: Colors.textSecondary },
+  txnMethod: { fontSize: Typography.xs, color: Colors.textMuted },
   txnRight: { alignItems: 'flex-end', gap: Spacing.xs },
-  txnAmount: { fontSize: Typography.lg, fontWeight: Typography.bold, color: Colors.textPrimary },
-  checkmark: { color: Colors.primary, fontWeight: Typography.bold, fontSize: Typography.base },
+  txnAmount: { fontSize: Typography.base, fontWeight: Typography.extrabold, color: Colors.textPrimary },
+  checkCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkmark: { color: '#ffffff', fontSize: 13, fontWeight: Typography.bold },
   reasonCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1.5, borderColor: Colors.border, gap: Spacing.md, ...Shadow.card,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    ...Shadow.card,
   },
-  reasonCardSelected: { borderColor: Colors.primary, backgroundColor: Colors.bgElevated },
-  reasonIcon: { fontSize: 22 },
-  reasonLabel: { flex: 1, fontSize: Typography.base, color: Colors.textSecondary, fontWeight: Typography.medium },
-  reasonLabelSelected: { color: Colors.textPrimary },
+  reasonCardSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: '#EFF6FF',
+  },
+  reasonIcon: { fontSize: 24 },
+  reasonLabel: { flex: 1, fontSize: Typography.base, color: Colors.textPrimary, fontWeight: Typography.medium },
+  reasonLabelSelected: { color: Colors.primary, fontWeight: Typography.bold },
   uploadBox: {
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 1.5,
-    borderColor: Colors.border, borderStyle: 'dashed', padding: Spacing.xl,
-    alignItems: 'center', gap: Spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    borderStyle: 'dashed',
+    padding: Spacing.xl,
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
-  uploadIcon: { fontSize: 36 },
-  uploadTitle: { fontSize: Typography.base, color: Colors.textPrimary, fontWeight: Typography.medium, textAlign: 'center' },
-  uploadSubtext: { fontSize: Typography.xs, color: Colors.textMuted },
-  removeFile: { alignSelf: 'center' },
-  removeFileText: { color: Colors.error, fontSize: Typography.sm },
-  statementLabel: { fontSize: Typography.sm, fontWeight: Typography.medium, color: Colors.textSecondary, marginTop: Spacing.sm },
+  uploadIcon: { fontSize: 32 },
+  uploadTitle: { fontSize: Typography.base, fontWeight: Typography.semibold, color: Colors.textPrimary },
+  uploadSubtext: { fontSize: Typography.xs, color: Colors.textSecondary },
+  removeFile: { alignSelf: 'center', padding: Spacing.xs },
+  removeFileText: { fontSize: Typography.xs, color: Colors.error, fontWeight: Typography.semibold },
+  statementLabel: { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.textPrimary, marginTop: Spacing.sm },
   statementInput: {
-    backgroundColor: Colors.bgSurface, borderRadius: Radius.md, borderWidth: 1,
-    borderColor: Colors.border, padding: Spacing.base, fontSize: Typography.base,
-    color: Colors.textPrimary, minHeight: 100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+    color: Colors.textPrimary,
+    fontSize: Typography.base,
+    minHeight: 100,
+    ...Shadow.card,
   },
   reviewCard: {
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.border, gap: Spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.sm,
+    ...Shadow.card,
   },
   reviewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: Spacing.xs },
-  reviewLabel: { fontSize: Typography.sm, color: Colors.textSecondary, flex: 1 },
-  reviewValue: { fontSize: Typography.sm, color: Colors.textPrimary, fontWeight: Typography.medium, flex: 2, textAlign: 'right' },
+  reviewLabel: { fontSize: Typography.sm, color: Colors.textSecondary },
+  reviewValue: { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.textPrimary },
   warningBox: {
-    backgroundColor: '#1A1200', borderRadius: Radius.md, padding: Spacing.base,
-    borderWidth: 1, borderColor: Colors.warning,
+    backgroundColor: '#FFFBEB',
+    borderRadius: Radius.md,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
-  warningText: { fontSize: Typography.xs, color: Colors.textSecondary, lineHeight: 18 },
+  warningText: { fontSize: Typography.xs, color: '#92400E', lineHeight: 18 },
   bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    padding: Spacing.xl, backgroundColor: Colors.bgDeep,
-    borderTopWidth: 1, borderTopColor: Colors.border,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.base,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
-  nextBtn: { backgroundColor: Colors.primary, borderRadius: Radius.lg, paddingVertical: Spacing.base, alignItems: 'center' },
-  nextBtnDisabled: { opacity: 0.4 },
-  nextBtnText: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#fff' },
-  submitBtn: { backgroundColor: Colors.statusResolved, borderRadius: Radius.lg, paddingVertical: Spacing.base, alignItems: 'center' },
+  nextBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.base,
+    alignItems: 'center',
+    ...Shadow.card,
+  },
+  nextBtnDisabled: { opacity: 0.5 },
+  nextBtnText: { color: '#ffffff', fontSize: Typography.md, fontWeight: Typography.bold },
+  submitBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.base,
+    alignItems: 'center',
+    ...Shadow.card,
+  },
   submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#fff' },
+  submitBtnText: { color: '#ffffff', fontSize: Typography.md, fontWeight: Typography.bold },
 });

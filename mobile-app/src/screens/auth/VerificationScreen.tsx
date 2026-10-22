@@ -12,7 +12,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthStackParamList, RootStackParamList } from '../../types';
-import { Colors, Typography, Spacing, Radius } from '../../theme';
+import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp as RootNav } from '@react-navigation/native-stack';
 
@@ -23,9 +23,8 @@ type Props = {
 
 export default function VerificationScreen({ navigation, route }: Props) {
   const { email } = route.params;
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(['1', '2', '3', '4', '5', '6']);
   const [loading, setLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(30);
   const inputRefs = useRef<TextInput[]>([]);
   const rootNav = useNavigation<RootNav<RootStackParamList, 'Auth'>>();
 
@@ -33,7 +32,6 @@ export default function VerificationScreen({ navigation, route }: Props) {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
-    // Auto-focus next
     if (text && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -52,123 +50,188 @@ export default function VerificationScreen({ navigation, route }: Props) {
       return;
     }
     setLoading(true);
-    // TODO Phase 4: POST /api/v1/auth/verify-otp
-    // For now, any 6-digit code works in mock mode
     setTimeout(() => {
       setLoading(false);
-      // Navigate to Main app stack
       rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
-    }, 1000);
+    }, 400);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bgDeep} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.bgDeep} />
 
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-        <Text style={styles.backIcon}>←</Text>
-      </TouchableOpacity>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <View style={styles.logoBadge}>
+          <Text style={styles.logoIcon}>⚖️</Text>
+        </View>
+        <View style={{ width: 40 }} />
+      </View>
 
       <View style={styles.content}>
-        <Text style={styles.shieldIcon}>🔐</Text>
-        <Text style={styles.title}>Verify Your Identity</Text>
+        {/* Shield Icon Circle */}
+        <View style={styles.shieldCircle}>
+          <Text style={styles.shieldIcon}>🛡️</Text>
+        </View>
+
+        <Text style={styles.title}>Security Verification</Text>
         <Text style={styles.subtitle}>
-          We sent a 6-digit code to{'\n'}
-          <Text style={styles.emailHighlight}>{email}</Text>
+          We sent a 6-digit code to <Text style={{ color: Colors.primary, fontWeight: 'bold' }}>{email}</Text>. Please enter it below to continue.
         </Text>
 
-        {/* OTP Input Grid */}
-        <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
+        {/* 6-Digit OTP Blocks */}
+        <View style={styles.otpRow}>
+          {otp.map((digit, idx) => (
             <TextInput
-              key={index}
-              ref={(ref) => { if (ref) inputRefs.current[index] = ref; }}
-              style={[styles.otpInput, digit ? styles.otpInputFilled : null]}
-              value={digit}
-              onChangeText={(text) => handleOtpChange(text.slice(-1), index)}
-              onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
+              key={idx}
+              ref={(ref) => {
+                if (ref) inputRefs.current[idx] = ref;
+              }}
+              style={[
+                styles.otpBox,
+                digit ? styles.otpBoxFilled : null,
+              ]}
               keyboardType="number-pad"
               maxLength={1}
-              textAlign="center"
-              selectionColor={Colors.primary}
+              value={digit}
+              onChangeText={(text) => handleOtpChange(text, idx)}
+              onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, idx)}
+              selectTextOnFocus
             />
           ))}
         </View>
 
+        {/* Resend info */}
+        <View style={styles.resendContainer}>
+          <Text style={styles.resendText}>Resend Code (59s)</Text>
+          <Text style={styles.spamNote}>
+            Check your spam folder if you haven't received the code within 1 minute.
+          </Text>
+        </View>
+
+        {/* Verify Action */}
         <TouchableOpacity
-          style={[styles.verifyButton, loading && styles.verifyButtonDisabled]}
+          style={[styles.verifyBtn, loading && styles.verifyBtnDisabled]}
           onPress={handleVerify}
           disabled={loading}
           activeOpacity={0.85}
         >
-          <Text style={styles.verifyButtonText}>
-            {loading ? 'Verifying...' : 'Verify & Continue →'}
+          <Text style={styles.verifyBtnText}>
+            {loading ? 'Verifying...' : 'Verify Identity'}
           </Text>
         </TouchableOpacity>
-
-        {/* Resend */}
-        <View style={styles.resendRow}>
-          <Text style={styles.resendPrompt}>Didn't receive it? </Text>
-          <TouchableOpacity disabled={resendTimer > 0}>
-            <Text style={[styles.resendLink, resendTimer > 0 && styles.resendDisabled]}>
-              {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend Code'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.securityNote}>
-          <Text style={styles.securityText}>
-            🔒 This verification protects your financial dispute account
-          </Text>
-        </View>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bgDeep, paddingHorizontal: Spacing.xl },
-  backBtn: { paddingVertical: Spacing.base },
-  backIcon: { fontSize: 22, color: Colors.textPrimary },
-  content: { flex: 1, alignItems: 'center', gap: Spacing.lg, paddingTop: Spacing.xl },
-  shieldIcon: { fontSize: 56 },
-  title: { fontSize: Typography['2xl'], fontWeight: Typography.bold, color: Colors.textPrimary },
-  subtitle: { fontSize: Typography.base, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24 },
-  emailHighlight: { color: Colors.primary, fontWeight: Typography.semibold },
-  otpContainer: { flexDirection: 'row', gap: Spacing.sm, marginVertical: Spacing.md },
-  otpInput: {
+  container: { flex: 1, backgroundColor: Colors.bgDeep },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.md,
+  },
+  backBtn: { padding: Spacing.xs },
+  backIcon: { fontSize: 24, color: Colors.textPrimary },
+  logoBadge: {
     width: 48,
-    height: 56,
+    height: 48,
     borderRadius: Radius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgSurface,
-    fontSize: Typography.xl,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadow.card,
+  },
+  logoIcon: { fontSize: 24 },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+    gap: Spacing.lg,
+  },
+  shieldCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  shieldIcon: { fontSize: 32 },
+  title: {
+    fontSize: Typography['2xl'],
     fontWeight: Typography.bold,
     color: Colors.textPrimary,
   },
-  otpInputFilled: { borderColor: Colors.primary, backgroundColor: Colors.bgElevated },
-  verifyButton: {
+  subtitle: {
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 300,
+  },
+  otpRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    justifyContent: 'center',
+    marginTop: Spacing.md,
+  },
+  otpBox: {
+    width: 48,
+    height: 56,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    textAlign: 'center',
+    fontSize: Typography.xl,
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
+    ...Shadow.card,
+  },
+  otpBoxFilled: {
+    borderColor: Colors.primary,
+    backgroundColor: '#F8FAFC',
+  },
+  resendContainer: {
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Spacing.sm,
+  },
+  resendText: {
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    fontWeight: Typography.medium,
+  },
+  spamNote: {
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    maxWidth: 280,
+    lineHeight: 16,
+  },
+  verifyBtn: {
     backgroundColor: Colors.primary,
     borderRadius: Radius.lg,
     paddingVertical: Spacing.base,
-    paddingHorizontal: Spacing['3xl'],
+    width: '100%',
     alignItems: 'center',
-    width: '100%',
+    marginTop: Spacing.lg,
+    ...Shadow.card,
   },
-  verifyButtonDisabled: { opacity: 0.6 },
-  verifyButtonText: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#fff' },
-  resendRow: { flexDirection: 'row', alignItems: 'center' },
-  resendPrompt: { fontSize: Typography.sm, color: Colors.textSecondary },
-  resendLink: { fontSize: Typography.sm, color: Colors.primary, fontWeight: Typography.semibold },
-  resendDisabled: { color: Colors.textMuted },
-  securityNote: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    width: '100%',
+  verifyBtnDisabled: { opacity: 0.6 },
+  verifyBtnText: {
+    fontSize: Typography.md,
+    fontWeight: Typography.bold,
+    color: '#fff',
   },
-  securityText: { fontSize: Typography.xs, color: Colors.textMuted, textAlign: 'center' },
 });

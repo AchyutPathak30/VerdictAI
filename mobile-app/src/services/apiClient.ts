@@ -6,12 +6,18 @@
 
 import axios from 'axios';
 
-// Backend base URL — change this to staging/production URL when deployed
+// Backend base URL — default to local FastAPI dev gateway
 const BASE_URL = 'http://localhost:8000/api/v1';
+
+let isBackendReachable = false;
+export const getBackendReachable = () => isBackendReachable;
+export const setBackendReachable = (val: boolean) => {
+  isBackendReachable = val;
+};
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 3500, // Fast 3.5s timeout for seamless offline demo fallback
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

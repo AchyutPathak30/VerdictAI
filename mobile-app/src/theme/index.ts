@@ -1,47 +1,57 @@
 /**
  * VerdictAI Design System & Theme Tokens
  * Aligned with Visily mobile wireframe color palette (Mayank Jayswal)
+ * Clean Light Fintech Mode: #F8FAFC root, #FFFFFF cards, #2563EB primary
  */
 
 export const Colors = {
-  // Primary Brand
-  primary: '#3B82F6',       // Blue 500 - CTAs, active tabs, links
+  // Primary Brand (Visily Royal Blue)
+  primary: '#2563EB',       // Blue 600 - CTAs, active tabs, buttons
   primaryDark: '#1D4ED8',   // Blue 700 - pressed states
-  primaryLight: '#93C5FD',  // Blue 300 - highlights, icons on dark bg
+  primaryLight: '#DBEAFE',  // Blue 100 - soft badge fills, highlights
 
-  // Background Layer System
-  bgDeep: '#0A0E1A',        // Near-black — root background
-  bgCard: '#131929',        // Dark navy — cards, modals
-  bgSurface: '#1C2440',     // Slightly lighter — input fields, list items
-  bgElevated: '#243058',    // For popups, bottom sheets
+  // Background Layer System (Visily Light Theme)
+  bgDeep: '#F8FAFC',        // Slate 50 - clean root background
+  bgCard: '#FFFFFF',        // Pure white — cards, modals
+  bgSurface: '#F1F5F9',     // Slate 100 — search bars, tab containers, inputs
+  bgElevated: '#FFFFFF',    // Pure white for popups, bottom sheets
 
-  // Text
-  textPrimary: '#F1F5F9',   // Off-white — headings, primary content
-  textSecondary: '#94A3B8', // Slate 400 — subtext, labels
-  textMuted: '#4B5563',     // Gray 600 — placeholders, disabled
-  textInvert: '#0A0E1A',    // For use on light/colored backgrounds
+  // Text Hierarchy
+  textPrimary: '#0F172A',   // Slate 900 — headings, primary content
+  textSecondary: '#64748B', // Slate 500 — subtext, labels
+  textMuted: '#94A3B8',     // Slate 400 — placeholders, inactive
+  textInvert: '#FFFFFF',    // White for use on blue/colored buttons
 
-  // Status Colors (mirror DisputeStatus)
-  statusSubmitted: '#F59E0B',     // Amber — SUBMITTED, EVIDENCE_PENDING
-  statusInProgress: '#3B82F6',    // Blue — EVIDENCE_INGESTED, IN_ANALYSIS
-  statusEvaluated: '#8B5CF6',     // Violet — SCORING_EVALUATED
-  statusResolved: '#10B981',      // Emerald — AUTO_RESOLVED, CLOSED
-  statusManual: '#F97316',        // Orange — MANUAL_REVIEW_QUEUE
-  statusRejected: '#EF4444',      // Red — REJECTED
-  statusOverridden: '#6366F1',    // Indigo — ADMIN_OVERRIDDEN
+  // Status Colors (matching Visily pill badges)
+  statusSubmitted: '#D97706',     // Amber 600 — SUBMITTED, EVIDENCE_PENDING
+  statusInProgress: '#2563EB',    // Blue 600 — EVIDENCE_INGESTED, IN_ANALYSIS
+  statusEvaluated: '#7C3AED',     // Violet 600 — SCORING_EVALUATED
+  statusResolved: '#16A34A',      // Green 600 — AUTO_RESOLVED, CLOSED
+  statusManual: '#EA580C',        // Orange 600 — MANUAL_REVIEW_QUEUE
+  statusRejected: '#DC2626',      // Red 600 — REJECTED
+  statusOverridden: '#4F46E5',    // Indigo 600 — ADMIN_OVERRIDDEN
+
+  // Status Badge Background Fills (tinted light)
+  statusSubmittedBg: '#FFFBEB',
+  statusInProgressBg: '#EFF6FF',
+  statusEvaluatedBg: '#F5F3FF',
+  statusResolvedBg: '#F0FDF4',
+  statusManualBg: '#FFF7ED',
+  statusRejectedBg: '#FEF2F2',
+  statusOverriddenBg: '#EEF2FF',
 
   // UI Utilities
-  border: '#1E2D4A',
-  divider: '#1C2440',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  info: '#3B82F6',
+  border: '#E2E8F0',        // Slate 200 — subtle crisp card & input borders
+  divider: '#F1F5F9',       // Slate 100 — dividers
+  success: '#16A34A',
+  warning: '#D97706',
+  error: '#DC2626',
+  info: '#2563EB',
 
   // Tab Bar
-  tabActive: '#3B82F6',
-  tabInactive: '#4B5563',
-  tabBackground: '#0F1624',
+  tabActive: '#2563EB',
+  tabInactive: '#64748B',
+  tabBackground: '#FFFFFF',
 } as const;
 
 export const Typography = {
@@ -90,17 +100,17 @@ export const Radius = {
 
 export const Shadow = {
   card: {
-    shadowColor: '#000',
+    shadowColor: '#64748B',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 2,
   },
   modal: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
 };

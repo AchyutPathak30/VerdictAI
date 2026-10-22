@@ -6,8 +6,9 @@ import {
   FlatList,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
-import { Colors, Typography, Spacing, Radius } from '../../theme';
+import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 
 interface Notification {
   id: string;
@@ -19,22 +20,21 @@ interface Notification {
   type: 'resolved' | 'update' | 'warning' | 'info';
 }
 
-// Illustrative mock notifications matching real lifecycle events
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
     icon: '✅',
     title: 'Dispute Auto-Resolved',
-    body: 'Your dispute against Apple Store Online ($1,299.00) has been resolved in your favor. Refund processing.',
+    body: 'Your dispute against Apple Store Online ($1,299.00) has been resolved in your favor. Full refund credited.',
     time: '2 mins ago',
     read: false,
     type: 'resolved',
   },
   {
     id: '2',
-    icon: '🔍',
-    title: 'Evidence Analysis Complete',
-    body: 'VerdictAI has completed analyzing all evidence for Case CAS-7C9E6679. Fair-Weighing score generated.',
+    icon: '✨',
+    title: 'Gemini XAI Rationale Available',
+    body: 'VerdictAI has evaluated your dispute claim for Uber Technologies ($42.20). Plain-language rationale published.',
     time: '1 hour ago',
     read: false,
     type: 'update',
@@ -42,8 +42,8 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '3',
     icon: '⏱',
-    title: 'SLA Warning — 4 Hours Left',
-    body: 'Merchant SLA response window is expiring soon for your Amazon.com dispute ($124.50).',
+    title: 'SLA Warning — 15 Hours Left',
+    body: 'Merchant response window is nearing deadline for your Starbucks Coffee dispute ($15.75).',
     time: '3 hours ago',
     read: true,
     type: 'warning',
@@ -51,8 +51,8 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '4',
     icon: '📋',
-    title: 'Dispute Submitted',
-    body: 'Your dispute for Starbucks Coffee ($15.75) has been filed. Case file sealed with SHA-256 hash.',
+    title: 'Dispute Sealed with Merkle Hash',
+    body: 'Your dispute for Amazon.com ($124.50) has been cryptographically sealed and verified.',
     time: 'Yesterday',
     read: true,
     type: 'info',
@@ -60,65 +60,56 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '5',
     icon: '📊',
-    title: 'Case Assigned to Analyst',
-    body: 'Your borderline dispute has been routed to a Dispute-Ops analyst for manual review.',
+    title: 'Case Under Analysis',
+    body: 'Evidence ingestion completed. Fair-Weighing models are scoring transaction metadata.',
     time: '2 days ago',
     read: true,
     type: 'info',
   },
 ];
 
-const TYPE_COLORS = {
-  resolved: Colors.statusResolved,
-  update: Colors.statusInProgress,
-  warning: Colors.statusManual,
-  info: Colors.primary,
-};
-
 export default function NotificationsScreen() {
   const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length;
 
-  const renderNotification = ({ item }: { item: Notification }) => (
-    <View style={[styles.card, !item.read && styles.cardUnread]}>
-      <View style={[styles.iconCircle, { backgroundColor: `${TYPE_COLORS[item.type]}20` }]}>
-        <Text style={styles.icon}>{item.icon}</Text>
-      </View>
-      <View style={styles.cardBody}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.title}>{item.title}</Text>
-          {!item.read && <View style={styles.unreadDot} />}
+  const renderItem = ({ item }: { item: Notification }) => (
+    <View style={[styles.card, !item.read && styles.unreadCard]}>
+      <View style={styles.cardLeft}>
+        <View style={styles.iconCircle}>
+          <Text style={styles.icon}>{item.icon}</Text>
         </View>
-        <Text style={styles.body}>{item.body}</Text>
-        <Text style={styles.time}>{item.time}</Text>
+      </View>
+      <View style={styles.cardRight}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <Text style={styles.cardTime}>{item.time}</Text>
+        </View>
+        <Text style={styles.cardBody}>{item.body}</Text>
       </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bgDeep} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.bgDeep} />
 
+      {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && (
-            <Text style={styles.headerSub}>{unreadCount} unread alert{unreadCount > 1 ? 's' : ''}</Text>
-          )}
+          <Text style={styles.title}>Alerts & Notifications</Text>
+          <Text style={styles.subtitle}>Real-time dispute lifecycle events</Text>
         </View>
-        <Text style={styles.bellIcon}>🔔</Text>
+        {unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{unreadCount} New</Text>
+          </View>
+        )}
       </View>
 
       <FlatList
         data={MOCK_NOTIFICATIONS}
         keyExtractor={(item) => item.id}
-        renderItem={renderNotification}
+        renderItem={renderItem}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyText}>No notifications yet</Text>
-          </View>
-        }
       />
     </SafeAreaView>
   );
@@ -127,31 +118,68 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgDeep },
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.xl, paddingTop: Spacing.lg, paddingBottom: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  headerTitle: { fontSize: Typography.xl, fontWeight: Typography.bold, color: Colors.textPrimary },
-  headerSub: { fontSize: Typography.sm, color: Colors.primary, marginTop: 2 },
-  bellIcon: { fontSize: 26 },
+  title: { fontSize: Typography['2xl'], fontWeight: Typography.extrabold, color: Colors.textPrimary },
+  subtitle: { fontSize: Typography.xs, color: Colors.textSecondary, marginTop: 2 },
+  badge: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm + 4,
+    paddingVertical: 4,
+  },
+  badgeText: { fontSize: Typography.xs, color: '#fff', fontWeight: Typography.bold },
   list: { padding: Spacing.xl, gap: Spacing.md },
   card: {
-    flexDirection: 'row', gap: Spacing.md,
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg,
-    padding: Spacing.base, borderWidth: 1, borderColor: Colors.border,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.md,
+    alignItems: 'flex-start',
+    ...Shadow.card,
   },
-  cardUnread: { borderColor: Colors.primary + '60' },
+  unreadCard: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  cardLeft: { paddingTop: 2 },
   iconCircle: {
-    width: 44, height: 44, borderRadius: 22,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  icon: { fontSize: 22 },
-  cardBody: { flex: 1, gap: Spacing.xs },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: Typography.sm, fontWeight: Typography.semibold, color: Colors.textPrimary, flex: 1 },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary, marginLeft: Spacing.xs },
-  body: { fontSize: Typography.xs, color: Colors.textSecondary, lineHeight: 18 },
-  time: { fontSize: Typography.xs, color: Colors.textMuted },
-  empty: { alignItems: 'center', paddingTop: Spacing['4xl'], gap: Spacing.md },
-  emptyIcon: { fontSize: 48 },
-  emptyText: { fontSize: Typography.base, color: Colors.textMuted },
+  icon: { fontSize: 20 },
+  cardRight: { flex: 1, gap: 4 },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  cardTitle: {
+    fontSize: Typography.sm,
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  cardTime: { fontSize: Typography.xs, color: Colors.textMuted },
+  cardBody: {
+    fontSize: Typography.xs,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
 });
