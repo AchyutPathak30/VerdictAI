@@ -129,7 +129,7 @@ export const MerchantPortalScreen: React.FC<MerchantPortalScreenProps> = ({ onAd
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-bold text-xs text-blue-600">{d.id}</span>
-                    <span className="text-xs font-bold text-slate-900">${d.amount.toFixed(2)}</span>
+                    <span className="text-xs font-bold text-slate-900">₹{d.amount.toLocaleString('en-IN')}</span>
                   </div>
                   <p className="text-xs text-slate-700 font-medium mt-1">{d.reasonCode}</p>
                   <div className="flex items-center gap-1.5 text-[11px] text-rose-600 font-bold mt-2">

@@ -124,7 +124,7 @@ export default function MyDisputesScreen({ navigation }: Props) {
           <View>
             <Text style={styles.amountLabel}>AMOUNT</Text>
             <Text style={styles.amount}>
-              ${item.header.disputed_amount.toFixed(2)}
+              ₹{item.header.disputed_amount.toLocaleString('en-IN')}
             </Text>
           </View>
           <View>

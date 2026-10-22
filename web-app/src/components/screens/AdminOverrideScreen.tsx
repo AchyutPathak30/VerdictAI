@@ -45,8 +45,8 @@ export const AdminOverrideScreen: React.FC<AdminOverrideScreenProps> = ({
     const res = await overrideDisputeDecision(disputeId, {
       override_decision: selectedOutcome,
       mandatory_reason: reasoning,
-      admin_id: 'adm_elena_01',
-      admin_name: 'Elena Vance'
+      admin_id: 'adm_priya_01',
+      admin_name: 'Priya Sharma'
     });
     setIsSubmitting(false);
 

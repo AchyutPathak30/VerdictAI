@@ -186,7 +186,7 @@ export default function DisputeWizardScreen({ navigation }: Props) {
                     <Text style={styles.txnMethod}>{txn.payment_method}</Text>
                   </View>
                   <View style={styles.txnRight}>
-                    <Text style={styles.txnAmount}>${txn.amount.toFixed(2)}</Text>
+                    <Text style={styles.txnAmount}>₹{txn.amount.toLocaleString('en-IN')}</Text>
                     {selectedTxn?.id === txn.id ? (
                       <View style={styles.checkCircle}>
                         <Text style={styles.checkmark}>✓</Text>
@@ -281,7 +281,7 @@ export default function DisputeWizardScreen({ navigation }: Props) {
               <ReviewRow label="Merchant" value={selectedTxn.merchant_name} />
               <ReviewRow
                 label="Amount"
-                value={`$${selectedTxn.amount.toFixed(2)} ${selectedTxn.currency}`}
+                value={`₹${selectedTxn.amount.toLocaleString('en-IN')} ${selectedTxn.currency}`}
               />
               <ReviewRow
                 label="Transaction Date"

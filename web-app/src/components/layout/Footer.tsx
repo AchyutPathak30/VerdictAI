@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
       </div>
       <div className="flex items-center gap-2 mt-2 sm:mt-0 font-mono text-[11px]">
         <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-        <span className="text-slate-500">REPORTING NODE: US-EAST-1</span>
+        <span className="text-slate-500">REPORTING NODE: AP-SOUTH-1 (MUMBAI)</span>
         <span className="text-slate-300">|</span>
         <span className="text-slate-500">V4.2.1-STABLE</span>
       </div>

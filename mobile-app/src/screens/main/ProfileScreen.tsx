@@ -15,11 +15,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
 
 const DEMO_USER = {
-  name: 'Alice Smith',
-  cardholderID: 'usr_alice_01',
-  email: 'alice.smith@example.com',
-  card: '•••• •••• •••• 8841',
-  cardType: 'Visa Credit',
+  name: 'Pooja Iyer',
+  cardholderID: 'usr_pooja_01',
+  email: 'pooja.iyer@gmail.com',
+  card: '•••• •••• •••• 4492',
+  cardType: 'HDFC RuPay Platinum',
   memberSince: 'August 2026',
 };
 
@@ -56,7 +56,7 @@ export default function ProfileScreen() {
         {/* User Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>AS</Text>
+            <Text style={styles.avatarInitial}>PI</Text>
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{DEMO_USER.name}</Text>

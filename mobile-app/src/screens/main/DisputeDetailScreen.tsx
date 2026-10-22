@@ -142,7 +142,7 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
           <Text style={styles.merchantName}>{caseFile.transaction.merchant_name}</Text>
           <Text style={styles.caseRef}>{caseFile.header.case_reference_number}</Text>
           <Text style={styles.disputedAmount}>
-            ${caseFile.header.disputed_amount.toFixed(2)} {caseFile.header.currency}
+            ₹{caseFile.header.disputed_amount.toLocaleString('en-IN')} {caseFile.header.currency}
           </Text>
           <Text style={styles.caseHash}>
             🔐 SHA-256: {caseFile.case_hash_sha256.slice(0, 24)}...

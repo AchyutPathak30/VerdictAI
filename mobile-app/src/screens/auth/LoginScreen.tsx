@@ -21,7 +21,7 @@ type Props = {
 };
 
 export default function LoginScreen({ navigation }: Props) {
-  const [email, setEmail] = useState('alice.smith@example.com');
+  const [email, setEmail] = useState('pooja.iyer@gmail.com');
   const [password, setPassword] = useState('••••••••');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

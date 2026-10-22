@@ -159,7 +159,7 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
                       {item.reason}
                     </td>
                     <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                      {item.currency}{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {item.currency}{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">

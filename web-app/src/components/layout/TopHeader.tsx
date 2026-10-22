@@ -15,24 +15,24 @@ interface TopHeaderProps {
 
 const USERS = [
   {
-    name: 'Elena Vance',
+    name: 'Priya Sharma',
     role: 'Admin Lead',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
   },
   {
-    name: 'Alex Rivera',
+    name: 'Rohan Mehta',
     role: 'Senior Administrator',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Marcus Chen',
-    role: 'Senior Dispute Investigator',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
   },
   {
-    name: 'Michael Sterling',
-    role: 'Store Operations Manager',
+    name: 'Rajesh Verma',
+    role: 'Senior Dispute Investigator',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Amit Patel',
+    role: 'Store Operations Manager',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
   }
 ];
 

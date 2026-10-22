@@ -181,7 +181,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
               </div>
               <div>
                 <span className="text-slate-400 block font-medium">Disputed Sum</span>
-                <span className="font-mono font-bold text-slate-900">${caseDetails.transaction.totalAmount.toFixed(2)} USD</span>
+                <span className="font-mono font-bold text-slate-900">₹{caseDetails.transaction.totalAmount.toLocaleString('en-IN')} INR</span>
               </div>
               <div>
                 <span className="text-slate-400 block font-medium">Member Account</span>

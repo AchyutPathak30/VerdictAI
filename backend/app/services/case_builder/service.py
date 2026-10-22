@@ -51,11 +51,11 @@ class CaseService:
                 "id": transaction_id,
                 "user_id": cardholder_id,
                 "merchant_id": "m0000000-0000-0000-0000-000000000001",
-                "merchant_name": "Apex Electronics Direct",
+                "merchant_name": "Croma Electronics India",
                 "amount": disputed_amount,
-                "currency": "USD",
-                "cardholder_name": "Alice Smith",
-                "payment_method": "VISA_CREDIT",
+                "currency": "INR",
+                "cardholder_name": "Pooja Iyer",
+                "payment_method": "UPI_RUPAY",
                 "transaction_timestamp": created_at
             }
             db_manager.insert_pg_record("transactions", transaction_id, txn_data)

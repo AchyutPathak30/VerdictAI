@@ -52,13 +52,13 @@ export const EvidenceReviewScreen: React.FC<EvidenceReviewScreenProps> = ({
   };
 
   const nlpComparisons = [
-    { field: 'Transaction Date', memberValue: 'Oct 12, 2023', merchantValue: 'Oct 12, 2023', match: true },
-    { field: 'Disputed Amount', memberValue: '$1,249.50 USD', merchantValue: '$1,249.50 USD', match: true },
-    { field: 'Delivery Address', memberValue: '742 Evergreen Terrace, Springfield', merchantValue: '742 Evergreen Terrace, Springfield', match: true },
-    { field: 'Carrier Tracking Number', memberValue: 'TRK-981273941', merchantValue: 'TRK-981273941', match: true },
-    { field: 'Product Description', memberValue: 'Cloud Subscription Plan', merchantValue: 'Premium Enterprise Cloud Tier', match: false, note: 'Tier naming variation detected' },
-    { field: 'IP Geo-Location', memberValue: '192.168.1.1 (US-East)', merchantValue: '192.168.1.1 (US-East)', match: true },
-    { field: 'Signature Confirmation', memberValue: 'Signed: S. Jenkins', merchantValue: 'Signed: S. Jenkins (Front Desk)', match: true }
+    { field: 'Transaction Date', memberValue: '12 Oct 2026', merchantValue: '12 Oct 2026', match: true },
+    { field: 'Disputed Amount', memberValue: '₹18,999.00 INR', merchantValue: '₹18,999.00 INR', match: true },
+    { field: 'Delivery Address', memberValue: 'Flat 402, Shanti Niketan, Indiranagar, Bengaluru, Karnataka - 560038', merchantValue: 'Flat 402, Shanti Niketan, Indiranagar, Bengaluru, Karnataka - 560038', match: true },
+    { field: 'Carrier Tracking (Blue Dart)', memberValue: 'BLUEDART-88192034', merchantValue: 'BLUEDART-88192034', match: true },
+    { field: 'Product Description', memberValue: 'OnePlus Pad 128GB WiFi', merchantValue: 'OnePlus Pad WiFi Enterprise Bundle', match: false, note: 'SKU description variation detected' },
+    { field: 'IP Geo-Location', memberValue: '103.24.188.12 (Airtel Fiber, Bengaluru)', merchantValue: '103.24.188.12 (Airtel Fiber, Bengaluru)', match: true },
+    { field: 'Signature Confirmation', memberValue: 'Signed: P. Iyer (Society Security)', merchantValue: 'Signed: P. Iyer (Indiranagar Gate)', match: true }
   ];
 
   if (loading) {

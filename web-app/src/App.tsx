@@ -22,7 +22,7 @@ export const App: React.FC = () => {
   const [activeCaseId, setActiveCaseId] = useState<string>('DSP-1041');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [currentUser, setCurrentUser] = useState({
-    name: 'Elena Vance',
+    name: 'Priya Sharma',
     role: 'Admin Lead',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
   });

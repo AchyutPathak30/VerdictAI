@@ -236,7 +236,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                       <td className="p-3.5 pl-5 font-mono font-bold text-blue-600">{item.id}</td>
                       <td className="p-3.5 font-semibold text-slate-900">{item.merchant}</td>
                       <td className="p-3.5 text-slate-600">{item.reason}</td>
-                      <td className="p-3.5 font-bold text-slate-900">${item.amount.toFixed(2)}</td>
+                      <td className="p-3.5 font-bold text-slate-900">₹{item.amount.toLocaleString('en-IN')}</td>
                       <td className="p-3.5">
                         <StatusBadge status={item.status} />
                       </td>

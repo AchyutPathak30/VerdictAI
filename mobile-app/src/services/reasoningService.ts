@@ -52,7 +52,7 @@ export const getCaseReasoning = async (
       case_id: disputeId,
       recommended_resolution: 'CARD_MEMBER_FAVOUR',
       confidence_score_pct: 89.0,
-      summary: `Dispute evaluated in favor of Card Member for ${merchant} ($${amount}).`,
+      summary: `Dispute evaluated in favor of Card Member for ${merchant} (₹${amount}).`,
       cardholder_rationale: `VerdictAI Fair-Weighing models analyzed your dispute claim regarding ${merchant}. Evidence indicates ${
         hasEvidence ? 'your submitted documentation aligns with cardholder claims' : 'the dispute reason was logged and verified within regulatory timelines'
       }. The merchant did not supply contradicting delivery verification within the mandated SLA.`,

@@ -58,11 +58,11 @@ async def seed_initial_disputes_on_startup():
         from database.mongodb.models import EvidenceType, EvidenceSource
 
         c1 = case_service.create_dispute_case(
-            transaction_id="TXN-APEX-1041",
-            cardholder_id="usr_sarah_jenkins",
+            transaction_id="TXN-CROMA-1041",
+            cardholder_id="usr_pooja_iyer",
             dispute_reason=DisputeReason.PRODUCT_NOT_RECEIVED,
-            disputed_amount=1249.50,
-            cardholder_statement="Ordered high-end electronics; courier marks delivered but package never received at residence.",
+            disputed_amount=18999.00,
+            cardholder_statement="Ordered OnePlus tablet from Croma online; Blue Dart tracking shows delivered but parcel was not received at Bengaluru residence.",
             merchant_sla_hours=48
         )
         case_service.attach_evidence(
@@ -70,29 +70,29 @@ async def seed_initial_disputes_on_startup():
             evidence_type=EvidenceType.COURIER_TRACKING,
             source=EvidenceSource.COURIER_CARRIER,
             raw_payload={
-                "carrier": "FedEx Express",
-                "tracking_number": "TRK-981273941",
+                "carrier": "Blue Dart Express",
+                "tracking_number": "BLUEDART-88192034",
                 "status": "DELIVERED",
                 "delivery_address_match": True,
-                "signed_by": "S. Jenkins (Front Desk)"
+                "signed_by": "P. Iyer (Society Security Desk)"
             },
-            actor="CARRIER:fedex",
-            file_name="fedex_delivery_proof.pdf"
+            actor="CARRIER:bluedart",
+            file_name="bluedart_delivery_proof.pdf"
         )
         case_service.create_dispute_case(
-            transaction_id="TXN-CLOUD-1042",
-            cardholder_id="usr_david_ross",
+            transaction_id="TXN-SWIGGY-1042",
+            cardholder_id="usr_rahul_verma",
             dispute_reason=DisputeReason.DUPLICATE_PROCESSING,
-            disputed_amount=199.00,
-            cardholder_statement="Subscription fee charged twice on October billing cycle.",
+            disputed_amount=1499.00,
+            cardholder_statement="UPI payment debited twice on Swiggy Instamart order.",
             merchant_sla_hours=48
         )
         case_service.create_dispute_case(
-            transaction_id="TXN-LUXURY-99281",
-            cardholder_id="usr_elena_m",
+            transaction_id="TXN-TATACLIQ-99281",
+            cardholder_id="usr_ananya_sen",
             dispute_reason=DisputeReason.FRAUD_UNRECOGNIZED_CHARGE,
-            disputed_amount=3499.00,
-            cardholder_statement="Unrecognized overseas charge on credit card statement while abroad.",
+            disputed_amount=24999.00,
+            cardholder_statement="Unauthorized luxury apparel charge on RuPay Platinum card.",
             merchant_sla_hours=24
         )
     except Exception as e:

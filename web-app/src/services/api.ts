@@ -138,7 +138,7 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
         id: h.dispute_id || h.case_file_id || 'DS-0000',
         merchant: t.merchant_name || 'Unknown Merchant',
         amount: h.disputed_amount || t.amount || 0,
-        currency: '$',
+        currency: '₹',
         status: formatStatus(h.current_status),
         riskLevel: getRiskLevel(h.current_status, h.disputed_amount),
         action: h.current_status === 'MANUAL_REVIEW_QUEUE' ? 'Override' : 'Review',
@@ -174,7 +174,7 @@ export async function fetchAdminQueue(statusFilter: string = 'MANUAL_REVIEW_QUEU
         id: h.dispute_id || h.case_file_id || 'DS-0000',
         merchant: t.merchant_name || 'Unknown Merchant',
         amount: h.disputed_amount || t.amount || 0,
-        currency: '$',
+        currency: '₹',
         status: 'Review Required',
         riskLevel: 'High',
         action: 'Override',
@@ -205,13 +205,13 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
         deadlineDaysLeft: 4,
         transaction: {
           id: t.transaction_id || 'TXN-882910',
-          merchant: t.merchant_name || 'Global Logistics Hub',
-          merchantId: t.merchant_id || 'MID-00441',
-          totalAmount: h.disputed_amount || t.amount || 1249.50,
-          currency: h.currency || 'USD',
-          txnDate: t.transaction_timestamp || 'Oct 12, 2023 14:22:10 GMT',
-          memberName: t.cardholder_name || 'Sarah Jenkins',
-          memberAccount: '**** 4492',
+          merchant: t.merchant_name || 'Croma Electronics India',
+          merchantId: t.merchant_id || 'MID-IN-00441',
+          totalAmount: h.disputed_amount || t.amount || 18999.00,
+          currency: h.currency || 'INR',
+          txnDate: t.transaction_timestamp || '12 Oct 2026 14:22:10 IST',
+          memberName: t.cardholder_name || 'Pooja Iyer',
+          memberAccount: 'HDFC Bank RuPay **** 4492',
           disputeReason: res.data.cardholder_statement || DSP_1041_DETAILS.transaction.disputeReason
         },
         merchantProfile: DSP_1041_DETAILS.merchantProfile,
@@ -447,9 +447,9 @@ let mockConfig: SystemConfigData = {
   autoArchiveDays: 30,
   experimentalLlm: true,
   slaHours: 48,
-  defaultRegion: 'North America (US-East)',
+  defaultRegion: 'Asia South (Mumbai, India)',
   uptime: '99.98%',
-  latencyMs: 142
+  latencyMs: 42
 };
 
 export async function fetchSystemConfig(): Promise<ApiResponse<SystemConfigData>> {
@@ -473,17 +473,17 @@ export interface MerchantProfileData {
 }
 
 let mockProfile: MerchantProfileData = {
-  entityName: 'Nexus Global Enterprises Inc.',
-  id: 'MID-00441',
-  email: 'disputes@nexusglobal.com',
-  phone: '+1 (800) 555-0199',
-  address: '100 Financial Plaza, Suite 400, New York, NY 10005',
+  entityName: 'Reliance Retail Ventures Ltd',
+  id: 'MID-IN-00441',
+  email: 'disputes.ops@relianceretail.com',
+  phone: '+91 (022) 3555-0199',
+  address: 'Reliance Corporate Park, Thane-Belapur Road, Navi Mumbai, Maharashtra - 400701',
   emailAlerts: true,
   smsAlerts: true,
   integrations: [
-    { name: 'Stripe Payment Gateway', status: 'CONNECTED', lastSync: '2 mins ago' },
-    { name: 'PayPal Braintree', status: 'CONNECTED', lastSync: '1 hour ago' },
-    { name: 'Adyen N.V.', status: 'ACTION REQUIRED', lastSync: 'Credential refresh needed' }
+    { name: 'NPCI UPI AutoPay Gateway', status: 'CONNECTED', lastSync: '5 mins ago' },
+    { name: 'Razorpay Enterprise Payments', status: 'CONNECTED', lastSync: '15 mins ago' },
+    { name: 'PayU India Settlement Gateway', status: 'ACTION REQUIRED', lastSync: 'Credential refresh needed' }
   ]
 };
 
