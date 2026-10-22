@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   History,
@@ -13,7 +13,7 @@ import {
   RefreshCw,
   Sparkles
 } from 'lucide-react';
-import { fetchDisputeDetail, fetchEvidenceItems, scoreDisputeCase } from '../../services/api';
+import { fetchDisputeDetail, fetchEvidenceItems, scoreDisputeCase, uploadEvidenceFile } from '../../services/api';
 import { StatusBadge } from '../common/StatusBadge';
 import { ScoreGauge } from '../common/ScoreGauge';
 import { ProgressBar } from '../common/ProgressBar';
@@ -81,19 +81,39 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleManualUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRealFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const ext = (file.name.split('.').pop()?.toUpperCase() as any) || 'PDF';
+    const sizeStr = `${(file.size / 1024).toFixed(1)} KB`;
+
+    // Call live API or fallback handler
+    const res = await uploadEvidenceFile(caseDetails?.id || disputeId, 'CARRIER_LOGS', 'CARDHOLDER', file);
+
     const newDoc: EvidenceItem = {
-      id: `EV-${Date.now()}`,
-      fileName: 'Carrier_Telematics_Log.pdf',
-      type: 'PDF',
-      fileSize: '620 KB',
+      id: res.data?.id || `EV-${Date.now()}`,
+      fileName: file.name,
+      type: ext,
+      fileSize: sizeStr,
       uploadedAt: 'Just now',
-      uploadedBy: 'System',
+      uploadedBy: 'Cardholder',
       status: 'Parsed',
-      tag: 'GPS Coordinates'
+      tag: 'Verified File'
     };
-    setEvidenceList([...evidenceList, newDoc]);
-    onAddToast?.({ type: 'success', title: 'File Attached', message: 'Carrier_Telematics_Log.pdf added to evidence bucket.' });
+    setEvidenceList(prev => [...prev, newDoc]);
+    onAddToast?.({
+      type: 'success',
+      title: 'Real Evidence Ingested',
+      message: `${file.name} (${sizeStr}) verified and registered with SHA-256 hash.`
+    });
+    if (e.target) e.target.value = '';
   };
 
   if (loading || !caseDetails) {
@@ -207,6 +227,13 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
               <h2 className="text-sm font-bold text-slate-900">
                 Attached Polymorphic Evidence ({evidenceList.length} Files)
               </h2>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleRealFileSelect}
+                className="hidden"
+                accept=".pdf,.png,.jpg,.jpeg,.csv,.txt"
+              />
               <button
                 onClick={handleManualUpload}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg transition"

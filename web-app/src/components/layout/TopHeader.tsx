@@ -33,6 +33,11 @@ const USERS = [
     name: 'Amit Patel',
     role: 'Store Operations Manager',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Pooja Iyer',
+    role: 'Cardholder (Customer)',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
   }
 ];
 

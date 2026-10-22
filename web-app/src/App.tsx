@@ -14,6 +14,7 @@ import { MerchantProfileScreen } from './components/screens/MerchantProfileScree
 import { PasswordRecoveryScreen } from './components/screens/PasswordRecoveryScreen';
 import { EmptyDisputesScreen } from './components/screens/EmptyDisputesScreen';
 import { NotFoundScreen } from './components/screens/NotFoundScreen';
+import { CardholderPortalScreen } from './components/screens/CardholderPortalScreen';
 import { ToastContainer, ToastMessage } from './components/common/Toast';
 import { CaseQueueItem } from './types/dispute';
 
@@ -53,10 +54,11 @@ export const App: React.FC = () => {
       {/* Global Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
 
-      {/* Fixed Navy Sidebar */}
+      {/* Fixed Navy Sidebar with Dynamic RBAC */}
       <Sidebar
         activeScreen={activeScreen}
         onSelectScreen={(screen) => setActiveScreen(screen)}
+        currentUser={currentUser}
       />
 
       {/* Main Workspace Container */}
@@ -71,10 +73,13 @@ export const App: React.FC = () => {
               title: 'Role Switch',
               message: `Switched active persona to ${user.name} (${user.role})`
             });
-            if (user.role.toLowerCase().includes('merchant') || user.role.toLowerCase().includes('store')) {
+            const r = user.role.toLowerCase();
+            if (r.includes('cardholder')) {
+              setActiveScreen('cardholder-portal');
+            } else if (r.includes('merchant') || r.includes('store')) {
               setActiveScreen('merchant-portal');
-            } else if (user.role.toLowerCase().includes('investigator')) {
-              setActiveScreen('override-console');
+            } else if (r.includes('investigator')) {
+              setActiveScreen('case-queue');
             } else {
               setActiveScreen('dashboard');
             }
@@ -130,6 +135,12 @@ export const App: React.FC = () => {
               <AdminOverrideScreen
                 disputeId={activeCaseId}
                 onBack={() => setActiveScreen('case-detail')}
+                onAddToast={addToast}
+              />
+            )}
+
+            {activeScreen === 'cardholder-portal' && (
+              <CardholderPortalScreen
                 onAddToast={addToast}
               />
             )}
