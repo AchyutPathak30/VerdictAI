@@ -168,3 +168,38 @@ async def list_dispute_evidence(dispute_id: str):
 
     items = [EvidencePayloadModel(**item) for item in mongo_data.get("evidence_items", [])]
     return items
+
+
+@router.get(
+    "/{dispute_id}/highlights",
+    summary="Get aggregated evidence highlights and semantic summary"
+)
+async def get_evidence_highlights(dispute_id: str):
+    """
+    Extracts structured highlights across all attached evidence items,
+    including key facts, critical anomalies, claim alignment signals,
+    and a prompt-ready semantic summary for the reasoning layer (SRS FR-11, FR-12).
+    """
+    dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
+    if not dispute_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    summary = case_service.extract_case_evidence_highlights(dispute_id)
+    if not summary:
+        return {
+            "dispute_id": dispute_id,
+            "evidence_count": 0,
+            "highlights": None,
+            "prompt_context": "",
+            "message": "No structured evidence items available for highlight extraction."
+        }
+
+    return {
+        "dispute_id": dispute_id,
+        "evidence_count": summary.evidence_count,
+        "highlights": summary.to_dict(),
+        "prompt_context": summary.to_prompt_context()
+    }

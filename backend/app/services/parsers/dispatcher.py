@@ -1,111 +1,200 @@
 """
-VerdictAI Evidence Parsing Pipeline — Dispatcher & Orchestration Bridge
-Author: Nirav Kachhiya (Project Lead / Backend Engineer)
+VerdictAI Evidence Parsing Pipeline — Dispatcher & Parser Registry
+Authors: Achyut Pathak (AI/NLP Engineer) & Nirav Kachhiya (Project Lead)
 
-Wires polymorphic evidence types to their dedicated parsing engines,
-providing automated schema validation, entity extraction, and anomaly detection.
+Routes incoming evidence payloads to the appropriate specialized parser
+based on EvidenceType and payload content inspection heuristics.
+Bridges raw API/MongoDB ingestion with the deterministic NLP extraction pipeline.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from database.mongodb.models import EvidenceType
-from backend.app.services.parsers.base_parser import EvidenceParser, ParsedEvidence
-from backend.app.services.parsers.transaction_parser import TransactionParser
-from backend.app.services.parsers.receipt_parser import ReceiptParser
+from backend.app.services.parsers.base_parser import (
+    EvidenceParser,
+    ParsedEvidence,
+)
 from backend.app.services.parsers.courier_tracking_parser import CourierTrackingParser
+from backend.app.services.parsers.receipt_parser import ReceiptParser
+from backend.app.services.parsers.transaction_parser import TransactionParser
 from backend.app.services.nlp.communication_parser import CommunicationLogParser
+from database.mongodb.models import EvidenceType
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("verdictai.parsers.dispatcher")
 
 
 class EvidenceParserDispatcher:
     """
-    Central dispatcher that inspects the evidence type and delegates parsing
-    to the appropriate domain-specific parser engine.
+    Central registry and dispatcher for VerdictAI evidence parsers.
+
+    Maps ``EvidenceType`` enum values to specialized parsers, provides
+    intelligent fallback via payload signature inspection, and safely
+    executes validation and parsing without failing the parent transaction.
     """
 
     def __init__(self):
-        self._parsers: Dict[EvidenceType, EvidenceParser] = {
-            EvidenceType.RECEIPT_INVOICE: ReceiptParser(),
-            EvidenceType.COURIER_TRACKING: CourierTrackingParser(),
-            EvidenceType.COMMUNICATION_LOG: CommunicationLogParser(),
-            EvidenceType.BANK_STATEMENT: TransactionParser(),
+        # Instantiate singleton parser workers
+        self._transaction_parser = TransactionParser()
+        self._receipt_parser = ReceiptParser()
+        self._courier_parser = CourierTrackingParser()
+        self._comm_parser = CommunicationLogParser()
+
+        # Primary mapping by EvidenceType enum string / value
+        self._type_map: Dict[str, EvidenceParser] = {
+            EvidenceType.RECEIPT_INVOICE.value: self._receipt_parser,
+            EvidenceType.COURIER_TRACKING.value: self._courier_parser,
+            EvidenceType.COMMUNICATION_LOG.value: self._comm_parser,
+            EvidenceType.BANK_STATEMENT.value: self._transaction_parser,
         }
 
-    def register_parser(self, evidence_type: EvidenceType, parser: EvidenceParser) -> None:
+    @property
+    def registered_parsers(self) -> Dict[str, EvidenceParser]:
+        """Return dict of registered parsers keyed by parser name."""
+        return {
+            self._transaction_parser.parser_name: self._transaction_parser,
+            self._receipt_parser.parser_name: self._receipt_parser,
+            self._courier_parser.parser_name: self._courier_parser,
+            self._comm_parser.parser_name: self._comm_parser,
+        }
+
+    def register_parser(self, evidence_type: Union[EvidenceType, str], parser: EvidenceParser) -> None:
         """Register or override a parser for a specific evidence type."""
-        self._parsers[evidence_type] = parser
+        key = evidence_type.value if isinstance(evidence_type, EvidenceType) else str(evidence_type)
+        self._type_map[key] = parser
 
-    def get_parser(self, evidence_type: EvidenceType) -> Optional[EvidenceParser]:
+    def get_parser(self, evidence_type: Union[EvidenceType, str]) -> Optional[EvidenceParser]:
         """Returns the parser registered for the given evidence type, if any."""
-        return self._parsers.get(evidence_type)
+        key = evidence_type.value if isinstance(evidence_type, EvidenceType) else str(evidence_type)
+        return self._type_map.get(key)
 
-    def is_supported(self, evidence_type: EvidenceType) -> bool:
+    def is_supported(self, evidence_type: Union[EvidenceType, str]) -> bool:
         """Checks if a dedicated parser exists for the evidence type."""
-        return evidence_type in self._parsers
+        return self.get_parser(evidence_type) is not None
 
-    def get_supported_types(self) -> List[EvidenceType]:
-        """Returns a list of all evidence types that have registered parsers."""
-        return list(self._parsers.keys())
+    def get_supported_types(self) -> List[str]:
+        """Returns a list of all evidence type values that have registered parsers."""
+        return list(self._type_map.keys())
 
-    def dispatch_and_parse(
+    def resolve_parser(
         self,
-        evidence_type: EvidenceType,
-        raw_payload: Dict[str, Any]
+        evidence_type: Optional[Union[EvidenceType, str]] = None,
+        raw_payload: Optional[Dict[str, Any]] = None,
+    ) -> Optional[EvidenceParser]:
+        """
+        Resolves the most appropriate parser for the given evidence type and/or payload.
+
+        Resolution strategy:
+        1. Check direct type map matching ``evidence_type``.
+        2. If not found or if the resolved parser fails payload validation, inspect
+           payload signature to detect the data structure dynamically.
+        """
+        payload = raw_payload or {}
+
+        # 1. Direct type resolution
+        if evidence_type is not None:
+            type_key = evidence_type.value if isinstance(evidence_type, EvidenceType) else str(evidence_type)
+            parser = self._type_map.get(type_key)
+            if parser and parser.validate(payload):
+                return parser
+
+        # 2. Content-based signature heuristic fallback
+        return self._detect_parser_by_payload(payload)
+
+    def _detect_parser_by_payload(self, payload: Dict[str, Any]) -> Optional[EvidenceParser]:
+        """
+        Inspects payload dictionary keys to infer the parser type.
+        """
+        if not payload:
+            return None
+
+        # Courier tracking signature
+        if any(k in payload for k in ("tracking_number", "checkpoints", "carrier")):
+            if self._courier_parser.validate(payload):
+                return self._courier_parser
+
+        # Receipt / Invoice signature
+        if any(k in payload for k in ("line_items", "receipt_number", "invoice_number", "subtotal")):
+            if self._receipt_parser.validate(payload):
+                return self._receipt_parser
+
+        # Communication log signature
+        if any(k in payload for k in ("messages", "transcript", "chat_log")):
+            if self._comm_parser.validate(payload):
+                return self._comm_parser
+
+        # Bank transaction signature
+        if any(k in payload for k in ("transaction_id", "mcc", "card_last_four", "transaction_date")):
+            if self._transaction_parser.validate(payload):
+                return self._transaction_parser
+
+        # Final check: see if any parser can validate
+        for parser in (self._receipt_parser, self._courier_parser, self._comm_parser, self._transaction_parser):
+            if parser.validate(payload):
+                return parser
+
+        return None
+
+    def parse(
+        self,
+        evidence_type: Optional[Union[EvidenceType, str]] = None,
+        raw_payload: Optional[Dict[str, Any]] = None,
     ) -> Optional[ParsedEvidence]:
         """
-        Validates and parses a raw evidence payload using the registered parser.
-
-        Parameters
-        ----------
-        evidence_type : EvidenceType
-            The classification of the evidence payload.
-        raw_payload : Dict[str, Any]
-            The raw JSON payload submitted by the user/integration.
-
-        Returns
-        -------
-        Optional[ParsedEvidence]
-            The structured extraction result with entities, anomalies, and confidence score,
-            or None if no parser exists or if parsing cannot proceed.
+        Executes parser on raw_payload.
+        Returns ``ParsedEvidence`` if successfully parsed, or ``None`` if
+        no parser matched or parsing could not be completed.
         """
-        parser = self.get_parser(evidence_type)
+        if not raw_payload:
+            return None
+
+        parser = self.resolve_parser(evidence_type=evidence_type, raw_payload=raw_payload)
         if not parser:
-            logger.debug("No parser registered for evidence type %s", evidence_type)
-            return None
-
-        if not isinstance(raw_payload, dict):
-            logger.warning("Raw payload for %s is not a dictionary", evidence_type)
-            return None
-
-        # Check if the payload passes minimum validation requirements
-        if not parser.validate(raw_payload):
-            logger.info(
-                "Payload for %s failed parser validation; skipping automated parsing",
-                evidence_type
-            )
             return None
 
         try:
-            parsed = parser.parse(raw_payload)
-            logger.info(
-                "Successfully parsed %s evidence with %s (confidence: %.2f, anomalies: %d)",
-                evidence_type.value,
-                parser.parser_name,
-                parsed.confidence_score,
-                len(parsed.anomalies)
-            )
-            return parsed
-        except Exception as e:
+            return parser.parse(raw_payload)
+        except Exception as exc:
             logger.warning(
-                "Parser %s raised exception for %s: %s",
+                "Evidence parsing failed using %s: %s",
                 parser.parser_name,
-                evidence_type.value,
-                str(e),
-                exc_info=True
+                exc,
+                exc_info=True,
             )
             return None
 
+    def dispatch_and_parse(
+        self,
+        evidence_type: Optional[Union[EvidenceType, str]] = None,
+        raw_payload: Optional[Dict[str, Any]] = None,
+    ) -> Optional[ParsedEvidence]:
+        """Alias for parse() to maintain backwards-compatibility."""
+        return self.parse(evidence_type=evidence_type, raw_payload=raw_payload)
 
+    def enrich_payload(
+        self,
+        evidence_type: Optional[Union[EvidenceType, str]] = None,
+        raw_payload: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Dict[str, Any], float, Optional[ParsedEvidence]]:
+        """
+        Convenience method for the case ingestion service.
+
+        Returns
+        -------
+        tuple: (nlp_entities_dict, confidence_rating, parsed_evidence_obj)
+        """
+        parsed = self.parse(evidence_type=evidence_type, raw_payload=raw_payload)
+        if parsed:
+            return parsed.to_nlp_entities_dict(), parsed.confidence_score, parsed
+        return {}, 1.0, None
+
+
+# Global dispatcher singleton instance
 evidence_dispatcher = EvidenceParserDispatcher()
+
+
+def parse_evidence_payload(
+    evidence_type: Optional[Union[EvidenceType, str]] = None,
+    raw_payload: Optional[Dict[str, Any]] = None,
+) -> Optional[ParsedEvidence]:
+    """Helper functional wrapper around the global dispatcher."""
+    return evidence_dispatcher.parse(evidence_type=evidence_type, raw_payload=raw_payload)

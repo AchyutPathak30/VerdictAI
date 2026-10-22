@@ -17,6 +17,8 @@ from backend.app.services.state_machine.state_machine import DisputeStateMachine
 from backend.app.services.audit_engine.audit import audit_engine
 from backend.app.services.parsers import evidence_dispatcher, AnomalyLevel
 from backend.app.core.db import db_manager
+from backend.app.services.parsers.dispatcher import evidence_dispatcher
+from backend.app.services.nlp.evidence_summarizer import EvidenceHighlightExtractor, EvidenceSummary
 from database.mongodb.models import EvidencePayloadModel, EvidenceType, EvidenceSource, MongoCaseDocument
 
 
@@ -220,6 +222,33 @@ class CaseService:
         """
         from backend.app.services.fair_weighing import fair_weighing_service
         return fair_weighing_service.evaluate_dispute_case(dispute_id=dispute_id, actor=actor)
+
+    def extract_case_evidence_highlights(self, dispute_id: str) -> Optional[EvidenceSummary]:
+        """
+        Parses all attached evidence items for a dispute and extracts
+        an aggregated highlight summary using EvidenceHighlightExtractor.
+        """
+        mongo_data = db_manager.get_mongo_doc("case_documents", dispute_id) or {}
+        evidence_items = [
+            EvidencePayloadModel(**item) for item in mongo_data.get("evidence_items", [])
+        ]
+        if not evidence_items:
+            return None
+
+        parsed_items = []
+        for item in evidence_items:
+            parsed = evidence_dispatcher.parse(
+                evidence_type=item.evidence_type,
+                raw_payload=item.raw_payload,
+            )
+            if parsed:
+                parsed_items.append(parsed)
+
+        if not parsed_items:
+            return None
+
+        extractor = EvidenceHighlightExtractor()
+        return extractor.extract_highlights(parsed_items)
 
 
 case_service = CaseService()
