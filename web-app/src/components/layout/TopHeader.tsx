@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, ChevronDown, CheckCircle2, Shield, User } from 'lucide-react';
+import { ScreenId } from './Sidebar';
 
 interface TopHeaderProps {
   onSearch?: (query: string) => void;
@@ -9,6 +10,7 @@ interface TopHeaderProps {
     avatar: string;
   };
   onSwitchUser?: (user: { name: string; role: string; avatar: string }) => void;
+  onNavigateToScreen?: (screen: ScreenId, caseId?: string) => void;
 }
 
 const USERS = [
@@ -38,10 +40,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onSearch,
   currentUser,
   onSwitchUser,
+  onNavigateToScreen,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [showNotification, setShowNotification] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(2);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-30 shadow-subtle">
@@ -76,24 +80,49 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             title="Notifications"
           >
             <Bell className="w-5 h-5" />
-            <span className="w-2 h-2 rounded-full bg-red-500 absolute top-1.5 right-1.5 ring-2 ring-white"></span>
+            {unreadCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-red-500 absolute top-1.5 right-1.5 ring-2 ring-white"></span>
+            )}
           </button>
 
           {showNotification && (
             <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-elevated p-3 z-50 animate-in fade-in zoom-in-95">
               <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-2">
-                <span className="text-xs font-bold text-slate-800">Notifications (2)</span>
-                <span className="text-[11px] text-blue-600 cursor-pointer hover:underline">Mark all read</span>
+                <span className="text-xs font-bold text-slate-800">Notifications ({unreadCount})</span>
+                <button
+                  onClick={() => setUnreadCount(0)}
+                  className="text-[11px] text-blue-600 cursor-pointer hover:underline"
+                >
+                  Mark all read
+                </button>
               </div>
               <div className="space-y-2 text-xs">
-                <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-900">
-                  <p className="font-semibold">Case CHB-99281-DX Flagged</p>
-                  <p className="text-[11px] text-amber-700">Low confidence score (44%) escalated for override.</p>
-                </div>
-                <div className="p-2 rounded bg-slate-50 border border-slate-200 text-slate-800">
-                  <p className="font-semibold">Merchant Evidence Submitted</p>
-                  <p className="text-[11px] text-slate-500">Case DS-8812 received carrier dispatch receipt.</p>
-                </div>
+                <button
+                  onClick={() => {
+                    onNavigateToScreen?.('override-console', 'CHB-99281-DX');
+                    setShowNotification(false);
+                  }}
+                  className="w-full text-left p-2.5 rounded-lg bg-amber-50 hover:bg-amber-100/80 border border-amber-200 text-amber-900 transition cursor-pointer"
+                >
+                  <p className="font-semibold flex items-center justify-between">
+                    <span>Case CHB-99281-DX Flagged</span>
+                    <span className="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-bold">Review</span>
+                  </p>
+                  <p className="text-[11px] text-amber-700 mt-0.5">Low confidence score (44%) escalated for override.</p>
+                </button>
+                <button
+                  onClick={() => {
+                    onNavigateToScreen?.('case-detail', 'DS-8812');
+                    setShowNotification(false);
+                  }}
+                  className="w-full text-left p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 transition cursor-pointer"
+                >
+                  <p className="font-semibold flex items-center justify-between">
+                    <span>Merchant Evidence Submitted</span>
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">View</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Case DS-8812 received carrier dispatch receipt.</p>
+                </button>
               </div>
             </div>
           )}

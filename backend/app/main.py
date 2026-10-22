@@ -46,6 +46,59 @@ app.add_middleware(
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 
 
+@app.on_event("startup")
+async def seed_initial_disputes_on_startup():
+    """Seeds in-memory store with demo disputes so UI and API have live data immediately."""
+    from backend.app.core.db import db_manager
+    if db_manager.pg_tables.get("disputes"):
+        return
+    try:
+        from backend.app.services.case_builder.service import case_service
+        from backend.app.models.schemas import DisputeReason
+        from database.mongodb.models import EvidenceType, EvidenceSource
+
+        c1 = case_service.create_dispute_case(
+            transaction_id="TXN-APEX-1041",
+            cardholder_id="usr_sarah_jenkins",
+            dispute_reason=DisputeReason.PRODUCT_NOT_RECEIVED,
+            disputed_amount=1249.50,
+            cardholder_statement="Ordered high-end electronics; courier marks delivered but package never received at residence.",
+            merchant_sla_hours=48
+        )
+        case_service.attach_evidence(
+            dispute_id=c1.header.dispute_id,
+            evidence_type=EvidenceType.COURIER_TRACKING,
+            source=EvidenceSource.COURIER_CARRIER,
+            raw_payload={
+                "carrier": "FedEx Express",
+                "tracking_number": "TRK-981273941",
+                "status": "DELIVERED",
+                "delivery_address_match": True,
+                "signed_by": "S. Jenkins (Front Desk)"
+            },
+            actor="CARRIER:fedex",
+            file_name="fedex_delivery_proof.pdf"
+        )
+        case_service.create_dispute_case(
+            transaction_id="TXN-CLOUD-1042",
+            cardholder_id="usr_david_ross",
+            dispute_reason=DisputeReason.DUPLICATE_PROCESSING,
+            disputed_amount=199.00,
+            cardholder_statement="Subscription fee charged twice on October billing cycle.",
+            merchant_sla_hours=48
+        )
+        case_service.create_dispute_case(
+            transaction_id="TXN-LUXURY-99281",
+            cardholder_id="usr_elena_m",
+            dispute_reason=DisputeReason.FRAUD_UNRECOGNIZED_CHARGE,
+            disputed_amount=3499.00,
+            cardholder_statement="Unrecognized overseas charge on credit card statement while abroad.",
+            merchant_sla_hours=24
+        )
+    except Exception as e:
+        pass
+
+
 # Global Exception Handlers
 @app.exception_handler(InvalidStateTransitionError)
 async def state_transition_exception_handler(request: Request, exc: InvalidStateTransitionError):

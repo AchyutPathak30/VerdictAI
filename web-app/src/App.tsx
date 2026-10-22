@@ -79,6 +79,15 @@ export const App: React.FC = () => {
               setActiveScreen('dashboard');
             }
           }}
+          onNavigateToScreen={(screen, caseId) => {
+            if (caseId) setActiveCaseId(caseId);
+            setActiveScreen(screen);
+            addToast({
+              type: 'info',
+              title: 'Navigating',
+              message: `Opened ${screen}${caseId ? ` for ${caseId}` : ''}`
+            });
+          }}
         />
 
         {/* Scrollable Screen Canvas */}
