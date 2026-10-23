@@ -6,9 +6,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  PlusCircle,
+  X,
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
-import { fetchDisputes } from '../../services/api';
+import { fetchDisputes, createDispute } from '../../services/api';
 import { StatusBadge, RiskDot } from '../common/StatusBadge';
 import { CaseQueueItem } from '../../types/dispute';
 import { ToastMessage } from '../common/Toast';
@@ -43,6 +47,35 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
     setLoading(false);
   };
 
+  const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
+  const [ingestTxn, setIngestTxn] = useState('txn_reliance_28500');
+  const [ingestReason, setIngestReason] = useState('PRODUCT_DAMAGED_OR_DEFECTIVE');
+  const [ingestAmount, setIngestAmount] = useState('28500');
+  const [ingestStatement, setIngestStatement] = useState('Screen damaged upon delivery; box arrived pierced by courier.');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleIngestNewDispute = async () => {
+    setIsSubmitting(true);
+    const amt = parseFloat(ingestAmount) || 18999;
+    const res = await createDispute({
+      transaction_id: ingestTxn,
+      cardholder_id: 'usr_pooja_01',
+      dispute_reason: ingestReason,
+      disputed_amount: amt,
+      cardholder_statement: ingestStatement,
+      merchant_sla_hours: 48
+    });
+    setIsSubmitting(false);
+    setIsIngestModalOpen(false);
+
+    onAddToast?.({
+      type: 'success',
+      title: 'Dispute Ingested to Queue',
+      message: `New dispute registered under ${res.data?.header?.dispute_id?.slice(0, 8) || 'active case'} with 48h SLA.`
+    });
+    loadQueue();
+  };
+
   const handleExportCsv = () => {
     onAddToast?.({
       type: 'success',
@@ -70,13 +103,22 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
           </p>
         </div>
 
-        <button
-          onClick={handleExportCsv}
-          className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-sm transition"
-        >
-          <Download className="w-3.5 h-3.5 text-slate-500" />
-          <span>Export CSV</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsIngestModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>+ Ingest New Case</span>
+          </button>
+          <button
+            onClick={handleExportCsv}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-sm transition"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span>Export CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -211,6 +253,137 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
           </div>
         </div>
       </div>
+
+      {/* Ingest Modal */}
+      {isIngestModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Ingest New Dispute Case</h3>
+                  <p className="text-[11px] text-slate-400">Registers cardholder claim into FastAPI triage queue</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsIngestModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Quick 1-Click Presets:
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIngestTxn('txn_reliance_28500');
+                    setIngestReason('PRODUCT_DAMAGED_OR_DEFECTIVE');
+                    setIngestAmount('28500');
+                    setIngestStatement('Reliance Digital LED TV screen shattered upon unboxing; technician verified delivery transit damage.');
+                  }}
+                  className={`p-2.5 rounded-xl border text-left transition ${
+                    ingestTxn === 'txn_reliance_28500' ? 'border-blue-600 bg-blue-50/50 font-bold text-blue-900' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <p className="font-bold">Reliance Digital (₹28,500)</p>
+                  <p className="text-[10px] text-slate-500">Damaged Goods</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIngestTxn('txn_flipkart_4599');
+                    setIngestReason('INCORRECT_AMOUNT_CHARGED');
+                    setIngestAmount('4599');
+                    setIngestStatement('Flipkart order billed ₹4,599 instead of promo price ₹3,199 displayed at checkout.');
+                  }}
+                  className={`p-2.5 rounded-xl border text-left transition ${
+                    ingestTxn === 'txn_flipkart_4599' ? 'border-blue-600 bg-blue-50/50 font-bold text-blue-900' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <p className="font-bold">Flipkart India (₹4,599)</p>
+                  <p className="text-[10px] text-slate-500">Incorrect Amount</p>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">Transaction ID</label>
+                <input
+                  type="text"
+                  value={ingestTxn}
+                  onChange={(e) => setIngestTxn(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg font-mono focus:ring-1 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Amount (INR)</label>
+                  <input
+                    type="number"
+                    value={ingestAmount}
+                    onChange={(e) => setIngestAmount(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg font-mono focus:ring-1 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Dispute Reason</label>
+                  <select
+                    value={ingestReason}
+                    onChange={(e) => setIngestReason(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="PRODUCT_DAMAGED_OR_DEFECTIVE">Product Damaged / Defective</option>
+                    <option value="PRODUCT_NOT_RECEIVED">Product Not Received</option>
+                    <option value="DUPLICATE_PROCESSING">Duplicate Processing</option>
+                    <option value="INCORRECT_AMOUNT_CHARGED">Incorrect Amount</option>
+                    <option value="FRAUD_UNRECOGNIZED_CHARGE">Fraudulent / Unrecognized</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">Cardholder Statement</label>
+                <textarea
+                  rows={2}
+                  value={ingestStatement}
+                  onChange={(e) => setIngestStatement(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsIngestModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 font-bold hover:bg-slate-50 transition text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleIngestNewDispute}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-xs flex items-center gap-1.5"
+              >
+                {isSubmitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                <span>Submit to Live Queue</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

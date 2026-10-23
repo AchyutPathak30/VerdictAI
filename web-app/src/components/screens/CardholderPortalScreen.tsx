@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { uploadEvidenceFile } from '../../services/api';
+import { uploadEvidenceFile, createDispute } from '../../services/api';
 
 interface CardholderPortalScreenProps {
   onAddToast?: (toast: { type: 'success' | 'info' | 'error' | 'warning'; title: string; message: string }) => void;
@@ -103,7 +103,7 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
     });
   };
 
-  const handleFileDispute = () => {
+  const handleFileDispute = async () => {
     if (!statementText.trim()) {
       onAddToast?.({
         type: 'warning',
@@ -114,35 +114,50 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const randomId = `CHB-${Math.floor(100000 + Math.random() * 900000)}-IN`;
-      const matchedTxn = recentTransactions.find(t => t.id === selectedTxn) || recentTransactions[0];
-      
-      const newDispute = {
-        id: randomId,
-        merchant: matchedTxn.merchant,
-        amount: matchedTxn.amount,
-        reason: disputeReason.replace(/_/g, ' '),
-        date: 'Today',
-        status: 'Submitted (SLA Active)',
-        statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
-        slaCountdown: '47h 59m remaining',
-        sha256Hash: `sha256_${Date.now()}_simulated_hash_verdictai`,
-        courier: 'Awaiting Merchant POD',
-        aiVerdict: 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.'
-      };
+    const matchedTxn = recentTransactions.find(t => t.id === selectedTxn) || recentTransactions[0];
 
-      setMyDisputes(prev => [newDispute, ...prev]);
-      onAddToast?.({
-        type: 'success',
-        title: 'Dispute Filed & Sealed',
-        message: `Case ${randomId} registered and anchored under SHA-256 Merkle root.`
-      });
-      setStatementText('');
-      setAttachedFile(null);
-      setActiveTab('my-disputes');
-    }, 700);
+    // Call live REST API: POST /api/v1/disputes
+    const res = await createDispute({
+      transaction_id: matchedTxn.id,
+      cardholder_id: 'usr_pooja_01',
+      dispute_reason: disputeReason,
+      disputed_amount: matchedTxn.amount,
+      cardholder_statement: statementText,
+      merchant_sla_hours: 48
+    });
+
+    const newCaseId = res.data?.header?.dispute_id || `CHB-${Math.floor(100000 + Math.random() * 900000)}-IN`;
+
+    // If an evidence file was attached, upload it to the new dispute ID
+    if (fileInputRef.current?.files?.[0]) {
+      await uploadEvidenceFile(newCaseId, 'CARDHOLDER_PROOF', 'CARDHOLDER', fileInputRef.current.files[0]);
+    }
+
+    setIsSubmitting(false);
+
+    const newDispute = {
+      id: newCaseId,
+      merchant: matchedTxn.merchant,
+      amount: matchedTxn.amount,
+      reason: disputeReason.replace(/_/g, ' '),
+      date: 'Today',
+      status: 'Submitted (SLA Active)',
+      statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
+      slaCountdown: '47h 59m remaining',
+      sha256Hash: res.data?.case_hash_sha256 || `sha256_${Date.now()}_simulated_hash_verdictai`,
+      courier: 'Awaiting Merchant POD',
+      aiVerdict: 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.'
+    };
+
+    setMyDisputes(prev => [newDispute, ...prev]);
+    onAddToast?.({
+      type: 'success',
+      title: 'Dispute Filed & Sealed',
+      message: `Case ${newCaseId.slice(0, 18)}... registered and sent to live API queue.`
+    });
+    setStatementText('');
+    setAttachedFile(null);
+    setActiveTab('my-disputes');
   };
 
   return (

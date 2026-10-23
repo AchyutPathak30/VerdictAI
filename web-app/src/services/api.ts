@@ -145,6 +145,59 @@ export function computeStableScore(itemOrReason: any, _disputeId?: string): numb
   return 85;
 }
 
+export interface CreateDisputePayload {
+  transaction_id: string;
+  cardholder_id: string;
+  dispute_reason: string;
+  disputed_amount: number;
+  cardholder_statement?: string;
+  merchant_sla_hours?: number;
+}
+
+export async function createDispute(payload: CreateDisputePayload): Promise<ApiResponse<any>> {
+  const res = await fetchApi<any>('/disputes', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+  if (res.connected && res.data) {
+    return { data: res.data, error: null, isBackendConnected: true };
+  }
+
+  // Fallback for offline mode: add to ACTIVE_CASE_QUEUE
+  const fakeId = `DSP-${Math.floor(100000 + Math.random() * 900000)}`;
+  const fakeItem: CaseQueueItem = {
+    id: fakeId,
+    merchant: payload.transaction_id.includes('swiggy') ? 'Swiggy Instamart' : payload.transaction_id.includes('reliance') ? 'Reliance Digital Retail Ltd' : payload.transaction_id.includes('tatacliq') ? 'Tata CLiQ Luxury' : 'Croma Electronics India',
+    amount: payload.disputed_amount,
+    currency: '₹',
+    status: 'Pending',
+    riskLevel: 'Medium',
+    action: 'Review',
+    reason: formatReason(payload.dispute_reason),
+    filedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    deadline: '2 days left',
+    aiScore: computeStableScore(payload.dispute_reason)
+  };
+  ACTIVE_CASE_QUEUE.unshift(fakeItem);
+
+  return {
+    data: {
+      header: {
+        dispute_id: fakeId,
+        case_file_id: `CF-${fakeId}`,
+        case_reference_number: `CAS-${fakeId}`,
+        dispute_reason: payload.dispute_reason,
+        current_status: 'SUBMITTED',
+        disputed_amount: payload.disputed_amount,
+        currency: 'INR'
+      }
+    },
+    error: res.error,
+    isBackendConnected: false
+  };
+}
+
 export async function fetchDisputes(filters: { status?: string; search?: string; reason?: string; page?: number } = {}): Promise<ApiResponse<CaseQueueItem[]>> {
   const queryParams = new URLSearchParams();
   if (filters.status && filters.status !== 'All') queryParams.append('status', filters.status);
