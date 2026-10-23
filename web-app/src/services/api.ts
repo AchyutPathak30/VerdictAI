@@ -122,6 +122,19 @@ export async function fetchDashboardStats(): Promise<ApiResponse<typeof ADMIN_ST
 // 2. Dispute Queue & Lifecycle APIs
 // --------------------------------------------------------------------------
 
+function computeStableScore(item: any): number {
+  if (item.resolution?.confidence_score) {
+    return Math.round(item.resolution.confidence_score);
+  }
+  const reason = (item.header?.dispute_reason || item.reason || '').toUpperCase();
+  if (reason.includes('DUPLICATE')) return 97;
+  if (reason.includes('PRODUCT') || reason.includes('NOT_RECEIVED')) return 87;
+  if (reason.includes('FRAUD') || reason.includes('UNRECOGNIZED')) return 91;
+  if (reason.includes('SERVICE')) return 44;
+  if (reason.includes('SUBSCRIPTION')) return 78;
+  return 85;
+}
+
 export async function fetchDisputes(filters: { status?: string; search?: string; reason?: string; page?: number } = {}): Promise<ApiResponse<CaseQueueItem[]>> {
   const queryParams = new URLSearchParams();
   if (filters.status && filters.status !== 'All') queryParams.append('status', filters.status);
@@ -145,7 +158,7 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
         reason: formatReason(h.dispute_reason),
         filedDate: h.created_at ? new Date(h.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 14, 2023',
         deadline: h.sla_deadline ? `${Math.max(1, Math.ceil((new Date(h.sla_deadline).getTime() - Date.now()) / (1000 * 3600 * 24)))} days left` : '3 days left',
-        aiScore: item.resolution?.confidence_score ?? Math.floor(Math.random() * 40) + 60
+        aiScore: computeStableScore(item)
       };
     });
     return { data: mapped, error: null, isBackendConnected: true };
