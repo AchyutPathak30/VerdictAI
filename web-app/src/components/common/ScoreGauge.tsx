@@ -51,16 +51,26 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({
           <span className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none">
             {score}%
           </span>
-          <span className="text-[10px] font-bold text-emerald-700 tracking-wider mt-1 uppercase">
+          <span className="text-[10px] font-bold text-slate-500 tracking-wider mt-1 uppercase">
             {label}
           </span>
         </div>
       </div>
 
       {/* Axis Scale Labels */}
-      <div className="w-full flex justify-between px-3 text-[11px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
-        <span>MERCHANT</span>
-        <span>{favourText}</span>
+      <div className="w-[180px] flex justify-between text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
+        <span>Merchant</span>
+        <span>Member</span>
+      </div>
+
+      {/* Favor Indication Badge */}
+      <div className={`mt-2.5 px-3 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 border ${
+        score >= 50 
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+          : 'bg-amber-50 text-amber-800 border-amber-200'
+      }`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${score >= 50 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+        <span>FAVOURS {favourText.replace(/^FAVOUR\s+/i, '')}</span>
       </div>
     </div>
   );

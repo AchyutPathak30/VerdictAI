@@ -19,7 +19,7 @@ export const ACTIVE_CASE_QUEUE: CaseQueueItem[] = [
     reason: 'Product Not Received',
     filedDate: '14 Oct 2026',
     deadline: '2 days left',
-    aiScore: 72,
+    aiScore: 87,
   },
   {
     id: 'DS-8942',
@@ -152,7 +152,7 @@ export const DSP_1041_DETAILS = {
     }
   ] as EvidenceItem[],
   aiScoring: {
-    score: 72,
+    score: 87,
     favour: 'MEMBER' as const,
     factors: [
       { label: 'Merchant Blue Dart Delivery Proof Quality', weight: 88, favors: 'merchant' },

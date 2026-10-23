@@ -125,6 +125,54 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
     );
   }
 
+  const getCaseAiEvaluation = () => {
+    const titleLower = (caseDetails?.title || '').toLowerCase();
+    const reasonLower = (caseDetails?.transaction?.disputeReason || '').toLowerCase();
+
+    if (titleLower.includes('fraud') || reasonLower.includes('fraud') || reasonLower.includes('unrecognized')) {
+      return {
+        score: 91,
+        favourText: 'FAVOUR MEMBER',
+        factors: [
+          { label: 'Unrecognized Overseas Proxy IP Match', value: 96, color: 'green' as const },
+          { label: 'Device Biometric / 2FA OTP Match', value: 8, color: 'amber' as const },
+          { label: 'Member Account Credibility & Standing', value: 94, color: 'green' as const },
+          { label: 'Cross-Border Card-Not-Present Risk Vector', value: 85, color: 'blue' as const }
+        ],
+        rationale: 'Transaction originated from an unrecognized overseas proxy IP without 3D-Secure RuPay OTP verification. Card remained physically with cardholder in Bengaluru. High confidence recommendation to approve cardholder refund.'
+      };
+    }
+
+    if (titleLower.includes('duplicate') || reasonLower.includes('duplicate')) {
+      return {
+        score: 97,
+        favourText: 'FAVOUR MEMBER',
+        factors: [
+          { label: 'POS Terminal Sequence Identical Match', value: 100, color: 'green' as const },
+          { label: 'Temporal Transaction Proximity (< 180s)', value: 98, color: 'green' as const },
+          { label: 'Billed Amount Parity & Ledger Match', value: 100, color: 'green' as const },
+          { label: 'Member Account Credibility', value: 94, color: 'green' as const }
+        ],
+        rationale: 'Dual swipe detected on merchant POS terminal within 3 minutes for identical amounts. Telemetry confirms accidental duplicate billing. Instant refund credit recommended.'
+      };
+    }
+
+    // Default: Product Not Received (Croma OnePlus tablet)
+    return {
+      score: 87,
+      favourText: 'FAVOUR MEMBER',
+      factors: [
+        { label: 'Carrier Tracking Delivery Proof', value: 88, color: 'green' as const },
+        { label: 'Member Account Credibility', value: 94, color: 'green' as const },
+        { label: 'Geospatial Delivery Coordinate Match', value: 22, color: 'amber' as const },
+        { label: 'Historical Merchant Dispute Ratio', value: 65, color: 'blue' as const }
+      ],
+      rationale: 'Carrier tracking confirms delivery, but Blue Dart GPS telematics show parcel was dropped off 3.2 km away from member address at Flat 402 Indiranagar Bengaluru. High confidence recommendation to approve member refund.'
+    };
+  };
+
+  const aiEval = getCaseAiEvaluation();
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Breadcrumb and Actions Bar */}
@@ -274,15 +322,14 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
             </div>
 
             <div className="flex justify-center py-2">
-              <ScoreGauge score={72} label="Confidence Score" favourText="FAVOUR MEMBER" />
+              <ScoreGauge score={aiEval.score} label="Confidence Score" favourText={aiEval.favourText} />
             </div>
 
             <div className="space-y-3 pt-2 border-t border-slate-100">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Factor Contribution</h3>
-              <ProgressBar label="Carrier Tracking Delivery Proof" value={88} color="green" />
-              <ProgressBar label="Member Account Credibility" value={94} color="green" />
-              <ProgressBar label="Geospatial Delivery Coordinate Match" value={22} color="amber" />
-              <ProgressBar label="Historical Merchant Dispute Ratio" value={65} color="blue" />
+              {aiEval.factors.map((f, i) => (
+                <ProgressBar key={i} label={f.label} value={f.value} color={f.color} />
+              ))}
             </div>
 
             <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
@@ -290,7 +337,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
                 <Info className="w-3.5 h-3.5 text-blue-600" /> XAI Rationale Summary
               </p>
               <p className="text-[11px] leading-relaxed">
-                Carrier tracking confirms delivery, but GPS telematics show parcel was dropped off 0.4 miles away from member address. High confidence recommendation to approve member refund.
+                {aiEval.rationale}
               </p>
             </div>
 

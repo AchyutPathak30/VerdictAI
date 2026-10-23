@@ -122,7 +122,17 @@ export async function fetchDashboardStats(): Promise<ApiResponse<typeof ADMIN_ST
 // 2. Dispute Queue & Lifecycle APIs
 // --------------------------------------------------------------------------
 
-function computeStableScore(item: any): number {
+export function computeStableScore(itemOrReason: any, _disputeId?: string): number {
+  if (typeof itemOrReason === 'string') {
+    const reason = itemOrReason.toUpperCase();
+    if (reason.includes('DUPLICATE')) return 97;
+    if (reason.includes('PRODUCT') || reason.includes('NOT_RECEIVED')) return 87;
+    if (reason.includes('FRAUD') || reason.includes('UNRECOGNIZED')) return 91;
+    if (reason.includes('SERVICE')) return 44;
+    if (reason.includes('SUBSCRIPTION')) return 78;
+    return 85;
+  }
+  const item = itemOrReason || {};
   if (item.resolution?.confidence_score) {
     return Math.round(item.resolution.confidence_score);
   }
@@ -229,7 +239,10 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
         },
         merchantProfile: DSP_1041_DETAILS.merchantProfile,
         evidence: DSP_1041_DETAILS.evidence,
-        aiScoring: DSP_1041_DETAILS.aiScoring
+        aiScoring: {
+          ...DSP_1041_DETAILS.aiScoring,
+          score: res.data.resolution?.confidence_score ?? computeStableScore(h.dispute_reason, h.dispute_id || disputeId)
+        }
       },
       error: null,
       isBackendConnected: true
@@ -249,7 +262,7 @@ export async function scoreDisputeCase(disputeId: string): Promise<ApiResponse<a
   if (res.connected && res.data) {
     return { data: res.data, error: null, isBackendConnected: true };
   }
-  return { data: { status: 'SCORING_EVALUATED', confidence_score: 72 }, error: res.error, isBackendConnected: false };
+  return { data: { status: 'SCORING_EVALUATED', confidence_score: computeStableScore('', disputeId) }, error: res.error, isBackendConnected: false };
 }
 
 export async function fetchDisputeResolution(disputeId: string): Promise<ApiResponse<any>> {
