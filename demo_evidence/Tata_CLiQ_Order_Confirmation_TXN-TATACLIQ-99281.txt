@@ -1,0 +1,15 @@
+=============================================================
+TATA CLIQ LUXURY - ORDER DISPATCH LOG
+=============================================================
+Order ID        : OD-TATACLIQ-99281
+Transaction ID  : TXN-TATACLIQ-99281
+Amount          : INR 24,999.00
+Payment Method  : RuPay Platinum Card **** 4492
+Cardholder Name : Pooja Iyer
+Billed Amount   : INR 24,999.00
+Merchant ID     : MID-TATA-88192
+Originating IP  : 185.220.101.44 (Tor Exit Relay, Bucharest, Romania)
+Device Profile  : Linux x86_64; HeadlessChrome/124.0.0.0 (Bot User-Agent)
+2FA OTP Status  : BYPASSED (No 3D-Secure SMS Triggered)
+Shipping Addr   : Unauthorized Freight Forwarding Hub, Bucharest Sector 1
+=============================================================

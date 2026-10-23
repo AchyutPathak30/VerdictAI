@@ -1,0 +1,13 @@
+=============================================================
+BLUE DART EXPRESS LIMITED - SHIPMENT TRACKING & POD
+=============================================================
+Waybill AWB     : BLUEDART-88192034
+Status          : DELIVERED
+Delivery Date   : 14-OCT-2026 15:42:18 IST
+Signed By       : Security Gate
+Destination Addr: Flat 402, Palm Heights, Indiranagar, Bengaluru
+GPS Telematics  : Drop-off Location = 12.9510 N, 77.6720 E
+Expected Loc    : Registered Residence = 12.9783 N, 77.6408 E
+Radial Variance : 3.2 KM AWAY FROM MEMBER ADDRESS
+Scanner Unit    : Blue Dart Handheld Scanner #HH-BLR-9921
+=============================================================

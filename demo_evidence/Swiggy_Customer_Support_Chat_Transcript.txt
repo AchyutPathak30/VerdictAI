@@ -1,0 +1,14 @@
+=============================================================
+SWIGGY INSTAMART - CUSTOMER SUPPORT CHAT TRANSCRIPT
+=============================================================
+Ticket ID       : #SWG-992102
+Customer        : Pooja Iyer (+91 98450 12345)
+Date            : 18-Oct-2026 20:25 IST
+Issue           : Duplicate Charge on RuPay Card (₹1,499 x 2)
+
+[20:25:10] Pooja Iyer: Hi, I ordered groceries for ₹1,499 on Swiggy Instamart, but my HDFC RuPay card was debited twice at 20:11 and 20:13.
+[20:26:02] Swiggy Bot: Checking your order details for Order #SWIG-BLR-8819...
+[20:27:15] Swiggy Executive (Rahul): Hello Pooja. I can see that the POS terminal retried payment and debited ₹1,499 twice for Order #SWIG-BLR-8819.
+[20:28:40] Swiggy Executive (Rahul): We have initiated a refund on our end for the duplicate transaction, but it may take 5-7 business days to reflect in your HDFC bank account.
+[20:29:10] Pooja Iyer: Understood. I will submit this transcript to the VerdictAI dispute portal for expedited bank credit.
+=============================================================

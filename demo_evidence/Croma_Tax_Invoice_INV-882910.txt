@@ -1,0 +1,17 @@
+=============================================================
+CROMA ELECTRONICS INDIA PVT LTD - TAX INVOICE
+=============================================================
+Invoice No     : INV-882910
+Date           : 12-OCT-2026
+GSTIN          : 29AABCC8819Q1ZN
+Billed To      : Pooja Iyer, Flat 402 Palm Heights, Indiranagar, Bengaluru
+Card Paid      : HDFC Bank RuPay Platinum **** 4492
+Transaction ID : TXN-882910
+Item           : OnePlus Pad Go (Wi-Fi, 128GB, Twin Mint)
+Quantity       : 1
+Amount         : INR 16,099.15
+CGST (9%)      : INR 1,449.92
+SGST (9%)      : INR 1,449.93
+TOTAL BILLED   : INR 18,999.00
+Carrier        : Blue Dart Express (Waybill AWB: BLUEDART-88192034)
+=============================================================
