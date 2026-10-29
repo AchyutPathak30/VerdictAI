@@ -1,0 +1,28 @@
+# Render Blueprint – VerdictAI cloud deployment
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: verdictai-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+    healthCheckPath: /health
+
+  - type: web
+    name: verdictai-web
+    runtime: docker
+    dockerfilePath: web-app/Dockerfile
+    dockerContext: .
+    plan: free
+    buildArgs:
+      VITE_API_BASE_URL: https://verdictai-api.onrender.com/api/v1
