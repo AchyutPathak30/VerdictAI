@@ -80,6 +80,7 @@ sequenceDiagram
 
 ## 🗄️ Dual-Database Architecture & Data Integrity
 
+<<<<<<< HEAD
 VerdictAI enforces strict separation of concerns between transactional integrity and multi-modal evidence flexibility:
 
 ```mermaid
@@ -105,6 +106,53 @@ graph TD
     CD --> E3
     CD --> E4
     A --> |SHA-256 Checksum Chain| CD
+=======
+```
+VerdictAI/
+├── backend/                              # Core Backend Services (FastAPI)
+│   ├── app/
+│   │   ├── api/                          # REST Route Handlers (disputes, evidence, resolutions)
+│   │   ├── core/                         # Config, Security (JWT), Dual-DB Connection Pool
+│   │   ├── models/                       # PostgreSQL SQLAlchemy Models & Pydantic Schemas
+│   │   ├── services/
+│   │   │   ├── case_builder/             # Structured Case File Compiler (Owner: Nirav)
+│   │   │   ├── state_machine/            # Lifecycle State Machine & SLA Monitor (Owner: Nirav)
+│   │   │   ├── audit_engine/             # Cryptographic Hash Chaining (Owner: Nirav)
+│   │   │   ├── nlp_parser/               # Receipt OCR & spaCy Dialogue Parser (Owner: Achyut)
+│   │   │   ├── fair_weighing/            # Scoring Rubric & Calibration Matrix (Owner: Akshay)
+│   │   │   └── reasoning_layer/          # Gemini API Explanation Generator (Owner: Darshan)
+│   │   └── main.py                       # FastAPI Application Entrypoint
+│   ├── tests/                            # PyTest Unit & Integration Test Suites
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend-web/                         # Dispute-Ops & Merchant Web Console (React.js)
+│   ├── src/
+│   │   ├── components/                   # DisputeQueue, EvidenceViewer, OverrideModal, AuditLog
+│   │   ├── pages/                        # Dashboard, CaseDetail, MerchantPortal, Analytics
+│   │   └── services/                     # Axios API Client & State Hooks
+│   ├── package.json
+│   └── README.md
+├── mobile-app/                           # Card Member Mobile Application (React Native)
+│   ├── src/
+│   │   ├── screens/                      # FileDisputeScreen, CaseTrackerScreen, RationaleView
+│   │   ├── navigation/                   # React Navigation Stack
+│   │   └── services/                     # Mobile API & Push Notification Handlers
+│   ├── package.json
+│   └── README.md
+├── database/                             # Database Schemas & Migrations
+│   ├── postgresql/
+│   │   ├── 01_init_schema.sql            # ACID Relational DDL (Disputes, Transactions, Audits)
+│   │   └── 02_seed_data.sql              # Synthetic Test Fixtures
+│   └── mongodb/
+│       └── models.py                     # Polymorphic Evidence Schemas & Hash Checksums
+├── docs/                                 # Project Documentation & Specifications
+│   ├── architecture/                     # High-Level Architecture & Database ERDs
+│   ├── brd/                              # Business Requirements Document (BRD)
+│   └── api/                              # OpenAPI Specification (Swagger)
+├── docker-compose.yml                    # Local stack: FastAPI API + React web console
+├── .env.example                          # Template environment variables
+└── README.md
+>>>>>>> origin/feat/hardik-phase4-devops-e2e
 ```
 
 - **PostgreSQL 14+**: Enforces strict ACID compliance, relational foreign keys, 12-state deterministic lifecycle transitions, and strict SLA deadline countdowns.
@@ -257,17 +305,26 @@ cp .env.example .env
 # Provide GEMINI_API_KEY if testing live XAI generation
 ```
 
-### 5. Run the Test Suite (186 Tests Passing)
+### 5. Run via Docker Compose (One-Click Stack)
+```bash
+docker compose up --build
+```
+- API + Swagger docs: http://localhost:8000/docs
+- Web console: http://localhost:3000
+
+Point the web console at a deployed API by building with
+`--build-arg VITE_API_BASE_URL=https://<your-api>/api/v1`.
+
+### 6. Run the Test Suite (186+ Tests Passing)
 ```bash
 python -m pytest backend/tests/ -v
 ```
-
 Expected output:
 ```
 ======================= 186 passed in 0.46s =======================
 ```
 
-### 6. Start the FastAPI Development Server
+### 7. Start the FastAPI Development Server Locally
 ```bash
 uvicorn backend.app.main:app --reload --port 8000
 ```
