@@ -540,6 +540,196 @@
         }
       }
     },
+    "/api/v1/disputes/{dispute_id}/reasoning": {
+      "post": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Generate or refresh explainable transparent reasoning for dispute case (FR-19, FR-20, SIR-07)",
+        "description": "On-demand reasoning generation endpoint bridging dispute case lifecycle and\nthe Transparent Reasoning Layer (Phase 5 Integration).\nProduces dual-perspective plain-language explanations, audits with deterministic guardrails,\npersists reasoning into PostgreSQL, and records a cryptographic audit event.",
+        "operationId": "generate_dispute_reasoning_api_v1_disputes__dispute_id__reasoning_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Actor identity triggering the explanation generation",
+              "default": "SYSTEM:reasoning_api",
+              "title": "Actor"
+            },
+            "description": "Actor identity triggering the explanation generation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Retrieve stored explainable reasoning and contributing factors for dispute case (FR-19, FR-20)",
+        "description": "Retrieves stored transparent reasoning for an existing dispute case.",
+        "operationId": "get_dispute_reasoning_api_v1_disputes__dispute_id__reasoning_get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/reasoning/explanation": {
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Get dual-perspective plain-language explanations for cardholder and merchant (FR-19, FR-20, AC-10)",
+        "description": "Dedicated endpoint returning dual-perspective explanations:\n- cardholder_explanation: empathetic, consumer-focused language (FR-19)\n- merchant_explanation: structured, evidence-auditable format (FR-20)\n- contributing_factors: at least 3 factors cited (AC-10)",
+        "operationId": "get_dispute_dual_perspective_explanation_api_v1_disputes__dispute_id__reasoning_explanation_get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DualPerspectiveExplanationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/override": {
+      "post": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Manual decision override directly on dispute case with mandatory audit justification (FR-27, AC-13)",
+        "description": "Allows human dispute analysts or ops managers to execute a manual decision override\ndirectly on the dispute resource. Enforces mandatory justification (>= 10 chars) and\nupdates the cryptographic audit trail (SRS FR-27, AC-13).",
+        "operationId": "override_dispute_decision_direct_api_v1_disputes__dispute_id__override_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/evidence/upload": {
       "post": {
         "tags": [
@@ -695,6 +885,47 @@
                   },
                   "title": "Response List Dispute Evidence Api V1 Evidence  Dispute Id  Items Get"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/evidence/{dispute_id}/highlights": {
+      "get": {
+        "tags": [
+          "Evidence"
+        ],
+        "summary": "Get aggregated evidence highlights and semantic summary",
+        "description": "Extracts structured highlights across all attached evidence items,\nincluding key facts, critical anomalies, claim alignment signals,\nand a prompt-ready semantic summary for the reasoning layer (SRS FR-11, FR-12).",
+        "operationId": "get_evidence_highlights_api_v1_evidence__dispute_id__highlights_get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -1492,6 +1723,78 @@
           "REJECTED"
         ],
         "title": "DisputeStatus"
+      },
+      "DualPerspectiveExplanationResponse": {
+        "properties": {
+          "dispute_id": {
+            "type": "string",
+            "title": "Dispute Id",
+            "description": "Target dispute case identifier",
+            "example": "DSP-1041"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Objective, neutral plain-language justification"
+          },
+          "cardholder_explanation": {
+            "type": "string",
+            "title": "Cardholder Explanation",
+            "description": "Empathetic, clear consumer explanation"
+          },
+          "merchant_explanation": {
+            "type": "string",
+            "title": "Merchant Explanation",
+            "description": "Structured, evidence-grounded merchant explanation"
+          },
+          "contributing_factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 3,
+            "title": "Contributing Factors",
+            "description": "At least 3 factors cited per SRS AC-10"
+          },
+          "confidence_score_pct": {
+            "type": "number",
+            "title": "Confidence Score Pct",
+            "description": "Confidence score percentage"
+          },
+          "recommended_resolution": {
+            "type": "string",
+            "title": "Recommended Resolution",
+            "description": "Recommended resolution outcome"
+          },
+          "guardrails_applied": {
+            "type": "boolean",
+            "title": "Guardrails Applied",
+            "description": "Guardrail audit status",
+            "default": true
+          },
+          "generator_source": {
+            "type": "string",
+            "title": "Generator Source",
+            "description": "Model provider or deterministic generator"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "summary",
+          "cardholder_explanation",
+          "merchant_explanation",
+          "contributing_factors",
+          "confidence_score_pct",
+          "recommended_resolution",
+          "generator_source"
+        ],
+        "title": "DualPerspectiveExplanationResponse"
       },
       "EvidencePayloadModel": {
         "properties": {

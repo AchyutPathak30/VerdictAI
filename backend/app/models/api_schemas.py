@@ -149,3 +149,16 @@ class ReasoningCapabilitiesResponse(BaseModel):
     srs_requirements_covered: List[str] = Field(default_factory=list)
     timestamp: datetime = Field(default_factory=utc_now)
 
+
+
+class DualPerspectiveExplanationResponse(BaseModel):
+    dispute_id: str = Field(..., description="Target dispute case identifier", json_schema_extra={"example": "DSP-1041"})
+    summary: str = Field(..., description="Objective, neutral plain-language justification")
+    cardholder_explanation: str = Field(..., description="Empathetic, clear consumer explanation")
+    merchant_explanation: str = Field(..., description="Structured, evidence-grounded merchant explanation")
+    contributing_factors: List[str] = Field(..., min_length=3, description="At least 3 factors cited per SRS AC-10")
+    confidence_score_pct: float = Field(..., description="Confidence score percentage")
+    recommended_resolution: str = Field(..., description="Recommended resolution outcome")
+    guardrails_applied: bool = Field(True, description="Guardrail audit status")
+    generator_source: str = Field(..., description="Model provider or deterministic generator")
+    generated_at: datetime = Field(default_factory=utc_now)
