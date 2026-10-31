@@ -11,12 +11,22 @@ from backend.app.models.schemas import (
     DisputeStatus,
     DisputeReason
 )
+import logging
 from backend.app.models.api_schemas import (
     DisputeCreateRequest,
     DisputeListResponse,
     StateTransitionRequest,
+    AdminOverrideRequest,
+    ReasoningResponse,
+    DualPerspectiveExplanationResponse,
     utc_now
 )
+from backend.app.services.reasoning_layer import (
+    transparent_reasoning_engine,
+    ReasoningOutput,
+)
+
+logger = logging.getLogger("DisputesApiRouter")
 from backend.app.services.case_builder.service import case_service
 from backend.app.services.state_machine.state_machine import (
     DisputeStateMachine,
@@ -274,4 +284,163 @@ async def get_dispute_resolution(dispute_id: str):
         )
 
     return resolution_rec
+
+@router.post(
+    "/{dispute_id}/reasoning",
+    response_model=ReasoningResponse,
+    summary="Generate or refresh explainable transparent reasoning for dispute case (FR-19, FR-20, SIR-07)"
+)
+async def generate_dispute_reasoning(
+    dispute_id: str,
+    actor: str = Query("SYSTEM:reasoning_api", description="Actor identity triggering the explanation generation")
+):
+    """
+    On-demand reasoning generation endpoint bridging dispute case lifecycle and
+    the Transparent Reasoning Layer (Phase 5 Integration).
+    Produces dual-perspective plain-language explanations, audits with deterministic guardrails,
+    persists reasoning into PostgreSQL, and records a cryptographic audit event.
+    """
+    case_file = case_service.get_unified_case_file(dispute_id)
+    if not case_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    try:
+        out: ReasoningOutput = transparent_reasoning_engine.generate_for_case(
+            dispute_id=dispute_id,
+            actor=actor
+        )
+        return ReasoningResponse(
+            summary=out.summary,
+            cardholder_rationale=out.cardholder_rationale,
+            merchant_rationale=out.merchant_rationale,
+            contributing_factors=out.contributing_factors,
+            generator_source=out.generator_source,
+            guardrails_applied=out.guardrails_applied,
+            guardrail_violations=out.guardrail_violations,
+            confidence_score_pct=out.confidence_score_pct,
+            recommended_resolution=out.recommended_resolution,
+            case_id=dispute_id,
+            generated_at=utc_now()
+        )
+    except Exception as e:
+        logger.error(f"Error generating reasoning for dispute '{dispute_id}': {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate reasoning for dispute '{dispute_id}': {str(e)}"
+        )
+
+
+@router.get(
+    "/{dispute_id}/reasoning",
+    response_model=ReasoningResponse,
+    summary="Retrieve stored explainable reasoning and contributing factors for dispute case (FR-19, FR-20)"
+)
+async def get_dispute_reasoning(dispute_id: str):
+    """
+    Retrieves stored transparent reasoning for an existing dispute case.
+    """
+    dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
+    if not dispute_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    stored = transparent_reasoning_engine.get_stored_reasoning(dispute_id)
+    if not stored:
+        # If case has been evaluated, generate on-demand
+        res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+        if res_rec:
+            try:
+                stored = transparent_reasoning_engine.generate_for_case(dispute_id, actor="SYSTEM:on_demand_reasoning")
+            except Exception:
+                stored = None
+
+    if not stored:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reasoning explanation has not been evaluated yet for dispute '{dispute_id}'. Trigger scoring or call POST /reasoning first."
+        )
+
+    return ReasoningResponse(
+        summary=stored.summary,
+        cardholder_rationale=stored.cardholder_rationale,
+        merchant_rationale=stored.merchant_rationale,
+        contributing_factors=stored.contributing_factors,
+        generator_source=stored.generator_source,
+        guardrails_applied=stored.guardrails_applied,
+        guardrail_violations=stored.guardrail_violations,
+        confidence_score_pct=stored.confidence_score_pct,
+        recommended_resolution=stored.recommended_resolution,
+        case_id=dispute_id,
+        generated_at=utc_now()
+    )
+
+
+@router.get(
+    "/{dispute_id}/reasoning/explanation",
+    response_model=DualPerspectiveExplanationResponse,
+    summary="Get dual-perspective plain-language explanations for cardholder and merchant (FR-19, FR-20, AC-10)"
+)
+async def get_dispute_dual_perspective_explanation(dispute_id: str):
+    """
+    Dedicated endpoint returning dual-perspective explanations:
+    - cardholder_explanation: empathetic, consumer-focused language (FR-19)
+    - merchant_explanation: structured, evidence-auditable format (FR-20)
+    - contributing_factors: at least 3 factors cited (AC-10)
+    """
+    dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
+    if not dispute_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    stored = transparent_reasoning_engine.get_stored_reasoning(dispute_id)
+    if not stored:
+        res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+        if res_rec:
+            try:
+                stored = transparent_reasoning_engine.generate_for_case(dispute_id, actor="SYSTEM:on_demand_reasoning")
+            except Exception:
+                stored = None
+
+    if not stored:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reasoning explanation has not been evaluated yet for dispute '{dispute_id}'. Trigger scoring or call POST /reasoning first."
+        )
+
+    return DualPerspectiveExplanationResponse(
+        dispute_id=dispute_id,
+        summary=stored.summary,
+        cardholder_explanation=stored.cardholder_rationale,
+        merchant_explanation=stored.merchant_rationale,
+        contributing_factors=stored.contributing_factors,
+        confidence_score_pct=stored.confidence_score_pct,
+        recommended_resolution=stored.recommended_resolution,
+        guardrails_applied=stored.guardrails_applied,
+        generator_source=stored.generator_source,
+        generated_at=utc_now()
+    )
+
+
+@router.post(
+    "/{dispute_id}/override",
+    summary="Manual decision override directly on dispute case with mandatory audit justification (FR-27, AC-13)"
+)
+async def override_dispute_decision_direct(
+    dispute_id: str,
+    payload: AdminOverrideRequest
+):
+    """
+    Allows human dispute analysts or ops managers to execute a manual decision override
+    directly on the dispute resource. Enforces mandatory justification (>= 10 chars) and
+    updates the cryptographic audit trail (SRS FR-27, AC-13).
+    """
+    from backend.app.api.v1.admin import override_dispute_decision
+    return await override_dispute_decision(dispute_id=dispute_id, payload=payload)
 
