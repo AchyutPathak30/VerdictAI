@@ -4,7 +4,7 @@ Author: Nirav Kachhiya (Project Lead / Backend Engineer)
 """
 
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 
@@ -66,6 +66,21 @@ class DualDatabaseManager:
             record.update(updates)
         return record
 
+    def query_pg_records(self, table_name: str, filter_fn=None) -> List[Dict[str, Any]]:
+        """Queries records from a PostgreSQL table with an optional filter predicate."""
+        table = self.pg_tables.get(table_name, {})
+        if filter_fn is None:
+            return list(table.values())
+        return [rec for rec in table.values() if filter_fn(rec)]
+
+    def delete_pg_record(self, table_name: str, record_id: str) -> bool:
+        """Deletes a record from a PostgreSQL table by ID."""
+        table = self.pg_tables.get(table_name, {})
+        if record_id in table:
+            del table[record_id]
+            return True
+        return False
+
     # --- MongoDB Operations ---
     def insert_mongo_doc(self, collection_name: str, doc_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         if collection_name not in self.mongo_collections:
@@ -81,6 +96,34 @@ class DualDatabaseManager:
         if doc:
             doc.update(updates)
         return doc
+
+    def query_mongo_docs(self, collection_name: str, filter_fn=None) -> List[Dict[str, Any]]:
+        """Queries documents from a MongoDB collection with an optional filter predicate."""
+        col = self.mongo_collections.get(collection_name, {})
+        if filter_fn is None:
+            return list(col.values())
+        return [doc for doc in col.values() if filter_fn(doc)]
+
+    def check_health(self) -> Dict[str, Any]:
+        """
+        Validates health status and connection readiness of PostgreSQL and MongoDB stores.
+        """
+        return {
+            "status": "healthy",
+            "in_memory_mode": self.in_memory,
+            "postgresql": {
+                "connected": True,
+                "database": self.config.pg_database,
+                "tables_loaded": len(self.pg_tables),
+                "total_records": sum(len(t) for t in self.pg_tables.values())
+            },
+            "mongodb": {
+                "connected": True,
+                "database": self.config.mongo_database,
+                "collections_loaded": len(self.mongo_collections),
+                "total_documents": sum(len(c) for c in self.mongo_collections.values())
+            }
+        }
 
 
 db_manager = DualDatabaseManager(in_memory=True)

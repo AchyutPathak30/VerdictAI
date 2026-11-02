@@ -5,7 +5,7 @@ Author: Darshan Prajapati (Backend Engineer - Reasoning & APIs)
 
 import math
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from backend.app.models.schemas import DisputeStatus, ResolutionOutcome
 from backend.app.models.api_schemas import (
     AdminOverrideRequest,
@@ -16,6 +16,7 @@ from backend.app.models.api_schemas import (
 from backend.app.services.case_builder.service import case_service
 from backend.app.services.audit_engine.audit import audit_engine
 from backend.app.core.db import db_manager
+from backend.app.core.security import require_roles, AuthenticatedUser
 
 router = APIRouter(prefix="/admin", tags=["Admin & Operations"])
 
@@ -28,7 +29,8 @@ router = APIRouter(prefix="/admin", tags=["Admin & Operations"])
 async def get_admin_queue(
     status_filter: Optional[str] = Query("MANUAL_REVIEW_QUEUE", description="Queue status filter"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100)
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: AuthenticatedUser = Depends(require_roles(["ADMIN", "DISPUTE_ANALYST"]))
 ):
     """
     Returns prioritized cases requiring human oversight (confidence < 50% or explicit escalation) (SRS FR-17, FR-25, US-AD-01).
@@ -67,7 +69,11 @@ async def get_admin_queue(
     "/disputes/{dispute_id}/override",
     summary="Manual decision override with mandatory audit reasoning"
 )
-async def override_dispute_decision(dispute_id: str, payload: AdminOverrideRequest):
+async def override_dispute_decision(
+    dispute_id: str,
+    payload: AdminOverrideRequest,
+    current_user: AuthenticatedUser = Depends(require_roles(["ADMIN", "DISPUTE_ANALYST"]))
+):
     """
     Executes a manual admin override on an automated or flagged decision.
     Enforces mandatory written justification per SRS FR-27 and AC-13.

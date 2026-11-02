@@ -275,3 +275,56 @@ async def get_dispute_resolution(dispute_id: str):
 
     return resolution_rec
 
+
+@router.get(
+    "/{dispute_id}/audit-trail",
+    summary="Get tamper-evident cryptographic audit trail & Merkle root"
+)
+async def get_dispute_audit_trail(dispute_id: str):
+    """
+    Returns the complete SHA-256 hash-chained audit trail, Merkle tree root,
+    and integrity validation status for a dispute case (Nirav Kachhiya - Audit Engine).
+    """
+    dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
+    if not dispute_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    trail = audit_engine.get_audit_trail(dispute_id)
+    merkle_root = audit_engine.calculate_merkle_root(dispute_id)
+    is_valid = audit_engine.verify_integrity(dispute_id)
+
+    return {
+        "dispute_id": dispute_id,
+        "total_events": len(trail),
+        "is_integrity_valid": is_valid,
+        "merkle_root_sha256": merkle_root,
+        "events": [e.model_dump() for e in trail]
+    }
+
+
+@router.get(
+    "/{dispute_id}/merkle-proof/{log_id}",
+    summary="Get cryptographic Merkle inclusion proof for audit event"
+)
+async def get_merkle_inclusion_proof(dispute_id: str, log_id: str):
+    """
+    Returns a verifiable Merkle inclusion proof for an individual audit event.
+    """
+    dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
+    if not dispute_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    proof = audit_engine.get_merkle_proof(dispute_id, log_id)
+    if not proof.get("verified"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=proof.get("error", "Proof could not be verified.")
+        )
+    return proof
+

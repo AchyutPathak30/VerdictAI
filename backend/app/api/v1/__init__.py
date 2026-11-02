@@ -10,10 +10,12 @@ from backend.app.api.v1.disputes import router as disputes_router
 from backend.app.api.v1.evidence import router as evidence_router
 from backend.app.api.v1.admin import router as admin_router
 from backend.app.api.v1.reasoning import router as reasoning_router
+from backend.app.api.v1.auth import router as auth_router
 
 api_v1_router = APIRouter()
 
 api_v1_router.include_router(system_router)
+api_v1_router.include_router(auth_router)
 api_v1_router.include_router(transactions_router)
 api_v1_router.include_router(disputes_router)
 api_v1_router.include_router(evidence_router)
