@@ -215,3 +215,4 @@ def test_presentation_dossier_and_eeoc_certification(tables_generator, tmp_path)
     # Assert Table 2 Zero Fluctuation Reproducibility
     for row in dossier.table2_anchor_calibration:
         assert row["score_variance"] == 0.0
+
