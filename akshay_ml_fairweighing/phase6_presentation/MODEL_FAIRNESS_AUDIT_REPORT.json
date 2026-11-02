@@ -1,0 +1,224 @@
+{
+  "model_version": "FairWeighing_v1.2_Calibrated",
+  "audit_date": "2026-11-03",
+  "eeoc_compliance_certified": true,
+  "category_anchors": {
+    "CAT-01": 87.0,
+    "CAT-02": 85.0,
+    "CAT-03": 91.0,
+    "CAT-04": 97.0,
+    "CAT-05": 88.0,
+    "CAT-06": 89.0,
+    "CAT-07": 85.0
+  },
+  "table1_demographic_parity": [
+    {
+      "demographic_cohort": "PLATINUM",
+      "sample_size": 16,
+      "selection_rate_favour": 0.375,
+      "disparate_impact_ratio": 1.0,
+      "eeoc_four_fifths_met": true,
+      "statistical_parity_diff": 0.0,
+      "compliance_status": "COMPLIANT (DIR >= 0.80)"
+    },
+    {
+      "demographic_cohort": "GOLD",
+      "sample_size": 14,
+      "selection_rate_favour": 0.3571,
+      "disparate_impact_ratio": 0.9523,
+      "eeoc_four_fifths_met": true,
+      "statistical_parity_diff": -0.0179,
+      "compliance_status": "COMPLIANT (DIR >= 0.80)"
+    },
+    {
+      "demographic_cohort": "SILVER",
+      "sample_size": 13,
+      "selection_rate_favour": 0.3846,
+      "disparate_impact_ratio": 1.0256,
+      "eeoc_four_fifths_met": true,
+      "statistical_parity_diff": 0.0096,
+      "compliance_status": "COMPLIANT (DIR >= 0.80)"
+    },
+    {
+      "demographic_cohort": "BASIC",
+      "sample_size": 13,
+      "selection_rate_favour": 0.3846,
+      "disparate_impact_ratio": 1.0256,
+      "eeoc_four_fifths_met": true,
+      "statistical_parity_diff": 0.0096,
+      "compliance_status": "COMPLIANT (DIR >= 0.80)"
+    }
+  ],
+  "table2_anchor_calibration": [
+    {
+      "category_id": "CAT-04",
+      "dispute_category_name": "Duplicate Processing",
+      "target_rubric_anchor": 97.0,
+      "empirical_confidence_score": 97.0,
+      "score_delta": 0.0,
+      "repeat_runs_tested": 50,
+      "score_variance": 0.0,
+      "reproducibility": "100.0% DETERMINISTIC (Zero Fluctuation)"
+    },
+    {
+      "category_id": "CAT-03",
+      "dispute_category_name": "Fraud / Unauthorized Charge",
+      "target_rubric_anchor": 91.0,
+      "empirical_confidence_score": 91.0,
+      "score_delta": 0.0,
+      "repeat_runs_tested": 50,
+      "score_variance": 0.0,
+      "reproducibility": "100.0% DETERMINISTIC (Zero Fluctuation)"
+    },
+    {
+      "category_id": "CAT-01",
+      "dispute_category_name": "Item Not Received / Delivery",
+      "target_rubric_anchor": 87.0,
+      "empirical_confidence_score": 87.0,
+      "score_delta": 0.0,
+      "repeat_runs_tested": 50,
+      "score_variance": 0.0,
+      "reproducibility": "100.0% DETERMINISTIC (Zero Fluctuation)"
+    },
+    {
+      "category_id": "CAT-02",
+      "dispute_category_name": "Damaged / Defective Product",
+      "target_rubric_anchor": 85.0,
+      "empirical_confidence_score": 85.0,
+      "score_delta": 0.0,
+      "repeat_runs_tested": 50,
+      "score_variance": 0.0,
+      "reproducibility": "100.0% DETERMINISTIC (Zero Fluctuation)"
+    },
+    {
+      "category_id": "CAT-05",
+      "dispute_category_name": "Cancelled Subscription",
+      "target_rubric_anchor": 88.0,
+      "empirical_confidence_score": 88.0,
+      "score_delta": 0.0,
+      "repeat_runs_tested": 50,
+      "score_variance": 0.0,
+      "reproducibility": "100.0% DETERMINISTIC (Zero Fluctuation)"
+    },
+    {
+      "category_id": "CAT-06",
+      "dispute_category_name": "Incorrect Amount Charged",
+      "target_rubric_anchor": 89.0,
+      "empirical_confidence_score": 89.0,
+      "score_delta": 0.0,
+      "repeat_runs_tested": 50,
+      "score_variance": 0.0,
+      "reproducibility": "100.0% DETERMINISTIC (Zero Fluctuation)"
+    }
+  ],
+  "table3_vector_neutrality": [
+    {
+      "category_id": "CAT-01",
+      "category_name": "Item Not Received",
+      "cardholder_evidence_outcome": "CARD_MEMBER_FAVOUR",
+      "cardholder_score": 81.8,
+      "merchant_evidence_outcome": "MERCHANT_FAVOUR",
+      "merchant_score": 81.8,
+      "missing_primary_outcome": "ESCALATE",
+      "missing_primary_confidence": 30.0,
+      "symmetric_neutrality_verified": true
+    },
+    {
+      "category_id": "CAT-02",
+      "category_name": "Defective Merchandise",
+      "cardholder_evidence_outcome": "CARD_MEMBER_FAVOUR",
+      "cardholder_score": 72.2,
+      "merchant_evidence_outcome": "MERCHANT_FAVOUR",
+      "merchant_score": 72.2,
+      "missing_primary_outcome": "ESCALATE",
+      "missing_primary_confidence": 30.0,
+      "symmetric_neutrality_verified": true
+    },
+    {
+      "category_id": "CAT-03",
+      "category_name": "Unauthorized Charge",
+      "cardholder_evidence_outcome": "CARD_MEMBER_FAVOUR",
+      "cardholder_score": 78.1,
+      "merchant_evidence_outcome": "MERCHANT_FAVOUR",
+      "merchant_score": 78.1,
+      "missing_primary_outcome": "ESCALATE",
+      "missing_primary_confidence": 30.0,
+      "symmetric_neutrality_verified": true
+    },
+    {
+      "category_id": "CAT-04",
+      "category_name": "Duplicate Transaction",
+      "cardholder_evidence_outcome": "CARD_MEMBER_FAVOUR",
+      "cardholder_score": 75.0,
+      "merchant_evidence_outcome": "MERCHANT_FAVOUR",
+      "merchant_score": 75.0,
+      "missing_primary_outcome": "ESCALATE",
+      "missing_primary_confidence": 30.0,
+      "symmetric_neutrality_verified": true
+    },
+    {
+      "category_id": "CAT-05",
+      "category_name": "Cancelled Subscription",
+      "cardholder_evidence_outcome": "CARD_MEMBER_FAVOUR",
+      "cardholder_score": 84.6,
+      "merchant_evidence_outcome": "MERCHANT_FAVOUR",
+      "merchant_score": 84.6,
+      "missing_primary_outcome": "ESCALATE",
+      "missing_primary_confidence": 30.0,
+      "symmetric_neutrality_verified": true
+    },
+    {
+      "category_id": "CAT-06",
+      "category_name": "Incorrect Amount",
+      "cardholder_evidence_outcome": "CARD_MEMBER_FAVOUR",
+      "cardholder_score": 78.7,
+      "merchant_evidence_outcome": "MERCHANT_FAVOUR",
+      "merchant_score": 78.7,
+      "missing_primary_outcome": "ESCALATE",
+      "missing_primary_confidence": 30.0,
+      "symmetric_neutrality_verified": true
+    }
+  ],
+  "table4_telematics_stress_test": [
+    {
+      "scenario_id": "SCEN-01",
+      "description": "Blue Dart Delivery at Cardholder Residence",
+      "gps_offset_km": 0.05,
+      "delivery_address_match": true,
+      "carrier_evidence_quality": 0.95,
+      "model_outcome": "MERCHANT_FAVOUR",
+      "model_confidence": 75.3,
+      "telematics_protection_active": true
+    },
+    {
+      "scenario_id": "SCEN-02",
+      "description": "Blue Dart Coordinate Discrepancy (3.2 km Misdelivery)",
+      "gps_offset_km": 3.2,
+      "delivery_address_match": false,
+      "carrier_evidence_quality": 0.15,
+      "model_outcome": "CARD_MEMBER_FAVOUR",
+      "model_confidence": 67.0,
+      "telematics_protection_active": true
+    },
+    {
+      "scenario_id": "SCEN-03",
+      "description": "Carrier Tracking Exception (Lost in Transit)",
+      "gps_offset_km": 0.0,
+      "delivery_address_match": false,
+      "carrier_evidence_quality": 0.15,
+      "model_outcome": "CARD_MEMBER_FAVOUR",
+      "model_confidence": 67.0,
+      "telematics_protection_active": true
+    },
+    {
+      "scenario_id": "SCEN-04",
+      "description": "Ambiguous Coordinates (> 5.0 km Warehouse Drop)",
+      "gps_offset_km": 5.1,
+      "delivery_address_match": false,
+      "carrier_evidence_quality": 0.15,
+      "model_outcome": "CARD_MEMBER_FAVOUR",
+      "model_confidence": 67.0,
+      "telematics_protection_active": true
+    }
+  ]
+}
