@@ -128,3 +128,4 @@ class OptimizedFairWeighingService:
             self._hits = 0
             self._misses = 0
             self._time_saved_ms = 0.0
+

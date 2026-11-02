@@ -195,3 +195,4 @@ class ScoringLoadBenchmark:
             success_rate=round(success_rate, 2),
             deterministic_consistency_passed=consistency_passed
         )
+
