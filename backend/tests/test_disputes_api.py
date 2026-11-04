@@ -406,3 +406,151 @@ def test_score_and_resolution_endpoints(client):
     assert res_data["dispute_id"] == dispute_id
     assert "outcome" in res_data
     assert "justification_summary" in res_data
+
+
+# ─── 7. Phase 5 Reasoning Layer Integration & Direct Override Tests ───────────
+
+def test_generate_dispute_reasoning_endpoint(client):
+    """
+    Phase 5 Integration (Darshan Prajapati - 20 Oct - 26 Oct / SRS FR-19, FR-20, SIR-07):
+    Tests on-demand reasoning generation directly on POST /api/v1/disputes/{id}/reasoning.
+    Verifies dual-perspective explanations, >=3 contributing factors, and guardrail verification.
+    """
+    created = client.post("/api/v1/disputes", json={
+        "transaction_id": "txn_valid_001",
+        "cardholder_id": "usr_alice_01",
+        "dispute_reason": DisputeReason.PRODUCT_NOT_RECEIVED.value,
+        "disputed_amount": 2499.00,
+        "cardholder_statement": "Ordered package was not delivered to residence."
+    }).json()
+    dispute_id = created["header"]["dispute_id"]
+
+    # Trigger reasoning generation on dispute endpoint
+    resp = client.post(f"/api/v1/disputes/{dispute_id}/reasoning?actor=ANALYST:darshan")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["case_id"] == dispute_id
+    assert len(data["summary"]) > 20
+    assert len(data["cardholder_rationale"]) > 20
+    assert len(data["merchant_rationale"]) > 20
+    assert len(data["contributing_factors"]) >= 3
+    assert data["guardrails_applied"] is True
+    assert data["confidence_score_pct"] > 0
+
+
+def test_get_dispute_reasoning_success_and_not_found(client):
+    """
+    SRS FR-19 & FR-20:
+    Verifies GET /api/v1/disputes/{id}/reasoning returns 404 before evaluation,
+    and returns 200 with stored reasoning once evaluated.
+    """
+    created = client.post("/api/v1/disputes", json={
+        "transaction_id": "txn_valid_002",
+        "cardholder_id": "usr_bob_02",
+        "dispute_reason": DisputeReason.DUPLICATE_PROCESSING.value,
+        "disputed_amount": 499.00
+    }).json()
+    dispute_id = created["header"]["dispute_id"]
+
+    # 1. Before evaluation -> 404
+    resp_before = client.get(f"/api/v1/disputes/{dispute_id}/reasoning")
+    assert resp_before.status_code == 404
+
+    # 2. Score dispute -> triggers reasoning integration
+    client.post(f"/api/v1/disputes/{dispute_id}/score")
+
+    # 3. After evaluation -> 200
+    resp_after = client.get(f"/api/v1/disputes/{dispute_id}/reasoning")
+    assert resp_after.status_code == 200
+    data = resp_after.json()
+    assert data["case_id"] == dispute_id
+    assert len(data["summary"]) > 0
+    assert len(data["contributing_factors"]) >= 3
+
+
+def test_get_dispute_dual_perspective_explanation(client):
+    """
+    SRS FR-19, FR-20 & AC-10:
+    Verifies GET /api/v1/disputes/{id}/reasoning/explanation returns dedicated
+    dual-perspective model (cardholder_explanation and merchant_explanation).
+    """
+    created = client.post("/api/v1/disputes", json={
+        "transaction_id": "txn_valid_001",
+        "cardholder_id": "usr_alice_01",
+        "dispute_reason": DisputeReason.PRODUCT_NOT_RECEIVED.value,
+        "disputed_amount": 2499.00
+    }).json()
+    dispute_id = created["header"]["dispute_id"]
+
+    # Generate reasoning
+    client.post(f"/api/v1/disputes/{dispute_id}/reasoning")
+
+    # Fetch dual perspective
+    resp = client.get(f"/api/v1/disputes/{dispute_id}/reasoning/explanation")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["dispute_id"] == dispute_id
+    assert len(data["cardholder_explanation"]) > 20
+    assert len(data["merchant_explanation"]) > 20
+    assert len(data["contributing_factors"]) >= 3
+    assert data["guardrails_applied"] is True
+
+
+def test_dispute_direct_override_success_and_validation(client):
+    """
+    SRS FR-27, AC-13:
+    Verifies POST /api/v1/disputes/{id}/override allows human analyst overrides
+    directly on the dispute resource, enforcing mandatory justification (>= 10 chars).
+    """
+    created = client.post("/api/v1/disputes", json={
+        "transaction_id": "txn_valid_001",
+        "cardholder_id": "usr_alice_01",
+        "dispute_reason": DisputeReason.PRODUCT_NOT_RECEIVED.value,
+        "disputed_amount": 2499.00
+    }).json()
+    dispute_id = created["header"]["dispute_id"]
+
+    # 1. Validation error: reason too short (< 10 chars)
+    short_payload = {
+        "override_decision": ResolutionOutcome.FAVOR_CARDHOLDER.value,
+        "mandatory_reason": "Too short",
+        "admin_id": "adm_darshan_01"
+    }
+    resp_short = client.post(f"/api/v1/disputes/{dispute_id}/override", json=short_payload)
+    assert resp_short.status_code == 422
+
+    # 2. Valid override
+    valid_payload = {
+        "override_decision": ResolutionOutcome.FAVOR_CARDHOLDER.value,
+        "mandatory_reason": "Verified carrier GPS coordinates confirm delivery was made to adjacent building.",
+        "admin_id": "adm_darshan_01",
+        "admin_name": "Darshan Prajapati"
+    }
+    resp_valid = client.post(f"/api/v1/disputes/{dispute_id}/override", json=valid_payload)
+    assert resp_valid.status_code == 200
+
+    # 3. Verify dispute status is updated to ADMIN_OVERRIDDEN
+    disp_after = client.get(f"/api/v1/disputes/{dispute_id}").json()
+    assert disp_after["header"]["current_status"] == DisputeStatus.ADMIN_OVERRIDDEN.value
+
+    # 4. Verify audit trail recorded ADMIN_OVERRIDE_DECISION
+    trail = client.get(f"/api/v1/disputes/{dispute_id}/audit-trail").json()
+    actions = [log["action_type"] for log in trail["audit_logs"]]
+    assert "ADMIN_DECISION_OVERRIDE" in actions or "ADMIN_OVERRIDE_DECISION" in actions
+
+
+def test_dispute_reasoning_nonexistent_returns_404(client):
+    """
+    Verifies HTTP 404 for non-existent dispute IDs on reasoning routes.
+    """
+    resp_gen = client.post("/api/v1/disputes/disp_missing_999/reasoning")
+    assert resp_gen.status_code == 404
+
+    resp_get = client.get("/api/v1/disputes/disp_missing_999/reasoning")
+    assert resp_get.status_code == 404
+
+    resp_exp = client.get("/api/v1/disputes/disp_missing_999/reasoning/explanation")
+    assert resp_exp.status_code == 404
+

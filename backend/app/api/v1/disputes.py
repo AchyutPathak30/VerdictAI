@@ -1,11 +1,12 @@
 """
 VerdictAI Dispute Lifecycle & Case Management REST Endpoints
-Author: Darshan Prajapati (Backend Engineer - Reasoning & APIs)
+Author: Darshan Prajapati (Backend Engineer - Reasoning & APIs) & Nirav Kachhiya (Project Lead)
 """
 
 import math
+import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Depends, status
 from backend.app.models.schemas import (
     UnifiedCaseFile,
     DisputeStatus,
@@ -15,7 +16,14 @@ from backend.app.models.api_schemas import (
     DisputeCreateRequest,
     DisputeListResponse,
     StateTransitionRequest,
+    AdminOverrideRequest,
+    ReasoningResponse,
+    DualPerspectiveExplanationResponse,
     utc_now
+)
+from backend.app.services.reasoning_layer import (
+    transparent_reasoning_engine,
+    ReasoningOutput,
 )
 from backend.app.services.case_builder.service import case_service
 from backend.app.services.state_machine.state_machine import (
@@ -25,6 +33,9 @@ from backend.app.services.state_machine.state_machine import (
 from backend.app.services.audit_engine.audit import audit_engine
 from backend.app.services.fair_weighing import fair_weighing_service
 from backend.app.core.db import db_manager
+from backend.app.core.security import require_roles, AuthenticatedUser
+
+logger = logging.getLogger("DisputesApiRouter")
 
 router = APIRouter(prefix="/disputes", tags=["Disputes"])
 
@@ -192,11 +203,12 @@ async def transition_status(dispute_id: str, payload: StateTransitionRequest):
 
 @router.get(
     "/{dispute_id}/audit-trail",
-    summary="Get cryptographic audit trail"
+    summary="Get tamper-evident cryptographic audit trail & Merkle root (SRS FR-21, FR-32)"
 )
 async def get_dispute_audit_trail(dispute_id: str):
     """
-    Returns the full audit log chain and cryptographic integrity verification status (SRS FR-21, FR-32).
+    Returns the complete SHA-256 hash-chained audit trail, Merkle tree root,
+    and integrity validation status for a dispute case.
     """
     dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
     if not dispute_rec:
@@ -207,12 +219,18 @@ async def get_dispute_audit_trail(dispute_id: str):
 
     trail = audit_engine.get_audit_trail(dispute_id)
     is_valid = audit_engine.verify_integrity(dispute_id)
+    merkle_root = audit_engine.calculate_merkle_root(dispute_id)
+
+    formatted_events = [e.model_dump() if hasattr(e, "model_dump") else e for e in trail]
 
     return {
         "dispute_id": dispute_id,
         "is_chain_intact": is_valid,
+        "is_integrity_valid": is_valid,
         "total_events": len(trail),
-        "audit_logs": trail
+        "merkle_root_sha256": merkle_root,
+        "audit_logs": formatted_events,
+        "events": formatted_events
     }
 
 
@@ -276,14 +294,62 @@ async def get_dispute_resolution(dispute_id: str):
     return resolution_rec
 
 
-@router.get(
-    "/{dispute_id}/audit-trail",
-    summary="Get tamper-evident cryptographic audit trail & Merkle root"
+@router.post(
+    "/{dispute_id}/reasoning",
+    response_model=ReasoningResponse,
+    summary="Generate or refresh explainable transparent reasoning for dispute case (FR-19, FR-20, SIR-07)"
 )
-async def get_dispute_audit_trail(dispute_id: str):
+async def generate_dispute_reasoning(
+    dispute_id: str,
+    actor: str = Query("SYSTEM:reasoning_api", description="Actor identity triggering the explanation generation")
+):
     """
-    Returns the complete SHA-256 hash-chained audit trail, Merkle tree root,
-    and integrity validation status for a dispute case (Nirav Kachhiya - Audit Engine).
+    On-demand reasoning generation endpoint bridging dispute case lifecycle and
+    the Transparent Reasoning Layer (Phase 5 Integration).
+    Produces dual-perspective plain-language explanations, audits with deterministic guardrails,
+    persists reasoning into PostgreSQL, and records a cryptographic audit event.
+    """
+    case_file = case_service.get_unified_case_file(dispute_id)
+    if not case_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    try:
+        out: ReasoningOutput = transparent_reasoning_engine.generate_for_case(
+            dispute_id=dispute_id,
+            actor=actor
+        )
+        return ReasoningResponse(
+            summary=out.summary,
+            cardholder_rationale=out.cardholder_rationale,
+            merchant_rationale=out.merchant_rationale,
+            contributing_factors=out.contributing_factors,
+            generator_source=out.generator_source,
+            guardrails_applied=out.guardrails_applied,
+            guardrail_violations=out.guardrail_violations,
+            confidence_score_pct=out.confidence_score_pct,
+            recommended_resolution=out.recommended_resolution,
+            case_id=dispute_id,
+            generated_at=utc_now()
+        )
+    except Exception as e:
+        logger.error(f"Error generating reasoning for dispute '{dispute_id}': {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate reasoning for dispute '{dispute_id}': {str(e)}"
+        )
+
+
+@router.get(
+    "/{dispute_id}/reasoning",
+    response_model=ReasoningResponse,
+    summary="Retrieve stored explainable reasoning and contributing factors for dispute case (FR-19, FR-20)"
+)
+async def get_dispute_reasoning(dispute_id: str):
+    """
+    Retrieves stored transparent reasoning for an existing dispute case.
     """
     dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
     if not dispute_rec:
@@ -292,17 +358,101 @@ async def get_dispute_audit_trail(dispute_id: str):
             detail=f"Dispute with ID '{dispute_id}' not found."
         )
 
-    trail = audit_engine.get_audit_trail(dispute_id)
-    merkle_root = audit_engine.calculate_merkle_root(dispute_id)
-    is_valid = audit_engine.verify_integrity(dispute_id)
+    stored = transparent_reasoning_engine.get_stored_reasoning(dispute_id)
+    if not stored:
+        # If case has been evaluated, generate on-demand
+        res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+        if res_rec:
+            try:
+                stored = transparent_reasoning_engine.generate_for_case(dispute_id, actor="SYSTEM:on_demand_reasoning")
+            except Exception:
+                stored = None
 
-    return {
-        "dispute_id": dispute_id,
-        "total_events": len(trail),
-        "is_integrity_valid": is_valid,
-        "merkle_root_sha256": merkle_root,
-        "events": [e.model_dump() for e in trail]
-    }
+    if not stored:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reasoning explanation has not been evaluated yet for dispute '{dispute_id}'. Trigger scoring or call POST /reasoning first."
+        )
+
+    return ReasoningResponse(
+        summary=stored.summary,
+        cardholder_rationale=stored.cardholder_rationale,
+        merchant_rationale=stored.merchant_rationale,
+        contributing_factors=stored.contributing_factors,
+        generator_source=stored.generator_source,
+        guardrails_applied=stored.guardrails_applied,
+        guardrail_violations=stored.guardrail_violations,
+        confidence_score_pct=stored.confidence_score_pct,
+        recommended_resolution=stored.recommended_resolution,
+        case_id=dispute_id,
+        generated_at=utc_now()
+    )
+
+
+@router.get(
+    "/{dispute_id}/reasoning/explanation",
+    response_model=DualPerspectiveExplanationResponse,
+    summary="Get dual-perspective plain-language explanations for cardholder and merchant (FR-19, FR-20, AC-10)"
+)
+async def get_dispute_dual_perspective_explanation(dispute_id: str):
+    """
+    Dedicated endpoint returning dual-perspective explanations:
+    - cardholder_explanation: empathetic, consumer-focused language (FR-19)
+    - merchant_explanation: structured, evidence-auditable format (FR-20)
+    - contributing_factors: at least 3 factors cited (AC-10)
+    """
+    dispute_rec = db_manager.get_pg_record("disputes", dispute_id)
+    if not dispute_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dispute with ID '{dispute_id}' not found."
+        )
+
+    stored = transparent_reasoning_engine.get_stored_reasoning(dispute_id)
+    if not stored:
+        res_rec = db_manager.get_pg_record("dispute_resolutions", dispute_id)
+        if res_rec:
+            try:
+                stored = transparent_reasoning_engine.generate_for_case(dispute_id, actor="SYSTEM:on_demand_reasoning")
+            except Exception:
+                stored = None
+
+    if not stored:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Reasoning explanation has not been evaluated yet for dispute '{dispute_id}'. Trigger scoring or call POST /reasoning first."
+        )
+
+    return DualPerspectiveExplanationResponse(
+        dispute_id=dispute_id,
+        summary=stored.summary,
+        cardholder_explanation=stored.cardholder_rationale,
+        merchant_explanation=stored.merchant_rationale,
+        contributing_factors=stored.contributing_factors,
+        confidence_score_pct=stored.confidence_score_pct,
+        recommended_resolution=stored.recommended_resolution,
+        guardrails_applied=stored.guardrails_applied,
+        generator_source=stored.generator_source,
+        generated_at=utc_now()
+    )
+
+
+@router.post(
+    "/{dispute_id}/override",
+    summary="Manual decision override directly on dispute case with mandatory audit justification (FR-27, AC-13)"
+)
+async def override_dispute_decision_direct(
+    dispute_id: str,
+    payload: AdminOverrideRequest,
+    current_user: AuthenticatedUser = Depends(require_roles(["ADMIN", "DISPUTE_ANALYST"]))
+):
+    """
+    Allows human dispute analysts or ops managers to execute a manual decision override
+    directly on the dispute resource. Enforces mandatory justification (>= 10 chars) and
+    updates the cryptographic audit trail (SRS FR-27, AC-13).
+    """
+    from backend.app.api.v1.admin import override_dispute_decision
+    return await override_dispute_decision(dispute_id=dispute_id, payload=payload, current_user=current_user)
 
 
 @router.get(
@@ -327,4 +477,3 @@ async def get_merkle_inclusion_proof(dispute_id: str, log_id: str):
             detail=proof.get("error", "Proof could not be verified.")
         )
     return proof
-

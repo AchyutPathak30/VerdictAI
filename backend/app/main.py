@@ -33,6 +33,15 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
+from backend.app.core.security_headers import SecurityHeadersMiddleware
+from backend.app.core.rate_limiter import RateLimitMiddleware
+
+# Enforce Production Security Headers (OWASP Hardening - SRS NFR-14)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Enforce Per-Client API Rate Limiting (SRS NFR-08)
+app.add_middleware(RateLimitMiddleware)
+
 # Configure Cross-Origin Resource Sharing (CORS) for Web & Mobile clients
 app.add_middleware(
     CORSMiddleware,
