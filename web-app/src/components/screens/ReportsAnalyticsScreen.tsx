@@ -18,6 +18,10 @@ import {
 } from 'lucide-react';
 import { fetchAuditReports } from '../../services/api';
 import { ToastMessage } from '../common/Toast';
+import { REPORTS_ANALYTICS_DATA } from '../../data/mockData';
+import { BarChart, BarSeries } from '../charts/BarChart';
+import { DonutChart } from '../charts/DonutChart';
+import { MiniSparkline } from '../charts/MiniSparkline';
 
 interface ReportsAnalyticsScreenProps {
   onAddToast?: (toast: Omit<ToastMessage, 'id'>) => void;
@@ -141,38 +145,98 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({ 
         </div>
       ) : (
         <>
-          {/* KPI Cards */}
+          {/* KPI Cards with Visual Trend Sparklines */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Average Resolution Time</span>
-              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">4.2 min</span>
-              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-1">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Average Resolution Time</span>
+                  <span className="text-2xl font-extrabold text-slate-900 mt-2 block">4.2 min</span>
+                </div>
+                <MiniSparkline data={[5.8, 5.2, 4.9, 4.6, 4.4, 4.2]} isPositive={true} />
+              </div>
+              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
                 <ArrowUpRight className="w-3.5 h-3.5" /> -12.5% vs benchmark
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Auto-Resolution Rate</span>
-              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">92.7%</span>
-              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-1">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Auto-Resolution Rate</span>
+                  <span className="text-2xl font-extrabold text-slate-900 mt-2 block">92.7%</span>
+                </div>
+                <MiniSparkline data={[84, 86, 88, 89.5, 91.2, 92.7]} color="#10B981" isPositive={true} />
+              </div>
+              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
                 <ArrowUpRight className="w-3.5 h-3.5" /> +4.1% STP rate
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">False Positive Rate</span>
-              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">1.3%</span>
-              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-1">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">False Positive Rate</span>
+                  <span className="text-2xl font-extrabold text-slate-900 mt-2 block">1.3%</span>
+                </div>
+                <MiniSparkline data={[2.1, 1.9, 1.7, 1.5, 1.4, 1.3]} color="#3B82F6" isPositive={true} />
+              </div>
+              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Beats NFR-14 &lt; 2% target
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Merchant Win Rate</span>
-              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">38.0%</span>
-              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-1">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Merchant Win Rate</span>
+                  <span className="text-2xl font-extrabold text-slate-900 mt-2 block">38.0%</span>
+                </div>
+                <MiniSparkline data={[32, 34, 33, 36, 37.2, 38.0]} color="#2563EB" isPositive={true} />
+              </div>
+              <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
                 <ArrowUpRight className="w-3.5 h-3.5" /> +2.2% recovery improvement
               </span>
+            </div>
+          </div>
+
+          {/* Interactive Visual Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Monthly Dispute Intake vs STP Volume Bar Chart (7 Cols) */}
+            <div className="lg:col-span-7">
+              <BarChart
+                title="Monthly Dispute Ingestion & Auto-Resolution Trends"
+                subtitle="Volume comparison between automated Straight-Through Processing and escalated cases (Jan - Jul 2026)"
+                data={REPORTS_ANALYTICS_DATA.monthlyVolume.map((m) => ({
+                  label: m.month,
+                  volume: m.volume,
+                  auto: m.auto,
+                  escalated: m.escalated,
+                }))}
+                series={[
+                  { key: 'volume', label: 'Total Inflow', color: '#2563EB', gradientTo: '#3B82F6' },
+                  { key: 'auto', label: 'Auto-Resolved', color: '#10B981', gradientTo: '#34D399' },
+                  { key: 'escalated', label: 'Escalated Ops', color: '#F59E0B', gradientTo: '#FBBF24' },
+                ]}
+                valueFormatter={(v) => `${v.toLocaleString()} cases`}
+              />
+            </div>
+
+            {/* Dispute Category Distribution Donut Chart (5 Cols) */}
+            <div className="lg:col-span-5">
+              <DonutChart
+                title="Dispute Category Distribution"
+                subtitle="Normalized dispute composition and risk concentration"
+                data={REPORTS_ANALYTICS_DATA.categoryBreakdown.map((c) => ({
+                  label: c.category,
+                  value: c.count,
+                  percentage: c.percentage,
+                  count: c.count,
+                  color: c.color,
+                }))}
+                totalLabel="Total Claims"
+                aiInsight={REPORTS_ANALYTICS_DATA.aiInsight}
+              />
             </div>
           </div>
 
