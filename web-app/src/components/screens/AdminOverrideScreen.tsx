@@ -12,6 +12,8 @@ import { CHB_99281_OVERRIDE_DATA } from '../../data/mockData';
 import { EvidenceCard } from '../common/EvidenceCard';
 import { overrideDisputeDecision } from '../../services/api';
 import { ToastMessage } from '../common/Toast';
+import { ScoreGauge } from '../common/ScoreGauge';
+import { BenchmarkChart } from '../charts/BenchmarkChart';
 
 interface AdminOverrideScreenProps {
   disputeId?: string;
@@ -110,8 +112,31 @@ export const AdminOverrideScreen: React.FC<AdminOverrideScreenProps> = ({
 
       {/* Two-Column Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (7 cols): Conflict Points & Documents */}
+        {/* Left Column (7 cols): Score Gauge, Conflict Points & Benchmark */}
         <div className="lg:col-span-7 space-y-6">
+          {/* AI Confidence Low Gauge Card */}
+          <div className="bg-white border border-amber-200 rounded-xl p-5 shadow-card flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="space-y-1.5 flex-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full inline-block">
+                Sub-Threshold Confidence
+              </span>
+              <h2 className="text-base font-bold text-slate-900">
+                AI Fair-Weighing Score: 44.2%
+              </h2>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Confidence rating falls below automated threshold (cutoff &lt; 50%). System Rule FR-17 requires certified senior analyst justification before closing case.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <ScoreGauge
+                score={44}
+                label="Confidence"
+                favourText="MERCHANT"
+                size="sm"
+              />
+            </div>
+          </div>
+
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card space-y-4">
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               AI Conflict Identification Summary
@@ -130,6 +155,30 @@ export const AdminOverrideScreen: React.FC<AdminOverrideScreenProps> = ({
               ))}
             </div>
           </div>
+
+          {/* Network Risk Comparison Benchmarks */}
+          <BenchmarkChart
+            title="Merchant & Peer Network Risk Comparison"
+            subtitle="Comparing Tata CLiQ Luxury risk indicators against peer luxury merchant network baseline"
+            items={[
+              {
+                label: 'Merchant Historical Dispute Ratio',
+                currentValue: 0.82,
+                benchmarkValue: 0.35,
+                unit: '%',
+                isHigherBetter: false,
+                benchmarkLabel: 'Network Tier-1 Baseline'
+              },
+              {
+                label: 'Similar Anomaly Overturn Rate',
+                currentValue: 12.4,
+                benchmarkValue: 5.0,
+                unit: '%',
+                isHigherBetter: false,
+                benchmarkLabel: 'Standard Flag Threshold'
+              }
+            ]}
+          />
         </div>
 
         {/* Right Column (5 cols): Decision Engine Form */}

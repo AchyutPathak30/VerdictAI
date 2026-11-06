@@ -13,6 +13,9 @@ import {
 import { MERCHANT_PORTAL_DATA } from '../../data/mockData';
 import { uploadEvidenceFile, submitStatement } from '../../services/api';
 import { ToastMessage } from '../common/Toast';
+import { MiniSparkline } from '../charts/MiniSparkline';
+import { BenchmarkChart } from '../charts/BenchmarkChart';
+import { ProgressBar } from '../common/ProgressBar';
 
 interface MerchantPortalScreenProps {
   onAddToast?: (toast: Omit<ToastMessage, 'id'>) => void;
@@ -108,6 +111,61 @@ export const MerchantPortalScreen: React.FC<MerchantPortalScreenProps> = ({ onAd
         </div>
       </div>
 
+      {/* 4 Merchant Metric KPI Cards with Live Visual Sparklines */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Active Disputes</span>
+              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">{MERCHANT_PORTAL_DATA.stats.activeDisputes.count}</span>
+            </div>
+            <MiniSparkline data={[28, 27, 26, 25, 24]} color="#F59E0B" isPositive={false} />
+          </div>
+          <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
+            -14% vs previous cycle
+          </span>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Dispute Recovery Rate</span>
+              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">{MERCHANT_PORTAL_DATA.stats.winRate.rate}</span>
+            </div>
+            <MiniSparkline data={[72, 74, 75.5, 77.2, 78.4]} color="#10B981" isPositive={true} />
+          </div>
+          <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
+            {MERCHANT_PORTAL_DATA.stats.winRate.change} average win rate
+          </span>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Pending Evidence</span>
+              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">{MERCHANT_PORTAL_DATA.stats.pendingEvidence.count}</span>
+            </div>
+            <MiniSparkline data={[14, 12, 10, 9, 8]} color="#3B82F6" isPositive={true} />
+          </div>
+          <span className="text-xs font-medium text-amber-600 flex items-center gap-1 mt-2">
+            {MERCHANT_PORTAL_DATA.stats.pendingEvidence.timeframe}
+          </span>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">At-Risk Volume</span>
+              <span className="text-2xl font-extrabold text-slate-900 mt-2 block">{MERCHANT_PORTAL_DATA.stats.atRiskVolume.formatted}</span>
+            </div>
+            <MiniSparkline data={[180000, 165000, 155000, 148000, 142050]} color="#2563EB" isPositive={true} />
+          </div>
+          <span className="text-xs font-medium text-emerald-600 flex items-center gap-1 mt-2">
+            Secured under RuPay & UPI rules
+          </span>
+        </div>
+      </div>
+
       {/* Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Active Disputes List */}
@@ -152,6 +210,16 @@ export const MerchantPortalScreen: React.FC<MerchantPortalScreenProps> = ({ onAd
               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded">
                 SLA Window Open
               </span>
+            </div>
+
+            {/* Dossier Completion Animated Progress */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+              <ProgressBar
+                label="Evidence Dossier Completion"
+                value={Math.round((checklist.filter(c => c.checked).length / (checklist.length || 1)) * 100)}
+                color="blue"
+                subtitle={`${checklist.filter(c => c.checked).length} of ${checklist.length} mandatory proofs attached & parsed`}
+              />
             </div>
 
             {/* Checklist */}
@@ -234,6 +302,38 @@ export const MerchantPortalScreen: React.FC<MerchantPortalScreenProps> = ({ onAd
           </div>
         </div>
       </div>
+
+      {/* Merchant Operational Performance & Network Benchmarks */}
+      <BenchmarkChart
+        title="Merchant Operational Performance & Network Benchmarks"
+        subtitle="Comparing Reliance Retail Ventures Ltd recovery metrics against Tier-1 enterprise merchant peer averages"
+        items={[
+          {
+            label: 'Dispute Recovery Win Rate',
+            currentValue: 78.4,
+            benchmarkValue: 65.0,
+            unit: '%',
+            isHigherBetter: true,
+            benchmarkLabel: 'National Tier-1 Average'
+          },
+          {
+            label: 'SLA Response Turnaround',
+            currentValue: 18.2,
+            benchmarkValue: 48.0,
+            unit: 'h',
+            isHigherBetter: false,
+            benchmarkLabel: 'Max Permissible SLA'
+          },
+          {
+            label: 'Evidence Acceptance Index',
+            currentValue: 94.2,
+            benchmarkValue: 80.0,
+            unit: '%',
+            isHigherBetter: true,
+            benchmarkLabel: 'Network Baseline'
+          }
+        ]}
+      />
     </div>
   );
 };

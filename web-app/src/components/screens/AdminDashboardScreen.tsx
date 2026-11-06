@@ -15,6 +15,9 @@ import { fetchDashboardStats, fetchDisputes } from '../../services/api';
 import { StatusBadge, RiskDot } from '../common/StatusBadge';
 import { CaseQueueItem } from '../../types/dispute';
 import { ToastMessage } from '../common/Toast';
+import { MiniSparkline } from '../charts/MiniSparkline';
+import { AreaTrendChart } from '../charts/AreaTrendChart';
+import { REPORTS_ANALYTICS_DATA } from '../../data/mockData';
 
 interface AdminDashboardScreenProps {
   onSelectCase: (caseItem: CaseQueueItem) => void;
@@ -110,7 +113,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
         </div>
       ) : (
         <>
-          {/* 4 KPI Summary Cards */}
+          {/* 4 KPI Summary Cards with Live Trend Sparklines */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Disputes */}
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-card hover:shadow-md transition">
@@ -122,10 +125,11 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                   <Layers className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex items-end justify-between">
                 <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {stats?.totalDisputes?.value || '1,247'}
                 </span>
+                <MiniSparkline data={[1120, 1150, 1180, 1205, 1230, 1247]} color="#2563EB" isPositive={true} />
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -144,10 +148,11 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                   <Clock className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex items-end justify-between">
                 <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {stats?.pendingReview?.value || '38'}
                 </span>
+                <MiniSparkline data={[46, 43, 41, 40, 39, 38]} color="#F59E0B" isPositive={false} />
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-rose-600">
                 <ArrowDownRight className="w-3.5 h-3.5" />
@@ -166,10 +171,11 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                   <Activity className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex items-end justify-between">
                 <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {stats?.autoResolved?.value || '92.7%'}
                 </span>
+                <MiniSparkline data={[85, 87, 89, 90, 91.5, 92.7]} color="#10B981" isPositive={true} />
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -188,10 +194,11 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
                   <Zap className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex items-end justify-between">
                 <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {stats?.escalatedCases?.value || '53'}
                 </span>
+                <MiniSparkline data={[42, 45, 48, 50, 52, 53]} color="#8B5CF6" isPositive={true} />
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-purple-600">
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -200,6 +207,24 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Operational Trajectory & Resolution Trends (Spline Area Chart) */}
+          <AreaTrendChart
+            title="Operational Dispute Ingestion & Auto-Resolution Trajectory"
+            subtitle="Real-time multi-month velocity tracking automated vs. manual triage workflows"
+            data={REPORTS_ANALYTICS_DATA.monthlyVolume.map((m) => ({
+              label: m.month,
+              volume: m.volume,
+              auto: m.auto,
+              escalated: m.escalated,
+            }))}
+            series={[
+              { key: 'volume', label: 'Dispute Inflow', color: '#2563EB', strokeWidth: 2.5 },
+              { key: 'auto', label: 'Auto-Resolved', color: '#10B981', strokeWidth: 2.5 },
+              { key: 'escalated', label: 'Escalated Cases', color: '#F59E0B', strokeWidth: 2 },
+            ]}
+            valueFormatter={(v) => `${v.toLocaleString()} cases`}
+          />
 
           {/* Priority Queue Table */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">

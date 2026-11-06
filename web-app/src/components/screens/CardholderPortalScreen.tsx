@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { uploadEvidenceFile, createDispute } from '../../services/api';
+import { MiniSparkline } from '../charts/MiniSparkline';
 
 interface CardholderPortalScreenProps {
   onAddToast?: (toast: { type: 'success' | 'info' | 'error' | 'warning'; title: string; message: string }) => void;
@@ -222,9 +223,12 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
             <span className="text-lg font-black text-amber-600 font-mono">{myDisputes.filter(d => d.status.includes('Active') || d.status.includes('Investigation')).length} Case</span>
           </div>
           <div className="h-8 w-px bg-slate-200"></div>
-          <div className="text-right">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Recovered</span>
-            <span className="text-lg font-black text-emerald-600 font-mono">₹{cardholderData.totalRefunded.toLocaleString('en-IN')}</span>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Recovered</span>
+              <span className="text-lg font-black text-emerald-600 font-mono">₹{cardholderData.totalRefunded.toLocaleString('en-IN')}</span>
+            </div>
+            <MiniSparkline data={[8500, 12000, 18500, 24000, 26498]} color="#10B981" width={75} height={30} />
           </div>
         </div>
       </div>
