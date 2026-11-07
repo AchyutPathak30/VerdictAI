@@ -8,6 +8,7 @@ identifiers, and detects amount discrepancies between the receipt and
 the disputed transaction.
 """
 
+import math
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -54,6 +55,8 @@ class ReceiptParser(EvidenceParser):
     # ── validation ───────────────────────────────────────────────
 
     def validate(self, raw_payload: Dict[str, Any]) -> bool:
+        if not isinstance(raw_payload, dict):
+            return False
         return all(
             k in raw_payload and raw_payload[k] is not None
             for k in ("merchant_name", "total")
@@ -68,16 +71,21 @@ class ReceiptParser(EvidenceParser):
         anomalies: List[DetectedAnomaly] = []
 
         # --- Core fields ---
-        merchant_name = str(raw_payload["merchant_name"]).strip()
+        merchant_name = str(raw_payload["merchant_name"]).replace("\x00", "").strip()[:500]
         total = self._safe_float(raw_payload["total"])
-        currency = str(raw_payload.get("currency", "USD")).upper()
-        receipt_number = raw_payload.get("receipt_number")
-        receipt_date = self._parse_date(raw_payload.get("receipt_date"))
-        payment_method = raw_payload.get("payment_method")
+        if total is None:
+            raise ValueError(
+                f"{self.parser_name}: Invalid or unparseable total amount: {raw_payload.get('total')!r}"
+            )
+        currency = str(raw_payload.get("currency", "USD")).replace("\x00", "").strip().upper()[:10]
+        receipt_number = str(raw_payload.get("receipt_number") or "").replace("\x00", "").strip() or None
+        raw_date = raw_payload.get("receipt_date") or raw_payload.get("date")
+        receipt_date = self._parse_date(raw_date)
+        payment_method = str(raw_payload.get("payment_method") or "").replace("\x00", "").strip()[:100] or None
         subtotal = self._safe_float(raw_payload.get("subtotal"))
         tax = self._safe_float(raw_payload.get("tax"))
         line_items = raw_payload.get("line_items", [])
-        ocr_text = raw_payload.get("ocr_text")
+        ocr_text = str(raw_payload["ocr_text"]).replace("\x00", "")[:100000] if raw_payload.get("ocr_text") else None
         transaction_amount = self._safe_float(raw_payload.get("transaction_amount"))
 
         # --- Entity extraction ---
@@ -171,7 +179,7 @@ class ReceiptParser(EvidenceParser):
             ))
 
         # 5. Missing date
-        if receipt_date is None and raw_payload.get("receipt_date") is None:
+        if receipt_date is None and raw_date is None:
             anomalies.append(DetectedAnomaly(
                 anomaly_type="MISSING_RECEIPT_DATE",
                 description="Receipt date is missing — cannot establish purchase timeline.",
@@ -218,12 +226,18 @@ class ReceiptParser(EvidenceParser):
         if value is None:
             return None
         if isinstance(value, (int, float)):
-            return float(value)
+            val = float(value)
+            if math.isnan(val) or math.isinf(val):
+                return None
+            return val
         if isinstance(value, str):
-            cleaned = re.sub(r"[^\d.\-]", "", value)
+            cleaned = re.sub(r"[^\d.\-]", "", value.replace("\x00", "").strip())
             if cleaned:
                 try:
-                    return float(cleaned)
+                    val = float(cleaned)
+                    if math.isnan(val) or math.isinf(val):
+                        return None
+                    return val
                 except ValueError:
                     return None
         return None
@@ -245,7 +259,10 @@ class ReceiptParser(EvidenceParser):
             "%Y-%m-%dT%H:%M:%S",
             "%Y-%m-%d",
             "%m/%d/%Y",
+            "%d/%m/%Y",
+            "%d.%m.%Y",
             "%B %d, %Y",
+            "%b %d, %Y",
         ]
         for fmt in formats:
             try:
@@ -265,13 +282,28 @@ class ReceiptParser(EvidenceParser):
 
     @staticmethod
     def _parse_line_items(line_items: List[Any]) -> List[Dict[str, Any]]:
+        if not isinstance(line_items, list):
+            return []
         parsed = []
-        for item in line_items:
+        for item in line_items[:500]:
             if not isinstance(item, dict):
                 continue
-            description = item.get("description", "Unknown Item")
-            quantity = float(item.get("quantity", 1))
-            unit_price = float(item.get("unit_price", 0.0))
+            description = str(item.get("description", "Unknown Item")).replace("\x00", "")[:200]
+            try:
+                quantity = float(item.get("quantity", 1))
+                if math.isnan(quantity) or math.isinf(quantity) or quantity < 0:
+                    quantity = 1.0
+            except (ValueError, TypeError):
+                quantity = 1.0
+            unit_price_raw = item.get("unit_price")
+            if unit_price_raw is None:
+                unit_price_raw = item.get("amount") if item.get("amount") is not None else item.get("price", 0.0)
+            try:
+                unit_price = float(unit_price_raw)
+                if math.isnan(unit_price) or math.isinf(unit_price):
+                    unit_price = 0.0
+            except (ValueError, TypeError):
+                unit_price = 0.0
             parsed.append({
                 "description": str(description),
                 "quantity": quantity,

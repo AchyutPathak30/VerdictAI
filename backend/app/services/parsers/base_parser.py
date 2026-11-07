@@ -167,6 +167,10 @@ class EvidenceParser(ABC):
         required: List[str],
     ) -> None:
         """Utility: raise ValueError when any required key is absent."""
+        if not isinstance(raw_payload, dict):
+            raise ValueError(
+                f"{self.parser_name}: raw_payload must be a dict, got {type(raw_payload).__name__}"
+            )
         missing = [f for f in required if f not in raw_payload or raw_payload[f] is None]
         if missing:
             raise ValueError(

@@ -118,7 +118,15 @@ class EntityExtractor:
         ExtractionResult
             Aggregated extraction result with all found entities.
         """
-        if not text or not text.strip():
+        if not isinstance(text, str):
+            return ExtractionResult()
+
+        text = text.replace("\x00", "")
+        # Guard against pathological input length (max 500 KB)
+        if len(text) > 500_000:
+            text = text[:500_000]
+
+        if not text.strip():
             return ExtractionResult()
 
         all_entities: List[ExtractedEntity] = []

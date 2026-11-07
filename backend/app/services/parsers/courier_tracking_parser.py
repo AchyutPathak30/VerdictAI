@@ -8,6 +8,7 @@ detects address mismatches, unsigned deliveries, delivery delays,
 and extracts GPS coordinates and signatory information.
 """
 
+import math
 import re
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
@@ -78,6 +79,8 @@ class CourierTrackingParser(EvidenceParser):
 
     # Maximum reasonable transit days before flagging
     MAX_TRANSIT_DAYS = 30
+    # Maximum GPS discrepancy between delivery telematics and destination before flagging
+    MAX_COORDINATE_DISTANCE_KM = 1.0
 
     @property
     def parser_name(self) -> str:
@@ -86,6 +89,8 @@ class CourierTrackingParser(EvidenceParser):
     # ── validation ───────────────────────────────────────────────
 
     def validate(self, raw_payload: Dict[str, Any]) -> bool:
+        if not isinstance(raw_payload, dict):
+            return False
         return all(
             k in raw_payload and raw_payload[k] is not None
             for k in ("carrier", "tracking_number", "status")
@@ -100,20 +105,24 @@ class CourierTrackingParser(EvidenceParser):
         anomalies: List[DetectedAnomaly] = []
 
         # --- Core fields ---
-        carrier = str(raw_payload["carrier"]).strip().upper()
-        tracking_number = str(raw_payload["tracking_number"]).strip()
-        status = str(raw_payload["status"]).strip().upper()
+        carrier = str(raw_payload["carrier"]).replace("\x00", "").strip().upper()[:100]
+        tracking_number = str(raw_payload["tracking_number"]).replace("\x00", "").strip()[:100]
+        status = str(raw_payload["status"]).replace("\x00", "").strip().upper()[:50]
         delivery_date = self._parse_date(raw_payload.get("delivery_date"))
         shipped_date = self._parse_date(raw_payload.get("shipped_date"))
-        signed_by = raw_payload.get("signed_by")
-        delivery_address = raw_payload.get("delivery_address")
-        expected_address = raw_payload.get("expected_address")
+        signed_by = str(raw_payload["signed_by"]).replace("\x00", "").strip()[:200] if raw_payload.get("signed_by") else None
+        delivery_address = str(raw_payload["delivery_address"]).replace("\x00", "").strip()[:500] if raw_payload.get("delivery_address") else None
+        expected_address = str(raw_payload["expected_address"]).replace("\x00", "").strip()[:500] if raw_payload.get("expected_address") else None
         gps_lat = raw_payload.get("gps_latitude")
         gps_lng = raw_payload.get("gps_longitude")
+        exp_lat = raw_payload.get("expected_latitude")
+        exp_lng = raw_payload.get("expected_longitude")
+        gps_distance_km = raw_payload.get("gps_distance_km")
         address_match = raw_payload.get("delivery_address_match")
-        status_history = raw_payload.get("status_history", [])
+        raw_history = raw_payload.get("status_history", [])
+        status_history = raw_history[:200] if isinstance(raw_history, list) else []
         weight_kg = raw_payload.get("weight_kg")
-        service_type = raw_payload.get("service_type")
+        service_type = str(raw_payload["service_type"]).replace("\x00", "").strip()[:100] if raw_payload.get("service_type") else None
         estimated_delivery = self._parse_date(raw_payload.get("estimated_delivery"))
 
         # --- Entity extraction ---
@@ -138,14 +147,32 @@ class CourierTrackingParser(EvidenceParser):
             entities.append(
                 ExtractedEntity(entity_type="GPE", text=delivery_address, confidence=0.90)
             )
+
+        valid_gps = None
         if gps_lat is not None and gps_lng is not None:
-            entities.append(
-                ExtractedEntity(
-                    entity_type="GPS_COORDINATES",
-                    text=f"{gps_lat},{gps_lng}",
-                    confidence=0.98,
+            try:
+                lat_f, lng_f = float(gps_lat), float(gps_lng)
+                if not (math.isnan(lat_f) or math.isinf(lat_f) or math.isnan(lng_f) or math.isinf(lng_f)):
+                    if -90.0 <= lat_f <= 90.0 and -180.0 <= lng_f <= 180.0:
+                        valid_gps = (lat_f, lng_f)
+            except (ValueError, TypeError):
+                valid_gps = None
+
+            if valid_gps:
+                entities.append(
+                    ExtractedEntity(
+                        entity_type="GPS_COORDINATES",
+                        text=f"{valid_gps[0]},{valid_gps[1]}",
+                        confidence=0.98,
+                    )
                 )
-            )
+            else:
+                anomalies.append(DetectedAnomaly(
+                    anomaly_type="INVALID_GPS_COORDINATES",
+                    description=f"Invalid or out-of-bounds GPS coordinates provided: ({gps_lat}, {gps_lng}).",
+                    severity=AnomalyLevel.MEDIUM,
+                    supporting_data={"latitude": gps_lat, "longitude": gps_lng},
+                ))
 
         # --- Anomaly detection ---
 
@@ -208,6 +235,37 @@ class CourierTrackingParser(EvidenceParser):
                         "expected_address": expected_address,
                     },
                 ))
+
+        # 5b. GPS Coordinate Discrepancy / Telematics Misdelivery Detection
+        coord_distance = None
+        if gps_distance_km is not None:
+            try:
+                coord_distance = float(gps_distance_km)
+            except (ValueError, TypeError):
+                pass
+        elif gps_lat is not None and gps_lng is not None and exp_lat is not None and exp_lng is not None:
+            try:
+                coord_distance = self._haversine_distance_km(
+                    float(gps_lat), float(gps_lng), float(exp_lat), float(exp_lng)
+                )
+            except (ValueError, TypeError):
+                pass
+
+        if coord_distance is not None and coord_distance > self.MAX_COORDINATE_DISTANCE_KM:
+            anomalies.append(DetectedAnomaly(
+                anomaly_type="COORDINATE_DISCREPANCY",
+                description=(
+                    f"Carrier GPS telematics records delivery {coord_distance:.1f} km away "
+                    f"from expected destination (threshold: {self.MAX_COORDINATE_DISTANCE_KM} km)."
+                ),
+                severity=AnomalyLevel.HIGH,
+                supporting_data={
+                    "distance_km": coord_distance,
+                    "threshold_km": self.MAX_COORDINATE_DISTANCE_KM,
+                    "delivery_coordinates": {"latitude": gps_lat, "longitude": gps_lng},
+                    "expected_coordinates": {"latitude": exp_lat, "longitude": exp_lng} if exp_lat is not None else None,
+                },
+            ))
 
         # 6. Excessive transit time
         if shipped_date and delivery_date:
@@ -312,10 +370,33 @@ class CourierTrackingParser(EvidenceParser):
             return None
 
     @staticmethod
+    def _haversine_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> Optional[float]:
+        """Computes great-circle distance between two GPS coordinates in kilometers."""
+        for val in (lat1, lon1, lat2, lon2):
+            if not isinstance(val, (int, float)) or math.isnan(val) or math.isinf(val):
+                return None
+        if not (-90.0 <= lat1 <= 90.0 and -90.0 <= lat2 <= 90.0 and -180.0 <= lon1 <= 180.0 and -180.0 <= lon2 <= 180.0):
+            return None
+        r = 6371.0  # Earth radius in km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = (
+            math.sin(dlat / 2.0) ** 2
+            + math.cos(math.radians(lat1))
+            * math.cos(math.radians(lat2))
+            * math.sin(dlon / 2.0) ** 2
+        )
+        a = max(0.0, min(1.0, a))
+        c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+        return round(r * c, 2)
+
+    @staticmethod
     def _addresses_match(addr1: str, addr2: str) -> bool:
         """Simple normalised address comparison."""
+        if not isinstance(addr1, str) or not isinstance(addr2, str):
+            return False
         def normalise(a: str) -> str:
-            a = a.lower().strip()
+            a = a.lower().strip()[:500]
             a = re.sub(r"[^a-z0-9\s]", "", a)
             a = re.sub(r"\s+", " ", a)
             return a
@@ -372,12 +453,13 @@ class CourierTrackingParser(EvidenceParser):
         """
         has_address_mismatch = any(a.anomaly_type == "ADDRESS_MISMATCH" for a in anomalies)
         has_delivery_exception = any(a.anomaly_type == "DELIVERY_EXCEPTION" for a in anomalies)
+        has_coord_discrepancy = any(a.anomaly_type == "COORDINATE_DISCREPANCY" for a in anomalies)
 
-        if status == "DELIVERED" and not has_address_mismatch:
+        if status == "DELIVERED" and not has_address_mismatch and not has_coord_discrepancy:
             return ClaimAlignment.SUPPORTS_MERCHANT
         elif status in EXCEPTION_STATUSES or has_delivery_exception:
             return ClaimAlignment.SUPPORTS_CARDHOLDER
-        elif has_address_mismatch:
+        elif has_address_mismatch or has_coord_discrepancy:
             return ClaimAlignment.SUPPORTS_CARDHOLDER
         else:
             return ClaimAlignment.NEUTRAL
