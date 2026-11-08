@@ -81,6 +81,17 @@ NEGATIVE_INDICATORS = {
     "bbb", "consumer protection", "report",
 }
 
+# Prompt injection patterns (adversarial attempts to hijack Gemini reasoning)
+PROMPT_INJECTION_PATTERNS = [
+    r"(?i)\b(?:system\s+override|ignore\s+(?:all\s+)?previous\s+instructions?)\b",
+    r"(?i)\b(?:disregard\s+(?:all\s+)?(?:prior|previous|above)\s+instructions?)\b",
+    r"(?i)\b(?:you\s+are\s+now\s+(?:an?\s+)?(?:ai|assistant|evaluator|judge))\b",
+    r"(?i)\b(?:rule\s+in\s+favor\s+of\s+(?:merchant|cardholder|customer))\b",
+    r"(?i)\b(?:conclude\s+in\s+favor\s+of|verdict\s*:\s*(?:cardholder|merchant))\b",
+    r"(?i)\b(?:override\s+verdict|set\s+confidence\s+to\s+100%?)\b",
+    r"(?i)<\s*(?:system|prompt_injection|instruction)\s*>",
+]
+
 
 @dataclass
 class MessageSegment:
@@ -104,6 +115,8 @@ class CommunicationAnalysis:
     dispute_indicators: List[str] = field(default_factory=list)
     escalation_detected: bool = False
     resolution_detected: bool = False
+    partial_credit_detected: bool = False
+    prompt_injection_detected: bool = False
 
 
 class CommunicationLogParser(EvidenceParser):
@@ -141,6 +154,8 @@ class CommunicationLogParser(EvidenceParser):
     # ── validation ───────────────────────────────────────────────
 
     def validate(self, raw_payload: Dict[str, Any]) -> bool:
+        if not isinstance(raw_payload, dict):
+            return False
         return bool(
             raw_payload.get("messages")
             or raw_payload.get("transcript")
@@ -189,7 +204,16 @@ class CommunicationLogParser(EvidenceParser):
 
         # --- Anomaly detection ---
 
-        # 1. Escalation language
+        # 1. Prompt injection attempt
+        if analysis.prompt_injection_detected:
+            anomalies.append(DetectedAnomaly(
+                anomaly_type="PROMPT_INJECTION_ATTEMPT",
+                description="Adversarial prompt injection or instruction override sequence detected in communication transcript.",
+                severity=AnomalyLevel.CRITICAL,
+                supporting_data={"indicators": [i for i in analysis.dispute_indicators if i.startswith("prompt_injection:")]},
+            ))
+
+        # 2. Escalation language
         if analysis.escalation_detected:
             anomalies.append(DetectedAnomaly(
                 anomaly_type="ESCALATION_LANGUAGE",
@@ -244,6 +268,8 @@ class CommunicationLogParser(EvidenceParser):
             "dispute_indicators": analysis.dispute_indicators,
             "escalation_detected": analysis.escalation_detected,
             "resolution_detected": analysis.resolution_detected,
+            "partial_credit_detected": analysis.partial_credit_detected,
+            "prompt_injection_detected": analysis.prompt_injection_detected,
             "participants": sorted(unique_senders),
         }
 
@@ -273,13 +299,15 @@ class CommunicationLogParser(EvidenceParser):
         messages_data: List[Dict[str, Any]],
     ) -> List[MessageSegment]:
         """Parse structured message dicts into MessageSegment objects."""
+        if not isinstance(messages_data, list):
+            return []
         segments = []
-        for msg in messages_data:
+        for msg in messages_data[:500]:
             if not isinstance(msg, dict):
                 continue
-            sender = str(msg.get("sender", "Unknown")).strip()
-            content = str(msg.get("content", "")).strip()
-            role = str(msg.get("role", "UNKNOWN")).upper()
+            sender = str(msg.get("sender", "Unknown")).replace("\x00", "").strip()[:100]
+            content = str(msg.get("content", "")).replace("\x00", "").strip()[:50000]
+            role = str(msg.get("role", "UNKNOWN")).replace("\x00", "").strip().upper()[:20]
 
             timestamp = None
             ts_raw = msg.get("timestamp")
@@ -309,6 +337,12 @@ class CommunicationLogParser(EvidenceParser):
             Sender: message text
             From: Sender
         """
+        if not isinstance(transcript, str):
+            return []
+        transcript = transcript.replace("\x00", "")
+        if len(transcript) > 500_000:
+            transcript = transcript[:500_000]
+
         segments: List[MessageSegment] = []
 
         # Pattern: [Name] or Name: at start of line
@@ -395,6 +429,13 @@ class CommunicationLogParser(EvidenceParser):
         else:
             analysis.sentiment_score = 0.0
 
+        # Prompt injection detection
+        for pat in PROMPT_INJECTION_PATTERNS:
+            match = re.search(pat, all_text_lower)
+            if match:
+                analysis.prompt_injection_detected = True
+                analysis.dispute_indicators.append(f"prompt_injection:{match.group(0)}")
+
         # Escalation detection
         escalation_terms = {"legal", "lawyer", "attorney", "lawsuit", "court",
                            "bbb", "consumer protection", "report", "regulatory"}
@@ -404,12 +445,22 @@ class CommunicationLogParser(EvidenceParser):
                 analysis.dispute_indicators.append(f"escalation:{term}")
 
         # Resolution detection
-        resolution_terms = {"resolved", "resolution", "agreed", "settlement",
-                           "refund issued", "refunded", "credit applied", "replacement sent"}
+        resolution_terms = {
+            "resolved", "resolution", "agreed", "settlement",
+            "refund issued", "refunded", "credit applied", "replacement sent",
+            "partial refund", "partial credit", "partial reimbursement", "store credit",
+        }
         for term in resolution_terms:
             if term in all_text_lower:
                 analysis.resolution_detected = True
                 analysis.dispute_indicators.append(f"resolution:{term}")
+
+        # Partial credit detection
+        partial_terms = {"partial refund", "partial credit", "partial reimbursement", "store credit"}
+        for term in partial_terms:
+            if term in all_text_lower:
+                analysis.partial_credit_detected = True
+                analysis.dispute_indicators.append(f"partial_credit:{term}")
 
         return analysis
 

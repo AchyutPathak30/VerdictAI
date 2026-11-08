@@ -7,6 +7,7 @@ financial data, detecting anomalies such as duplicate charges, amount
 mismatches, weekend/holiday transactions, and suspicious patterns.
 """
 
+import math
 import re
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
@@ -64,6 +65,8 @@ class TransactionParser(EvidenceParser):
     # ── validation ───────────────────────────────────────────────
 
     def validate(self, raw_payload: Dict[str, Any]) -> bool:
+        if not isinstance(raw_payload, dict):
+            return False
         required = ["merchant_name", "amount", "transaction_date"]
         return all(
             k in raw_payload and raw_payload[k] is not None
@@ -79,17 +82,17 @@ class TransactionParser(EvidenceParser):
         anomalies: List[DetectedAnomaly] = []
 
         # --- Extract and normalise core fields ---
-        merchant_name = str(raw_payload["merchant_name"]).strip()
+        merchant_name = str(raw_payload["merchant_name"]).replace("\x00", "").strip()[:500]
         amount = self._parse_amount(raw_payload["amount"])
-        currency = str(raw_payload.get("currency", "USD")).upper()
+        currency = str(raw_payload.get("currency", "USD")).replace("\x00", "").strip().upper()[:10]
         txn_date = self._parse_date(raw_payload["transaction_date"])
-        card_last_four = raw_payload.get("card_last_four")
-        mcc_code = raw_payload.get("mcc_code")
-        merchant_location = raw_payload.get("merchant_location")
-        payment_method = raw_payload.get("payment_method")
-        transaction_id = raw_payload.get("transaction_id")
-        authorization_code = raw_payload.get("authorization_code")
-        description = raw_payload.get("description", "")
+        card_last_four = str(raw_payload.get("card_last_four") or "").replace("\x00", "").strip() or None
+        mcc_code = str(raw_payload.get("mcc_code") or "").replace("\x00", "").strip() or None
+        merchant_location = str(raw_payload.get("merchant_location") or "").replace("\x00", "").strip()[:200] or None
+        payment_method = str(raw_payload.get("payment_method") or "").replace("\x00", "").strip()[:100] or None
+        transaction_id = str(raw_payload.get("transaction_id") or "").replace("\x00", "").strip()[:100] or None
+        authorization_code = str(raw_payload.get("authorization_code") or "").replace("\x00", "").strip()[:100] or None
+        description = str(raw_payload.get("description") or "").replace("\x00", "")[:50000]
 
         # --- Entity extraction ---
         entities.append(
@@ -200,14 +203,20 @@ class TransactionParser(EvidenceParser):
 
     @staticmethod
     def _parse_amount(raw_amount: Any) -> float:
-        """Coerce various amount representations to float."""
+        """Coerce various amount representations to float, rejecting NaN and Inf."""
         if isinstance(raw_amount, (int, float)):
-            return float(raw_amount)
+            val = float(raw_amount)
+            if math.isnan(val) or math.isinf(val):
+                raise ValueError(f"Amount cannot be NaN or Infinite: {raw_amount!r}")
+            return val
         if isinstance(raw_amount, str):
-            cleaned = re.sub(r"[^\d.\-]", "", raw_amount)
+            cleaned = re.sub(r"[^\d.\-]", "", raw_amount.replace("\x00", ""))
             if cleaned:
                 try:
-                    return float(cleaned)
+                    val = float(cleaned)
+                    if math.isnan(val) or math.isinf(val):
+                        raise ValueError(f"Amount cannot be NaN or Infinite: {raw_amount!r}")
+                    return val
                 except ValueError:
                     pass
         raise ValueError(f"Cannot parse amount value: {raw_amount!r}")

@@ -88,7 +88,7 @@ class EvidenceParserDispatcher:
         2. If not found or if the resolved parser fails payload validation, inspect
            payload signature to detect the data structure dynamically.
         """
-        payload = raw_payload or {}
+        payload = raw_payload if isinstance(raw_payload, dict) else {}
 
         # 1. Direct type resolution
         if evidence_type is not None:
@@ -104,7 +104,7 @@ class EvidenceParserDispatcher:
         """
         Inspects payload dictionary keys to infer the parser type.
         """
-        if not payload:
+        if not isinstance(payload, dict) or not payload:
             return None
 
         # Courier tracking signature
@@ -144,7 +144,7 @@ class EvidenceParserDispatcher:
         Returns ``ParsedEvidence`` if successfully parsed, or ``None`` if
         no parser matched or parsing could not be completed.
         """
-        if not raw_payload:
+        if not isinstance(raw_payload, dict) or not raw_payload:
             return None
 
         parser = self.resolve_parser(evidence_type=evidence_type, raw_payload=raw_payload)

@@ -11,6 +11,7 @@ Layer by distilling parsed anomalies, entities, and alignment signals
 into a curated, prompt-ready format.
 """
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -70,6 +71,15 @@ class EvidenceSummary:
     def total_highlights(self) -> int:
         return len(self.key_facts) + len(self.critical_anomalies) + len(self.alignment_signals)
 
+    @staticmethod
+    def _sanitize_prompt_text(text: str) -> str:
+        """Neutralizes prompt injection sequences and control characters."""
+        if not text:
+            return ""
+        sanitized = re.sub(r"<\s*/?\s*(?:system|instruction|prompt)[^>]*>", "[FILTERED_TAG]", text, flags=re.IGNORECASE)
+        sanitized = sanitized.replace("\x00", "").replace("\r", " ")
+        return sanitized
+
     def to_prompt_context(self) -> str:
         """
         Renders the full summary as a structured text block suitable for
@@ -85,24 +95,27 @@ class EvidenceSummary:
         if self.key_facts:
             lines.append("--- KEY FACTS ---")
             for i, fact in enumerate(self.key_facts, 1):
-                lines.append(f"  {i}. [{fact.source_parser}] {fact.summary}")
+                clean_sum = self._sanitize_prompt_text(fact.summary)
+                lines.append(f"  {i}. [{fact.source_parser}] {clean_sum}")
             lines.append("")
 
         if self.critical_anomalies:
             lines.append("--- CRITICAL ANOMALIES & RED FLAGS ---")
             for i, anomaly in enumerate(self.critical_anomalies, 1):
-                lines.append(f"  {i}. [{anomaly.source_parser}] {anomaly.summary}")
+                clean_sum = self._sanitize_prompt_text(anomaly.summary)
+                lines.append(f"  {i}. [{anomaly.source_parser}] {clean_sum}")
             lines.append("")
 
         if self.alignment_signals:
             lines.append("--- ALIGNMENT SIGNALS ---")
             for signal in self.alignment_signals:
-                lines.append(f"  • [{signal.source_parser}] {signal.summary}")
+                clean_sum = self._sanitize_prompt_text(signal.summary)
+                lines.append(f"  • [{signal.source_parser}] {clean_sum}")
             lines.append("")
 
         if self.semantic_summary:
             lines.append("--- SEMANTIC SUMMARY ---")
-            lines.append(self.semantic_summary)
+            lines.append(self._sanitize_prompt_text(self.semantic_summary))
 
         return "\n".join(lines)
 
