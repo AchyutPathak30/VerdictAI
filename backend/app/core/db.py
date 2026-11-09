@@ -108,17 +108,47 @@ class DualDatabaseManager:
         """
         Validates health status and connection readiness of PostgreSQL and MongoDB stores.
         """
+        pg_connected = True
+        mongo_connected = True
+        if not self.in_memory:
+            try:
+                import socket
+                with socket.create_connection((self.config.pg_host, self.config.pg_port), timeout=1.0):
+                    pg_connected = True
+            except Exception:
+                pg_connected = False
+
+            try:
+                import socket
+                host = "localhost"
+                port = 27017
+                if "://" in self.config.mongo_uri:
+                    part = self.config.mongo_uri.split("://")[1].split("/")[0]
+                    if ":" in part:
+                        host, port_str = part.split(":")
+                        port = int(port_str)
+                    else:
+                        host = part
+                with socket.create_connection((host, port), timeout=1.0):
+                    mongo_connected = True
+            except Exception:
+                mongo_connected = False
+
+        status_str = "healthy" if (pg_connected and mongo_connected) else "degraded"
         return {
-            "status": "healthy",
+            "status": status_str,
             "in_memory_mode": self.in_memory,
             "postgresql": {
-                "connected": True,
+                "connected": pg_connected,
+                "host": self.config.pg_host,
+                "port": self.config.pg_port,
                 "database": self.config.pg_database,
                 "tables_loaded": len(self.pg_tables),
                 "total_records": sum(len(t) for t in self.pg_tables.values())
             },
             "mongodb": {
-                "connected": True,
+                "connected": mongo_connected,
+                "uri": self.config.mongo_uri,
                 "database": self.config.mongo_database,
                 "collections_loaded": len(self.mongo_collections),
                 "total_documents": sum(len(c) for c in self.mongo_collections.values())
@@ -126,4 +156,5 @@ class DualDatabaseManager:
         }
 
 
-db_manager = DualDatabaseManager(in_memory=True)
+IN_MEMORY_DEFAULT = os.getenv("IN_MEMORY_DB", "true").lower() in ("true", "1", "yes")
+db_manager = DualDatabaseManager(in_memory=IN_MEMORY_DEFAULT)

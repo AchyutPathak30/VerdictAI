@@ -3,6 +3,7 @@ VerdictAI REST API Gateway & Application Entrypoint
 Author: Darshan Prajapati (Backend Engineer - Reasoning & APIs)
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,6 +13,63 @@ from backend.app.core.config import settings
 from backend.app.api.v1 import api_v1_router
 from backend.app.services.state_machine.state_machine import InvalidStateTransitionError
 from backend.app.models.api_schemas import utc_now
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI Lifespan Context Manager (SRS Architecture Standard).
+    Seeds in-memory store with demo disputes on startup so UI and API have live data immediately.
+    """
+    from backend.app.core.db import db_manager
+    if not db_manager.pg_tables.get("disputes"):
+        try:
+            from backend.app.services.case_builder.service import case_service
+            from backend.app.models.schemas import DisputeReason
+            from database.mongodb.models import EvidenceType, EvidenceSource
+
+            c1 = case_service.create_dispute_case(
+                transaction_id="TXN-CROMA-1041",
+                cardholder_id="usr_pooja_iyer",
+                dispute_reason=DisputeReason.PRODUCT_NOT_RECEIVED,
+                disputed_amount=18999.00,
+                cardholder_statement="Ordered OnePlus tablet from Croma online; Blue Dart tracking shows delivered but parcel was not received at Bengaluru residence.",
+                merchant_sla_hours=48
+            )
+            case_service.attach_evidence(
+                dispute_id=c1.header.dispute_id,
+                evidence_type=EvidenceType.COURIER_TRACKING,
+                source=EvidenceSource.COURIER_CARRIER,
+                raw_payload={
+                    "carrier": "Blue Dart Express",
+                    "tracking_number": "BLUEDART-88192034",
+                    "status": "DELIVERED",
+                    "delivery_address_match": True,
+                    "signed_by": "P. Iyer (Society Security Desk)"
+                },
+                actor="CARRIER:bluedart",
+                file_name="bluedart_delivery_proof.pdf"
+            )
+            case_service.create_dispute_case(
+                transaction_id="TXN-SWIGGY-1042",
+                cardholder_id="usr_rahul_verma",
+                dispute_reason=DisputeReason.DUPLICATE_PROCESSING,
+                disputed_amount=1499.00,
+                cardholder_statement="UPI payment debited twice on Swiggy Instamart order.",
+                merchant_sla_hours=48
+            )
+            case_service.create_dispute_case(
+                transaction_id="TXN-TATACLIQ-99281",
+                cardholder_id="usr_ananya_sen",
+                dispute_reason=DisputeReason.FRAUD_UNRECOGNIZED_CHARGE,
+                disputed_amount=24999.00,
+                cardholder_statement="Unauthorized luxury apparel charge on RuPay Platinum card.",
+                merchant_sla_hours=24
+            )
+        except Exception:
+            pass
+    yield
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -30,7 +88,8 @@ app = FastAPI(
     """,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
 from backend.app.core.security_headers import SecurityHeadersMiddleware
@@ -53,59 +112,6 @@ app.add_middleware(
 
 # Mount Version 1 API Router
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
-
-
-@app.on_event("startup")
-async def seed_initial_disputes_on_startup():
-    """Seeds in-memory store with demo disputes so UI and API have live data immediately."""
-    from backend.app.core.db import db_manager
-    if db_manager.pg_tables.get("disputes"):
-        return
-    try:
-        from backend.app.services.case_builder.service import case_service
-        from backend.app.models.schemas import DisputeReason
-        from database.mongodb.models import EvidenceType, EvidenceSource
-
-        c1 = case_service.create_dispute_case(
-            transaction_id="TXN-CROMA-1041",
-            cardholder_id="usr_pooja_iyer",
-            dispute_reason=DisputeReason.PRODUCT_NOT_RECEIVED,
-            disputed_amount=18999.00,
-            cardholder_statement="Ordered OnePlus tablet from Croma online; Blue Dart tracking shows delivered but parcel was not received at Bengaluru residence.",
-            merchant_sla_hours=48
-        )
-        case_service.attach_evidence(
-            dispute_id=c1.header.dispute_id,
-            evidence_type=EvidenceType.COURIER_TRACKING,
-            source=EvidenceSource.COURIER_CARRIER,
-            raw_payload={
-                "carrier": "Blue Dart Express",
-                "tracking_number": "BLUEDART-88192034",
-                "status": "DELIVERED",
-                "delivery_address_match": True,
-                "signed_by": "P. Iyer (Society Security Desk)"
-            },
-            actor="CARRIER:bluedart",
-            file_name="bluedart_delivery_proof.pdf"
-        )
-        case_service.create_dispute_case(
-            transaction_id="TXN-SWIGGY-1042",
-            cardholder_id="usr_rahul_verma",
-            dispute_reason=DisputeReason.DUPLICATE_PROCESSING,
-            disputed_amount=1499.00,
-            cardholder_statement="UPI payment debited twice on Swiggy Instamart order.",
-            merchant_sla_hours=48
-        )
-        case_service.create_dispute_case(
-            transaction_id="TXN-TATACLIQ-99281",
-            cardholder_id="usr_ananya_sen",
-            dispute_reason=DisputeReason.FRAUD_UNRECOGNIZED_CHARGE,
-            disputed_amount=24999.00,
-            cardholder_statement="Unauthorized luxury apparel charge on RuPay Platinum card.",
-            merchant_sla_hours=24
-        )
-    except Exception as e:
-        pass
 
 
 # Global Exception Handlers
