@@ -299,6 +299,11 @@ async def get_dispute_resolution(dispute_id: str):
     response_model=ReasoningResponse,
     summary="Generate or refresh explainable transparent reasoning for dispute case (FR-19, FR-20, SIR-07)"
 )
+@router.post(
+    "/{dispute_id}/reasoning/generate",
+    response_model=ReasoningResponse,
+    summary="Generate or refresh explainable transparent reasoning for dispute case (FR-19, FR-20, SIR-07)"
+)
 async def generate_dispute_reasoning(
     dispute_id: str,
     actor: str = Query("SYSTEM:reasoning_api", description="Actor identity triggering the explanation generation")
