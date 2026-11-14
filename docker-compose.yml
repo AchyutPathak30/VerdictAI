@@ -8,6 +8,12 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      # Snapshot the in-memory stores to the mounted volume (R-05: persistence
+      # across container restarts).
+      DB_PERSIST_PATH: /data/verdictai_store.json
+    volumes:
+      - pg_data:/data
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -30,3 +36,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+volumes:
+  pg_data:

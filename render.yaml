@@ -16,6 +16,12 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-1.5-flash
+      - key: DB_PERSIST_PATH
+        value: /data/verdictai_store.json
+    disk:
+      name: verdictai-data
+      mountPath: /data
+      sizeGB: 1
     healthCheckPath: /health
 
   - type: web
