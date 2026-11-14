@@ -303,8 +303,8 @@ class FairWeighingScoringService:
             from backend.app.services.reasoning_layer import transparent_reasoning_engine, ReasoningRequest
             reasoning_req = ReasoningRequest(
                 case_id=dispute_id,
-                category_id=cat_id,
-                category_name=cat_name,
+                category_id=scoring_payload["dispute_category_id"],
+                category_name=scoring_payload["dispute_category_name"],
                 recommended_resolution=resolution_str,
                 confidence_score=confidence,
                 card_member_score=eval_result["card_member_score"],
