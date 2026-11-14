@@ -179,4 +179,6 @@ The API, reasoning, and security layers are covered by comprehensive automated t
 - `backend/tests/test_reasoning_api.py` (Direct Reasoning REST endpoints, XAI generation & Guardrails tests)
 - `backend/tests/test_reasoning_guardrails.py` (Guardrail unit tests)
 - `backend/tests/test_e2e_milestone3.py` (102 synthetic chargeback scenarios)
-- Total test suite status: **461 / 461 tests passing (100%) in ~7.0 seconds**.
+- Total test suite status: **596 / 596 tests passing (100%) in ~9.8 seconds**.
+
+For full-system REST API coverage and operational guides across all personas, see the [VerdictAI Comprehensive User Guide & REST API Reference Manual](./USER_GUIDE_AND_API_DOCS.md).
