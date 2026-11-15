@@ -15,10 +15,12 @@ import { PasswordRecoveryScreen } from './components/screens/PasswordRecoveryScr
 import { EmptyDisputesScreen } from './components/screens/EmptyDisputesScreen';
 import { NotFoundScreen } from './components/screens/NotFoundScreen';
 import { CardholderPortalScreen } from './components/screens/CardholderPortalScreen';
+import { LoginScreen, UserPersona } from './components/screens/LoginScreen';
 import { ToastContainer, ToastMessage } from './components/common/Toast';
 import { CaseQueueItem } from './types/dispute';
 
 export const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [activeScreen, setActiveScreen] = useState<ScreenId>('dashboard');
   const [activeCaseId, setActiveCaseId] = useState<string>('DSP-1041');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -49,6 +51,55 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setActiveScreen('dashboard');
+    addToast({
+      type: 'info',
+      title: 'Session Locked',
+      message: 'Signed out securely. Please authenticate to access the workspace.'
+    });
+  };
+
+  // If user is not authenticated and hasn't navigated to Password Recovery
+  if (!isAuthenticated && activeScreen !== 'password-recovery') {
+    return (
+      <div className="min-h-screen w-screen bg-slate-950">
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
+        <LoginScreen
+          onLogin={(user: UserPersona, targetScreen: ScreenId) => {
+            setCurrentUser({
+              name: user.name,
+              role: user.role,
+              avatar: user.avatar,
+            });
+            setActiveScreen(targetScreen);
+            setIsAuthenticated(true);
+          }}
+          onNavigateToForgotPassword={() => {
+            setActiveScreen('password-recovery');
+          }}
+          onAddToast={addToast}
+        />
+      </div>
+    );
+  }
+
+  // If user is accessing Password Recovery directly from Login
+  if (!isAuthenticated && activeScreen === 'password-recovery') {
+    return (
+      <div className="min-h-screen w-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
+        <div className="w-full max-w-md">
+          <PasswordRecoveryScreen
+            onBackToLogin={() => setActiveScreen('dashboard')}
+            onAddToast={addToast}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-surface-bg text-slate-800">
       {/* Global Toast Notification Container */}
@@ -66,6 +117,7 @@ export const App: React.FC = () => {
         {/* Sticky Top Header */}
         <TopHeader
           currentUser={currentUser}
+          onLogout={handleLogout}
           onSwitchUser={(user) => {
             setCurrentUser(user);
             addToast({

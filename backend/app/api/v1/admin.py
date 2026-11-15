@@ -6,6 +6,7 @@ Author: Darshan Prajapati (Backend Engineer - Reasoning & APIs)
 import math
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, status, Depends
+from pydantic import BaseModel
 from backend.app.models.schemas import DisputeStatus, ResolutionOutcome
 from backend.app.models.api_schemas import (
     AdminOverrideRequest,
@@ -204,4 +205,72 @@ async def get_audit_report(
             "audit_chain_integrity": "VERIFIED_100%"
         },
         "records": resolutions
+    }
+
+
+class AdminProvisionRequest(BaseModel):
+    name: str
+    email: str
+    role: str = "ADMIN"
+    department: Optional[str] = "Dispute Operations"
+    clearance_level: Optional[str] = "Level 3 - Audit & Overrides"
+
+
+@router.post(
+    "/users/provision",
+    summary="Provision internal bank admin or dispute investigator credentials (Head Admin only)"
+)
+async def provision_admin_user(
+    payload: AdminProvisionRequest,
+    current_user: AuthenticatedUser = Depends(require_roles(["ADMIN"]))
+):
+    """
+    Enforces banking governance: Only Head Admin (role: ADMIN) can provision internal administrative users.
+    Direct self-registration is strictly disallowed. Every provisioning event is logged to the cryptographic audit trail.
+    """
+    import uuid
+    from backend.app.core.security import ENTERPRISE_PERSONAS, ROLE_SCOPES, UserRole
+
+    role_enum = UserRole.ADMIN if "admin" in payload.role.lower() else UserRole.DISPUTE_ANALYST
+    user_id = f"usr_{payload.email.split('@')[0]}_{uuid.uuid4().hex[:6]}"
+
+    new_user = AuthenticatedUser(
+        user_id=user_id,
+        email=payload.email,
+        full_name=payload.name,
+        role=role_enum,
+        scopes=list(ROLE_SCOPES[role_enum])
+    )
+    ENTERPRISE_PERSONAS[user_id] = new_user
+    db_manager.insert_pg_record("users", user_id, {
+        "id": user_id,
+        "email": payload.email,
+        "full_name": payload.name,
+        "role": role_enum.value,
+        "department": payload.department,
+        "clearance": payload.clearance_level,
+        "is_active": True,
+        "provisioned_by": current_user.user_id,
+        "created_at": int(utc_now().timestamp())
+    })
+
+    # Audit log
+    audit_engine.log_event(
+        dispute_id="SYS-PROVISION",
+        performed_by=f"ADMIN:{current_user.user_id}",
+        action_type="ADMIN_USER_PROVISIONED",
+        previous_state=None,
+        new_state={"user_id": user_id, "role": role_enum.value, "email": payload.email},
+        state_delta={"department": payload.department, "clearance": payload.clearance_level}
+    )
+
+    return {
+        "user_id": user_id,
+        "name": payload.name,
+        "email": payload.email,
+        "role": role_enum.value,
+        "clearance_level": payload.clearance_level,
+        "status": "ACTIVE",
+        "provisioned_by": current_user.user_id,
+        "timestamp": utc_now().isoformat()
     }

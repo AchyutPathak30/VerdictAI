@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, ChevronDown, CheckCircle2, Shield, User } from 'lucide-react';
+import { Search, Bell, ChevronDown, CheckCircle2, Shield, User, LogOut } from 'lucide-react';
 import { ScreenId } from './Sidebar';
 
 interface TopHeaderProps {
@@ -11,6 +11,7 @@ interface TopHeaderProps {
   };
   onSwitchUser?: (user: { name: string; role: string; avatar: string }) => void;
   onNavigateToScreen?: (screen: ScreenId, caseId?: string) => void;
+  onLogout?: () => void;
 }
 
 const USERS = [
@@ -46,6 +47,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   currentUser,
   onSwitchUser,
   onNavigateToScreen,
+  onLogout,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -187,9 +189,36 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   </button>
                 ))}
               </div>
+
+              {onLogout && (
+                <div className="pt-2 mt-1 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      onLogout();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out (Lock Session)</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Quick Sign Out Action */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Sign Out to Login Portal"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
+        )}
       </div>
     </header>
   );
