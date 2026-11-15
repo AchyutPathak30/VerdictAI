@@ -23,7 +23,12 @@ export const getCardholderTransactions = async (
       `[VerdictAI] Transactions API offline (${err?.message || 'timeout'}). Using fallback seed data.`
     );
     setBackendReachable(false);
-    return FALLBACK_TRANSACTIONS.filter((t) => t.user_id === cardholderId || !cardholderId);
+    return FALLBACK_TRANSACTIONS.filter(
+      (t) =>
+        !cardholderId ||
+        t.user_id === cardholderId ||
+        (cardholderId.startsWith('usr_pooja') && t.user_id.startsWith('usr_pooja'))
+    );
   }
 };
 

@@ -139,7 +139,7 @@ export default function LoginScreen({ navigation }: Props) {
           <View style={styles.demoNote}>
             <Text style={styles.demoTitle}>🔧 Demo Mode Cardholder Account</Text>
             <Text style={styles.demoText}>
-              Pre-filled with <Text style={{ fontWeight: 'bold' }}>usr_alice_01</Text> credentials. Tap Sign In to proceed directly to 2FA verification.
+              Pre-filled with <Text style={{ fontWeight: 'bold' }}>pooja.iyer@gmail.com (Pooja Iyer)</Text> credentials. Tap Sign In to proceed directly to 2FA verification.
             </Text>
           </View>
         </ScrollView>
