@@ -112,8 +112,9 @@ VerdictAI leverages **Render Cloud PaaS** and **Docker containerization** for au
        dockerfilePath: web-app/Dockerfile
        dockerContext: .
        plan: free
-       buildArgs:
-         VITE_API_BASE_URL: https://verdictai-api.onrender.com/api/v1
+       envVars:
+         - key: VITE_API_BASE_URL
+           value: https://verdictai-api.onrender.com/api/v1
    ```
 
 ---
