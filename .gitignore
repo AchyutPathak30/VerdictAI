@@ -29,6 +29,7 @@ Thumbs.db
 *.pdf
 *.txt
 *.docx
+!DEPLOYMENT_AND_HOSTING.docx
 *.doc
 *.tex
 *.csv
