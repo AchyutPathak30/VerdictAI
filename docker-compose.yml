@@ -1,4 +1,4 @@
-# Local stack: FastAPI gateway + React web console.
+# VerdictAI local stack: FastAPI gateway + React web console.
 # Usage: cp .env.example .env && docker compose up --build
 services:
   api:
@@ -10,6 +10,13 @@ services:
         required: false
     ports:
       - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   web:
     build:
@@ -19,5 +26,7 @@ services:
         VITE_API_BASE_URL: http://localhost:8000/api/v1
     ports:
       - "5173:80"
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
