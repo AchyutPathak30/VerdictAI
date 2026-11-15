@@ -14,7 +14,8 @@ import {
   Lock,
   Inbox,
   AlertOctagon,
-  CreditCard
+  CreditCard,
+  X
 } from 'lucide-react';
 
 export type ScreenId = 
@@ -40,9 +41,17 @@ interface SidebarProps {
     role: string;
     avatar: string;
   };
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, currentUser }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeScreen,
+  onSelectScreen,
+  currentUser,
+  mobileOpen = false,
+  onCloseMobile
+}) => {
   const roleLower = (currentUser?.role || 'admin').toLowerCase();
 
   // Role-based navigation filtering
@@ -80,22 +89,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, 
     ];
   }
 
-  return (
-    <aside className="w-64 bg-slate-950 text-slate-300 flex flex-col justify-between shrink-0 select-none border-r border-slate-900 h-screen">
+  const renderNavContent = (isMobileDrawer: boolean = false) => (
+    <>
       {/* Brand Header */}
       <div>
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/80">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <ShieldCheck className="w-5 h-5" />
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-white tracking-tight leading-none">
+                VerdictAI
+              </span>
+              <span className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase mt-1">
+                Gateway v1.0
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold text-white tracking-tight leading-none">
-              VerdictAI
-            </span>
-            <span className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase mt-1">
-              Gateway v1.0
-            </span>
-          </div>
+          {isMobileDrawer && (
+            <button
+              onClick={onCloseMobile}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+              title="Close Menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Dynamic RBAC Security Scope Pill */}
@@ -115,7 +135,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, 
             return (
               <button
                 key={item.id}
-                onClick={() => onSelectScreen(item.id)}
+                onClick={() => {
+                  onSelectScreen(item.id);
+                  if (isMobileDrawer) onCloseMobile?.();
+                }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   isActive
                     ? 'bg-blue-600 text-white font-semibold shadow-sm'
@@ -136,7 +159,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, 
             <div className="pt-3 border-t border-slate-800/80 my-2 space-y-1">
               <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">System States</p>
               <button
-                onClick={() => onSelectScreen('empty-state')}
+                onClick={() => {
+                  onSelectScreen('empty-state');
+                  if (isMobileDrawer) onCloseMobile?.();
+                }}
                 className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   activeScreen === 'empty-state' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                 }`}
@@ -145,7 +171,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, 
                 <span>WEB-13: Zero State</span>
               </button>
               <button
-                onClick={() => onSelectScreen('password-recovery')}
+                onClick={() => {
+                  onSelectScreen('password-recovery');
+                  if (isMobileDrawer) onCloseMobile?.();
+                }}
                 className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   activeScreen === 'password-recovery' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                 }`}
@@ -154,7 +183,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, 
                 <span>WEB-02: Auth Reset</span>
               </button>
               <button
-                onClick={() => onSelectScreen('not-found')}
+                onClick={() => {
+                  onSelectScreen('not-found');
+                  if (isMobileDrawer) onCloseMobile?.();
+                }}
                 className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   activeScreen === 'not-found' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                 }`}
@@ -174,7 +206,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeScreen, onSelectScreen, 
           <span>REST API: 8000/api/v1</span>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar (Permanent on md and above) */}
+      <aside className="hidden md:flex w-64 bg-slate-950 text-slate-300 flex-col justify-between shrink-0 select-none border-r border-slate-900 h-screen">
+        {renderNavContent(false)}
+      </aside>
+
+      {/* Mobile Drawer (Overlay on small screens) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+            onClick={onCloseMobile}
+          />
+          <aside className="relative w-72 max-w-[85vw] bg-slate-950 text-slate-300 flex flex-col justify-between shrink-0 select-none border-r border-slate-900 h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            {renderNavContent(true)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 };
+
 

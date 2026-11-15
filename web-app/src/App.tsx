@@ -21,6 +21,7 @@ import { CaseQueueItem } from './types/dispute';
 
 export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [activeScreen, setActiveScreen] = useState<ScreenId>('dashboard');
   const [activeCaseId, setActiveCaseId] = useState<string>('DSP-1041');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -108,18 +109,25 @@ export const App: React.FC = () => {
       {/* Fixed Navy Sidebar with Dynamic RBAC */}
       <Sidebar
         activeScreen={activeScreen}
-        onSelectScreen={(screen) => setActiveScreen(screen)}
+        onSelectScreen={(screen) => {
+          setActiveScreen(screen);
+          setMobileMenuOpen(false);
+        }}
         currentUser={currentUser}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
       {/* Main Workspace Container */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden w-full min-w-0">
         {/* Sticky Top Header */}
         <TopHeader
           currentUser={currentUser}
           onLogout={handleLogout}
+          onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           onSwitchUser={(user) => {
             setCurrentUser(user);
+            setMobileMenuOpen(false);
             addToast({
               type: 'info',
               title: 'Role Switch',
@@ -139,6 +147,7 @@ export const App: React.FC = () => {
           onNavigateToScreen={(screen, caseId) => {
             if (caseId) setActiveCaseId(caseId);
             setActiveScreen(screen);
+            setMobileMenuOpen(false);
             addToast({
               type: 'info',
               title: 'Navigating',
@@ -148,7 +157,7 @@ export const App: React.FC = () => {
         />
 
         {/* Scrollable Screen Canvas */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8">
           <div className="max-w-7xl mx-auto pb-10">
             {activeScreen === 'dashboard' && (
               <AdminDashboardScreen
