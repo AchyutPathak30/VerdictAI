@@ -554,3 +554,29 @@ def test_dispute_reasoning_nonexistent_returns_404(client):
     resp_exp = client.get("/api/v1/disputes/disp_missing_999/reasoning/explanation")
     assert resp_exp.status_code == 404
 
+def test_generate_dispute_reasoning_generate_alias_endpoint(client):
+    """
+    Phase 7 Delivery & Alignment (Darshan Prajapati - SRS FR-19, FR-20):
+    Verifies that POST /api/v1/disputes/{id}/reasoning/generate functions as an alias to
+    POST /api/v1/disputes/{id}/reasoning and produces complete dual-perspective XAI rationales.
+    """
+    created = client.post("/api/v1/disputes", json={
+        "transaction_id": "txn_valid_003",
+        "cardholder_id": "usr_alice_01",
+        "dispute_reason": DisputeReason.PRODUCT_DAMAGED_OR_DEFECTIVE.value,
+        "disputed_amount": 1200.00,
+        "cardholder_statement": "Item screen arrived shattered."
+    }).json()
+    dispute_id = created["header"]["dispute_id"]
+
+    resp = client.post(f"/api/v1/disputes/{dispute_id}/reasoning/generate?actor=ANALYST:darshan")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["case_id"] == dispute_id
+    assert len(data["summary"]) > 20
+    assert len(data["cardholder_rationale"]) > 20
+    assert len(data["merchant_rationale"]) > 20
+    assert len(data["contributing_factors"]) >= 3
+    assert data["guardrails_applied"] is True
+

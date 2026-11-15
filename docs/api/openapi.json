@@ -28,6 +28,146 @@
         }
       }
     },
+    "/api/v1/auth/token": {
+      "post": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "Obtain JWT token for persona",
+        "description": "Issues a cryptographically signed HMAC-SHA256 JWT token for an enterprise persona.",
+        "operationId": "obtain_token_api_v1_auth_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "Get current authenticated user profile",
+        "description": "Returns the resolved identity, role, and permission scopes of the calling user.",
+        "operationId": "get_my_profile_api_v1_auth_me_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Role"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticatedUser"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/personas": {
+      "get": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "List enterprise personas for demonstration",
+        "description": "Returns the list of 4 enterprise personas for demonstration and testing.",
+        "operationId": "list_personas_api_v1_auth_personas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Personas Api V1 Auth Personas Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/transactions/cardholder/{cardholder_id}": {
       "get": {
         "tags": [
@@ -408,8 +548,8 @@
         "tags": [
           "Disputes"
         ],
-        "summary": "Get cryptographic audit trail",
-        "description": "Returns the full audit log chain and cryptographic integrity verification status (SRS FR-21, FR-32).",
+        "summary": "Get tamper-evident cryptographic audit trail & Merkle root (SRS FR-21, FR-32)",
+        "description": "Returns the complete SHA-256 hash-chained audit trail, Merkle tree root,\nand integrity validation status for a dispute case.",
         "operationId": "get_dispute_audit_trail_api_v1_disputes__dispute_id__audit_trail_get",
         "parameters": [
           {
@@ -524,6 +664,61 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/reasoning/generate": {
+      "post": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Generate or refresh explainable transparent reasoning for dispute case (FR-19, FR-20, SIR-07)",
+        "description": "On-demand reasoning generation endpoint bridging dispute case lifecycle and\nthe Transparent Reasoning Layer (Phase 5 Integration).\nProduces dual-perspective plain-language explanations, audits with deterministic guardrails,\npersists reasoning into PostgreSQL, and records a cryptographic audit event.",
+        "operationId": "generate_dispute_reasoning_api_v1_disputes__dispute_id__reasoning_generate_post",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Actor identity triggering the explanation generation",
+              "default": "SYSTEM:reasoning_api",
+              "title": "Actor"
+            },
+            "description": "Actor identity triggering the explanation generation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResponse"
+                }
               }
             }
           },
@@ -687,6 +882,11 @@
         "summary": "Manual decision override directly on dispute case with mandatory audit justification (FR-27, AC-13)",
         "description": "Allows human dispute analysts or ops managers to execute a manual decision override\ndirectly on the dispute resource. Enforces mandatory justification (>= 10 chars) and\nupdates the cryptographic audit trail (SRS FR-27, AC-13).",
         "operationId": "override_dispute_decision_direct_api_v1_disputes__dispute_id__override_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "dispute_id",
@@ -695,6 +895,38 @@
             "schema": {
               "type": "string",
               "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "X-User-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Role"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
             }
           }
         ],
@@ -708,6 +940,56 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disputes/{dispute_id}/merkle-proof/{log_id}": {
+      "get": {
+        "tags": [
+          "Disputes"
+        ],
+        "summary": "Get cryptographic Merkle inclusion proof for audit event",
+        "description": "Returns a verifiable Merkle inclusion proof for an individual audit event.",
+        "operationId": "get_merkle_inclusion_proof_api_v1_disputes__dispute_id__merkle_proof__log_id__get",
+        "parameters": [
+          {
+            "name": "dispute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "log_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Log Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -950,6 +1232,11 @@
         "summary": "Get prioritized admin review queue",
         "description": "Returns prioritized cases requiring human oversight (confidence < 50% or explicit escalation) (SRS FR-17, FR-25, US-AD-01).",
         "operationId": "get_admin_queue_api_v1_admin_queue_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "status_filter",
@@ -992,6 +1279,38 @@
               "default": 20,
               "title": "Page Size"
             }
+          },
+          {
+            "name": "X-User-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Role"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
           }
         ],
         "responses": {
@@ -1026,6 +1345,11 @@
         "summary": "Manual decision override with mandatory audit reasoning",
         "description": "Executes a manual admin override on an automated or flagged decision.\nEnforces mandatory written justification per SRS FR-27 and AC-13.",
         "operationId": "override_dispute_decision_api_v1_admin_disputes__dispute_id__override_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "dispute_id",
@@ -1034,6 +1358,38 @@
             "schema": {
               "type": "string",
               "title": "Dispute Id"
+            }
+          },
+          {
+            "name": "X-User-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Role"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
             }
           }
         ],
@@ -1491,6 +1847,48 @@
           "analyst_name"
         ],
         "title": "AssignCaseRequest"
+      },
+      "AuthenticatedUser": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes"
+          },
+          "issued_at": {
+            "type": "integer",
+            "title": "Issued At"
+          },
+          "expires_at": {
+            "type": "integer",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "full_name",
+          "role"
+        ],
+        "title": "AuthenticatedUser"
       },
       "Body_upload_evidence_file_api_v1_evidence_upload_post": {
         "properties": {
@@ -2424,6 +2822,46 @@
         "type": "object",
         "title": "SystemStatusResponse"
       },
+      "TokenRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "TokenRequest"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "default": 86400
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthenticatedUser"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "TokenResponse"
+      },
       "TransactionDTO": {
         "properties": {
           "id": {
@@ -2605,6 +3043,16 @@
         "title": "UnifiedCaseFile",
         "description": "Consolidated, tamper-evident case file aggregating transactional data,\npolymorphic evidence from MongoDB, scoring inputs, and audit chain."
       },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "CARDHOLDER",
+          "MERCHANT",
+          "DISPUTE_ANALYST",
+          "ADMIN"
+        ],
+        "title": "UserRole"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -2644,6 +3092,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
