@@ -18,22 +18,17 @@ The entire platform is production-ready, containerized, and deployed with zero e
 
 ---
 
-## 2. Public Live URLs & Endpoints Directory
+## 2. Public Live URLs & Core Deliverables
 
-| Service / Interface | Public Live URL / Endpoint | Purpose & Features |
+| Deliverable / Interface | Public URL | Purpose & Capabilities |
 | :--- | :--- | :--- |
-| **Web App Console** | [`https://verdictai-web.onrender.com`](https://verdictai-web.onrender.com) | Multi-persona dashboard (Cardholder, Merchant, Investigator, Admin Lead) |
-| **REST API Gateway** | [`https://verdictai-api.onrender.com`](https://verdictai-api.onrender.com) | Root API Gateway entrypoint providing service navigation |
-| **Interactive Swagger UI** | [`https://verdictai-api.onrender.com/docs`](https://verdictai-api.onrender.com/docs) | Interactive OpenAPI 3.0 test console for all dispute & evidence endpoints |
-| **ReDoc API Documentation**| [`https://verdictai-api.onrender.com/redoc`](https://verdictai-api.onrender.com/redoc) | Clean, formal OpenAPI technical reference documentation |
-| **OpenAPI 3.0 Spec** | [`https://verdictai-api.onrender.com/openapi.json`](https://verdictai-api.onrender.com/openapi.json) | Raw machine-readable OpenAPI 3.0 JSON specification |
-| **Health Liveness Probe** | [`https://verdictai-api.onrender.com/health`](https://verdictai-api.onrender.com/health) | Container orchestration healthcheck probe (`{"status": "healthy"}`) |
-| **Operational Metrics** | [`https://verdictai-api.onrender.com/api/v1/system/metrics`](https://verdictai-api.onrender.com/api/v1/system/metrics) | Real-time SLA compliance, dispute outcome counts, and evidence stats |
-| **GitHub Repository** | [`https://github.com/AchyutPathak30/VerdictAI`](https://github.com/AchyutPathak30/VerdictAI) | Source repository with CI/CD actions and Docker configuration |
+| **Live Working Web App** | [`https://verdictai-web.onrender.com`](https://verdictai-web.onrender.com) | Multi-role dispute resolution console (Cardholder, Merchant, Investigator, Admin Lead) |
+| **API & Interactive Docs** | [`https://verdictai-api.onrender.com/docs`](https://verdictai-api.onrender.com/docs) | Interactive Swagger API explorer for all dispute lifecycle, evidence, & auth endpoints |
+| **GitHub Repository** | [`https://github.com/AchyutPathak30/VerdictAI`](https://github.com/AchyutPathak30/VerdictAI) | Complete source code, Docker configs, and automated GitHub Actions CI/CD workflows |
 
 > **Local Mirror (via Docker Compose):**
 > * Web Console: `http://localhost:5173`
-> * API Gateway: `http://localhost:8000` (Docs at `http://localhost:8000/docs`)
+> * API Gateway: `http://localhost:8000/docs`
 
 ---
 
