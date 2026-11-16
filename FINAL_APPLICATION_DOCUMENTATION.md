@@ -182,3 +182,4 @@ VerdictAI exposes a clean, versioned RESTful Service-Oriented Architecture (`/ap
 ---
 
 *Submitted in partial fulfillment of the requirements for IT644 (Web Services & Service-Oriented Architecture), Autumn 2026.*
+
