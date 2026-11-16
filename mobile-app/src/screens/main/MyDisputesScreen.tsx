@@ -21,8 +21,8 @@ type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'MyDisputes'>;
 };
 
-// Hardcoded demo cardholder ID matching backend seed data
-const DEMO_CARDHOLDER_ID = 'usr_alice_01';
+// Demo cardholder ID matching backend seed data (Pooja Iyer)
+const DEMO_CARDHOLDER_ID = 'usr_pooja_01';
 
 const STATUS_CONFIG: Record<
   string,
@@ -54,7 +54,62 @@ export default function MyDisputesScreen({ navigation }: Props) {
 
     try {
       const response = await getDisputes(DEMO_CARDHOLDER_ID);
-      setDisputes(response.items);
+      const items = [...response.items];
+
+      // Web cross-storage sync: also surface any newly filed disputes from unified browser store
+      const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
+      if (win && win.localStorage) {
+        try {
+          const raw = win.localStorage.getItem('verdictai_master_disputes_v3');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              for (const p of parsed) {
+                if (!items.some((it) => it.header.dispute_id.toLowerCase() === p.id.toLowerCase())) {
+                  items.unshift({
+                    case_hash_sha256: p.sha256Hash || 'sha256_client_verified_hash',
+                    audit_chain_length: 3,
+                    header: {
+                      case_file_id: p.caseFileId || `cf_${p.id}`,
+                      dispute_id: p.id,
+                      case_reference_number: `CAS-${p.id}`,
+                      dispute_reason: (p.reason || 'PRODUCT_NOT_RECEIVED').replace(/ /g, '_').toUpperCase() as any,
+                      current_status: (p.status?.toLowerCase().includes('refund') || p.status?.toLowerCase().includes('settled') || p.status?.toLowerCase().includes('approv'))
+                        ? 'AUTO_RESOLVED'
+                        : 'IN_ANALYSIS',
+                      disputed_amount: p.amount || 18999,
+                      currency: 'INR',
+                      sla_deadline: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+                      created_at: new Date().toISOString(),
+                      is_sealed: false,
+                      sealed_at: null,
+                    },
+                    transaction: {
+                      transaction_id: `txn_${p.id}`,
+                      cardholder_id: 'usr_pooja_01',
+                      merchant_id: 'm_merchant_001',
+                      merchant_name: p.merchant || 'Reliance Digital Retail Ltd',
+                      amount: p.amount || 18999,
+                      currency: 'INR',
+                      cardholder_name: p.cardholderName || 'Pooja Iyer',
+                      payment_method: 'HDFC RuPay **** 4492',
+                      transaction_timestamp: new Date().toISOString(),
+                    },
+                    evidence_items: [],
+                    cardholder_statement: p.cardholderStatement || 'Transaction contested by cardholder.',
+                    merchant_response_statement: null,
+                    resolution: null,
+                  });
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore web localStorage parse error
+        }
+      }
+
+      setDisputes(items);
       setIsLiveApi(getBackendReachable());
     } catch {
       setIsLiveApi(false);

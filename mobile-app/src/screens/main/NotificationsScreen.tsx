@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -69,10 +69,29 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 export default function NotificationsScreen() {
-  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length;
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleToggleRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
+    );
+  };
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+  };
 
   const renderItem = ({ item }: { item: Notification }) => (
-    <View style={[styles.card, !item.read && styles.unreadCard]}>
+    <TouchableOpacity
+      style={[styles.card, !item.read && styles.unreadCard]}
+      onPress={() => handleToggleRead(item.id)}
+      activeOpacity={0.8}
+    >
       <View style={styles.cardLeft}>
         <View style={styles.iconCircle}>
           <Text style={styles.icon}>{item.icon}</Text>
@@ -85,7 +104,7 @@ export default function NotificationsScreen() {
         </View>
         <Text style={styles.cardBody}>{item.body}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -98,18 +117,35 @@ export default function NotificationsScreen() {
           <Text style={styles.title}>Alerts & Notifications</Text>
           <Text style={styles.subtitle}>Real-time dispute lifecycle events</Text>
         </View>
-        {unreadCount > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{unreadCount} New</Text>
-          </View>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {unreadCount > 0 ? (
+            <TouchableOpacity onPress={handleMarkAllRead} style={styles.actionPill}>
+              <Text style={styles.actionPillText}>Read All ({unreadCount})</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handleClearAll} style={styles.actionPill}>
+              <Text style={styles.actionPillText}>Clear All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <FlatList
-        data={MOCK_NOTIFICATIONS}
+        data={notifications}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={{ alignItems: 'center', paddingVertical: 40, gap: 8 }}>
+            <Text style={{ fontSize: 36 }}>📭</Text>
+            <Text style={{ fontSize: Typography.base, fontWeight: Typography.bold, color: Colors.textSecondary }}>
+              No active alerts
+            </Text>
+            <Text style={{ fontSize: Typography.xs, color: Colors.textMuted }}>
+              You are completely up-to-date with your dispute cases.
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -137,6 +173,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   badgeText: { fontSize: Typography.xs, color: '#fff', fontWeight: Typography.bold },
+  actionPill: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm + 4,
+    paddingVertical: 5,
+  },
+  actionPillText: { fontSize: Typography.xs, color: '#1E40AF', fontWeight: Typography.bold },
   list: { padding: Spacing.xl, gap: Spacing.md },
   card: {
     flexDirection: 'row',

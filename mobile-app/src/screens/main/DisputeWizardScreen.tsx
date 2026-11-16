@@ -23,7 +23,16 @@ type Props = {
   navigation: NativeStackNavigationProp<FileDisputeStackParamList, 'DisputeWizard'>;
 };
 
-const DEMO_CARDHOLDER_ID = 'usr_alice_01';
+const DEMO_CARDHOLDER_ID = 'usr_pooja_01';
+
+const DEFAULT_STATEMENTS: Record<string, string> = {
+  PRODUCT_NOT_RECEIVED: 'Ordered item was marked as delivered by courier, but package was never received at my residence address.',
+  PRODUCT_DAMAGED_OR_DEFECTIVE: 'Merchandise arrived damaged upon unboxing; transit impact crushed packaging and damaged item.',
+  DUPLICATE_PROCESSING: 'Card debited twice within 3 minutes for single purchase on merchant POS terminal. Second transaction is an erroneous duplicate charge.',
+  FRAUD_UNRECOGNIZED_CHARGE: 'Unrecognized card-not-present transaction initiated without cardholder consent or 2FA OTP verification.',
+  SUBSCRIPTION_CANCELLED_CHARGED: 'Subscription was cancelled within billing cycle, but recurring card debit was processed.',
+  INCORRECT_AMOUNT_CHARGED: 'Billed transaction total exceeds the authorized invoice amount displayed at merchant checkout.'
+};
 
 const DISPUTE_REASONS: { value: DisputeReason; label: string; icon: string }[] = [
   { value: 'PRODUCT_NOT_RECEIVED', label: 'Item Not Received', icon: '📦' },
@@ -121,6 +130,38 @@ export default function DisputeWizardScreen({ navigation }: Props) {
         });
       }
 
+      // Sync across browser localStorage if running on web platform
+      const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
+      if (win && win.localStorage) {
+        try {
+          const raw = win.localStorage.getItem('verdictai_master_disputes_v3');
+          const list = raw ? JSON.parse(raw) : [];
+          list.unshift({
+            id: caseFile.header.dispute_id,
+            caseFileId: caseFile.header.case_file_id,
+            merchant: selectedTxn.merchant_name,
+            amount: selectedTxn.amount,
+            currency: '₹',
+            reason: selectedReason.replace(/_/g, ' '),
+            date: 'Today',
+            status: 'Submitted (SLA Active)',
+            statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
+            riskLevel: selectedTxn.amount > 10000 ? 'High' : 'Medium',
+            action: 'Review',
+            slaCountdown: '47h 59m remaining',
+            sha256Hash: caseFile.case_hash_sha256 || `sha256_${Date.now()}_mobile_sealed`,
+            courier: 'Awaiting Merchant Counter-Proof',
+            aiVerdict: 'Dispute ingested into Fair-Weighing ML queue.',
+            aiScore: 88,
+            cardholderId: 'usr_pooja_01',
+            cardholderName: 'Pooja Iyer',
+            cardholderStatement: statement.trim(),
+            attachedFile: evidenceFile?.name
+          });
+          win.localStorage.setItem('verdictai_master_disputes_v3', JSON.stringify(list));
+        } catch {}
+      }
+
       navigation.replace('DisputeSuccess', {
         caseId: caseFile.header.dispute_id,
         referenceNumber: caseFile.header.case_reference_number,
@@ -208,7 +249,12 @@ export default function DisputeWizardScreen({ navigation }: Props) {
               <TouchableOpacity
                 key={reason.value}
                 style={[styles.reasonCard, selectedReason === reason.value && styles.reasonCardSelected]}
-                onPress={() => setSelectedReason(reason.value)}
+                onPress={() => {
+                  setSelectedReason(reason.value);
+                  if (!statement || Object.values(DEFAULT_STATEMENTS).includes(statement)) {
+                    setStatement(DEFAULT_STATEMENTS[reason.value] || '');
+                  }
+                }}
                 activeOpacity={0.8}
               >
                 <Text style={styles.reasonIcon}>{reason.icon}</Text>

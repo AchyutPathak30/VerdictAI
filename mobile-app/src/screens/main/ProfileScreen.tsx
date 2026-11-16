@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,8 @@ const DEMO_USER = {
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -40,6 +42,40 @@ export default function ProfileScreen() {
           },
         },
       ]
+    );
+  };
+
+  const handleToggleBiometrics = () => {
+    setBiometricsEnabled(!biometricsEnabled);
+    Alert.alert(
+      'Biometric Preference Updated',
+      !biometricsEnabled
+        ? 'Face ID / Touch ID authentication enabled for fast login.'
+        : 'Biometric login disabled. 2FA email passkey will be required.'
+    );
+  };
+
+  const handleToggleNotifications = () => {
+    setNotificationsEnabled(!notificationsEnabled);
+    Alert.alert(
+      'Notification Preference',
+      !notificationsEnabled
+        ? 'Real-time dispute lifecycle alerts activated.'
+        : 'Push notifications paused.'
+    );
+  };
+
+  const handleShowPolicyGuide = () => {
+    Alert.alert(
+      'VerdictAI Dispute Policy & SLA Guide',
+      '• Statutory SLA: 48 hours for merchant evidence submission.\n• Impartial Fair-Weighing ML: Multi-factor mathematical scoring.\n• Cryptographic Integrity: SHA-256 hashing on all evidence.\n• Reversal Guarantee: Automated member credit upon verified claim.'
+    );
+  };
+
+  const handleShowCryptoProof = () => {
+    Alert.alert(
+      'Cryptographic Ledger Attestation',
+      'Merkle Root: 0x9f1a...4bfd\nAlgorithm: SHA-256 Sealed\nCompliance: RBI Master Direction & Visa Core Rules 2026\nStatus: Tamper-Evident Immutable Chain Active'
     );
   };
 
@@ -82,10 +118,30 @@ export default function ProfileScreen() {
         {/* Account Settings */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionHeader}>PREFERENCES & SECURITY</Text>
-          <ActionItem label="Biometric Sign-In" value="Enabled (Touch ID)" icon="👆" />
-          <ActionItem label="Push Notifications" value="Active (Instant)" icon="🔔" />
-          <ActionItem label="Dispute Policy Guide" value="SRS FR-01 - FR-20" icon="📖" />
-          <ActionItem label="Cryptographic Verification" value="SHA-256 / Merkle" icon="🔐" />
+          <ActionItem
+            label="Biometric Sign-In"
+            value={biometricsEnabled ? 'Enabled (Touch / Face ID)' : 'Disabled'}
+            icon="👆"
+            onPress={handleToggleBiometrics}
+          />
+          <ActionItem
+            label="Push Notifications"
+            value={notificationsEnabled ? 'Active (Instant)' : 'Muted'}
+            icon="🔔"
+            onPress={handleToggleNotifications}
+          />
+          <ActionItem
+            label="Dispute Policy Guide"
+            value="View Rules & SLA"
+            icon="📖"
+            onPress={handleShowPolicyGuide}
+          />
+          <ActionItem
+            label="Cryptographic Verification"
+            value="SHA-256 / Merkle Ledger"
+            icon="🔐"
+            onPress={handleShowCryptoProof}
+          />
         </View>
 
         {/* Sign Out Button */}
@@ -101,16 +157,26 @@ export default function ProfileScreen() {
   );
 }
 
-function ActionItem({ label, value, icon }: { label: string; value: string; icon: string }) {
+function ActionItem({
+  label,
+  value,
+  icon,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  icon: string;
+  onPress: () => void;
+}) {
   return (
-    <View style={styles.actionRow}>
+    <TouchableOpacity style={styles.actionRow} onPress={onPress} activeOpacity={0.7}>
       <Text style={styles.actionIcon}>{icon}</Text>
       <View style={styles.actionTextCol}>
         <Text style={styles.actionLabel}>{label}</Text>
         <Text style={styles.actionValue}>{value}</Text>
       </View>
       <Text style={styles.arrowIcon}>›</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 

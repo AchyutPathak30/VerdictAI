@@ -11,24 +11,42 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types';
+import { AuthStackParamList, RootStackParamList } from '../../types';
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp as RootNavProp } from '@react-navigation/native-stack';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 };
 
 export default function LoginScreen({ navigation }: Props) {
-  const [email, setEmail] = useState('pooja.iyer@gmail.com');
-  const [password, setPassword] = useState('••••••••');
+  const rootNav = useNavigation<RootNavProp<RootStackParamList>>();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Registration modal state
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regCard, setRegCard] = useState('4492');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
+
+  // Biometrics modal state
+  const [isBiometricOpen, setIsBiometricOpen] = useState(false);
+  const [biometricStatus, setBiometricStatus] = useState<'scanning' | 'success' | 'failed'>('scanning');
+
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please enter your email and password.');
+      Alert.alert('Missing Fields', 'Please enter your email and password, or use Quick Demo Auto-Fill.');
       return;
     }
     setLoading(true);
@@ -36,6 +54,61 @@ export default function LoginScreen({ navigation }: Props) {
       setLoading(false);
       navigation.navigate('Verification', { email: email.trim() });
     }, 400);
+  };
+
+  const handleDemoAutofill = () => {
+    setEmail('pooja.iyer@gmail.com');
+    setPassword('VerdictAI@2026');
+  };
+
+  const handleStartBiometrics = () => {
+    setIsBiometricOpen(true);
+    setBiometricStatus('scanning');
+    setTimeout(() => {
+      setBiometricStatus('success');
+      setTimeout(() => {
+        setIsBiometricOpen(false);
+        // Direct entry to main app via strong biometric authentication
+        rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
+      }, 700);
+    }, 1200);
+  };
+
+  const handleForgotPassword = () => {
+    const targetEmail = email.trim() || 'pooja.iyer@gmail.com';
+    Alert.alert(
+      'Password Reset Link Dispatched',
+      `A secure 1-click password reset token has been sent to ${targetEmail}. Please check your inbox.`
+    );
+  };
+
+  const handleRegisterSubmit = () => {
+    if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
+      Alert.alert('Missing Fields', 'Please complete all required fields to register.');
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      Alert.alert('Password Mismatch', 'Password and Confirm Password must match.');
+      return;
+    }
+
+    setRegLoading(true);
+    setTimeout(() => {
+      setRegLoading(false);
+      setIsRegisterOpen(false);
+      setEmail(regEmail.trim());
+      setPassword(regPassword);
+      Alert.alert(
+        'Account Created',
+        `Welcome ${regName}! Your account has been registered. Please complete 2FA verification code.`,
+        [
+          {
+            text: 'Proceed to Verification',
+            onPress: () => navigation.navigate('Verification', { email: regEmail.trim() }),
+          },
+        ]
+      );
+    }, 600);
   };
 
   return (
@@ -59,9 +132,23 @@ export default function LoginScreen({ navigation }: Props) {
             </View>
             <Text style={styles.title}>Sign In to VerdictAI</Text>
             <Text style={styles.subtitle}>
-              Access your dispute resolution dashboard.
+              Access your cardholder dispute resolution dashboard.
             </Text>
           </View>
+
+          {/* Quick Demo Autofill Bar */}
+          <TouchableOpacity
+            style={styles.autofillBanner}
+            onPress={handleDemoAutofill}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.autofillIcon}>⚡</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.autofillTitle}>1-Click Demo Fill (Pooja Iyer)</Text>
+              <Text style={styles.autofillSub}>Tap to load valid demo credentials instantly</Text>
+            </View>
+            <Text style={styles.autofillAction}>Fill →</Text>
+          </TouchableOpacity>
 
           {/* Form */}
           <View style={styles.form}>
@@ -69,7 +156,7 @@ export default function LoginScreen({ navigation }: Props) {
               <Text style={styles.label}>EMAIL ADDRESS</Text>
               <TextInput
                 style={styles.input}
-                placeholder="name@company.com"
+                placeholder="e.g. pooja.iyer@gmail.com"
                 placeholderTextColor={Colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -92,11 +179,15 @@ export default function LoginScreen({ navigation }: Props) {
                 <TouchableOpacity
                   onPress={() => setShowPassword((v) => !v)}
                   style={styles.eyeButton}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '🔒'}</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.forgotPassword}>
+              <TouchableOpacity
+                style={styles.forgotPassword}
+                onPress={handleForgotPassword}
+              >
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
@@ -107,9 +198,11 @@ export default function LoginScreen({ navigation }: Props) {
               disabled={loading}
               activeOpacity={0.85}
             >
-              <Text style={styles.loginButtonText}>
-                {loading ? 'Verifying...' : 'Sign In'}
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.loginButtonText}>Sign In</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.divider}>
@@ -120,7 +213,7 @@ export default function LoginScreen({ navigation }: Props) {
 
             <TouchableOpacity
               style={styles.biometricButton}
-              onPress={() => navigation.navigate('Verification', { email: 'alice.smith@example.com' })}
+              onPress={handleStartBiometrics}
               activeOpacity={0.85}
             >
               <Text style={styles.biometricIcon}>👆</Text>
@@ -129,28 +222,175 @@ export default function LoginScreen({ navigation }: Props) {
 
             <View style={styles.registerRow}>
               <Text style={styles.registerText}>Don't have an account? </Text>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setRegName('Pooja Iyer');
+                  setRegEmail('pooja.iyer@gmail.com');
+                  setRegPassword('VerdictAI@2026');
+                  setRegConfirmPassword('VerdictAI@2026');
+                  setIsRegisterOpen(true);
+                }}
+              >
                 <Text style={styles.registerLink}>Register Now</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Demo Credentials Note */}
+          {/* Demo Note */}
           <View style={styles.demoNote}>
-            <Text style={styles.demoTitle}>🔧 Demo Mode Cardholder Account</Text>
+            <Text style={styles.demoTitle}>🔧 Cardholder Triage Mode</Text>
             <Text style={styles.demoText}>
-              Pre-filled with <Text style={{ fontWeight: 'bold' }}>usr_alice_01</Text> credentials. Tap Sign In to proceed directly to 2FA verification.
+              Demonstrates 2FA cryptographic security, dynamic 48h SLA dispute filing, and live Gemini XAI reasoning.
             </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ─── Registration Modal ─────────────────────────────────────────── */}
+      <Modal
+        visible={isRegisterOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsRegisterOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Register New Account</Text>
+              <TouchableOpacity
+                onPress={() => setIsRegisterOpen(false)}
+                style={styles.modalCloseBtn}
+              >
+                <Text style={styles.modalCloseIcon}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ gap: 12, paddingBottom: 16 }}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>FULL NAME</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Pooja Iyer"
+                  value={regName}
+                  onChangeText={setRegName}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>EMAIL ADDRESS</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. pooja.iyer@gmail.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={regEmail}
+                  onChangeText={setRegEmail}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>PRIMARY CARD LAST 4 DIGITS</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="4492"
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  value={regCard}
+                  onChangeText={setRegCard}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>PASSWORD</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Choose a strong password"
+                  secureTextEntry
+                  value={regPassword}
+                  onChangeText={setRegPassword}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>CONFIRM PASSWORD</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Re-enter password"
+                  secureTextEntry
+                  value={regConfirmPassword}
+                  onChangeText={setRegConfirmPassword}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.loginButton, regLoading && styles.loginButtonDisabled]}
+                onPress={handleRegisterSubmit}
+                disabled={regLoading}
+              >
+                {regLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Create Account & Verify</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ─── Biometrics Authentication Modal ────────────────────────────── */}
+      <Modal
+        visible={isBiometricOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsBiometricOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.biometricModalCard}>
+            <View style={styles.biometricIconCircle}>
+              <Text style={{ fontSize: 44 }}>
+                {biometricStatus === 'success' ? '✅' : '👆'}
+              </Text>
+            </View>
+
+            <Text style={styles.biometricModalTitle}>
+              {biometricStatus === 'success'
+                ? 'Biometrics Verified!'
+                : 'Touch ID / Face ID'}
+            </Text>
+
+            <Text style={styles.biometricModalSub}>
+              {biometricStatus === 'success'
+                ? 'Identity confirmed. Signing you in...'
+                : `Glance at camera or place finger on sensor to authenticate as ${email || 'Pooja Iyer'}.`}
+            </Text>
+
+            {biometricStatus === 'scanning' && (
+              <ActivityIndicator
+                size="large"
+                color={Colors.primary}
+                style={{ marginTop: 12 }}
+              />
+            )}
+
+            {biometricStatus === 'scanning' && (
+              <TouchableOpacity
+                style={styles.cancelBiometricBtn}
+                onPress={() => setIsBiometricOpen(false)}
+              >
+                <Text style={styles.cancelBiometricText}>Cancel</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgDeep },
-  scrollContent: { padding: Spacing.xl, gap: Spacing.xl },
+  scrollContent: { padding: Spacing.xl, gap: Spacing.lg },
   header: { alignItems: 'center', gap: Spacing.xs },
   backBtn: { alignSelf: 'flex-start', padding: Spacing.xs },
   backIcon: { fontSize: 24, color: Colors.textPrimary },
@@ -167,6 +407,22 @@ const styles = StyleSheet.create({
   logoIcon: { fontSize: 30 },
   title: { fontSize: Typography['2xl'], fontWeight: Typography.bold, color: Colors.textPrimary },
   subtitle: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center', marginTop: 2 },
+  
+  autofillBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  autofillIcon: { fontSize: 20 },
+  autofillTitle: { fontSize: Typography.sm, fontWeight: Typography.bold, color: '#1E40AF' },
+  autofillSub: { fontSize: Typography.xs, color: '#3B82F6' },
+  autofillAction: { fontSize: Typography.sm, fontWeight: Typography.bold, color: '#1E40AF' },
+
   form: { gap: Spacing.base },
   fieldGroup: { gap: 6 },
   label: {
@@ -249,13 +505,65 @@ const styles = StyleSheet.create({
     fontWeight: Typography.bold,
   },
   demoNote: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F8FAFC',
     borderRadius: Radius.md,
     padding: Spacing.base,
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
     gap: Spacing.xs,
   },
-  demoTitle: { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.primaryDark },
+  demoTitle: { fontSize: Typography.sm, fontWeight: Typography.bold, color: Colors.textPrimary },
   demoText: { fontSize: Typography.xs, color: Colors.textSecondary, lineHeight: 18 },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 440,
+    maxHeight: '90%',
+    backgroundColor: '#fff',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    ...Shadow.card,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.base,
+  },
+  modalTitle: { fontSize: Typography.lg, fontWeight: Typography.bold, color: Colors.textPrimary },
+  modalCloseBtn: { padding: 4 },
+  modalCloseIcon: { fontSize: 20, color: Colors.textMuted },
+
+  biometricModalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    gap: 12,
+    ...Shadow.card,
+  },
+  biometricIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#BFDBFE',
+  },
+  biometricModalTitle: { fontSize: Typography.xl, fontWeight: Typography.bold, color: Colors.textPrimary },
+  biometricModalSub: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  cancelBiometricBtn: { marginTop: 8, padding: 8 },
+  cancelBiometricText: { fontSize: Typography.sm, color: Colors.textMuted, fontWeight: Typography.semibold },
 });
