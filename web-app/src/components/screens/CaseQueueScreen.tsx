@@ -10,9 +10,10 @@ import {
   PlusCircle,
   X,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  UploadCloud
 } from 'lucide-react';
-import { fetchDisputes, createDispute } from '../../services/api';
+import { fetchDisputes, createDispute, saveDisputeEvidenceItem } from '../../services/api';
 import { subscribeToDisputeUpdates } from '../../services/disputeStore';
 import { StatusBadge, RiskDot } from '../common/StatusBadge';
 import { CaseQueueItem } from '../../types/dispute';
@@ -52,12 +53,34 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
     setLoading(false);
   };
 
+  const DEFAULT_STATEMENTS_BY_REASON: Record<string, string> = {
+    PRODUCT_DAMAGED_OR_DEFECTIVE: 'Merchandise arrived physically damaged upon unboxing; carton puncture marks caused transit damage to inner components.',
+    PRODUCT_NOT_RECEIVED: 'Courier marked package as delivered, but item was never received at the cardholder residence address.',
+    DUPLICATE_PROCESSING: 'Card debited twice within 3 minutes for single transaction on merchant POS terminal. Second debit is an accidental duplicate billing.',
+    INCORRECT_AMOUNT_CHARGED: 'Merchant processed card for amount exceeding agreed checkout total and invoice authorization.',
+    FRAUD_UNRECOGNIZED_CHARGE: 'Unrecognized card-not-present online transaction initiated without cardholder consent or 2FA OTP.'
+  };
+
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [ingestTxn, setIngestTxn] = useState('txn_reliance_28500');
   const [ingestReason, setIngestReason] = useState('PRODUCT_DAMAGED_OR_DEFECTIVE');
   const [ingestAmount, setIngestAmount] = useState('28500');
-  const [ingestStatement, setIngestStatement] = useState('Screen damaged upon delivery; box arrived pierced by courier.');
+  const [ingestStatement, setIngestStatement] = useState(DEFAULT_STATEMENTS_BY_REASON.PRODUCT_DAMAGED_OR_DEFECTIVE);
+  const [ingestAttachedFile, setIngestAttachedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleReasonChange = (newReason: string) => {
+    setIngestReason(newReason);
+    const isDefaultStatement =
+      Object.values(DEFAULT_STATEMENTS_BY_REASON).includes(ingestStatement) ||
+      ingestStatement.includes('shattered upon unboxing') ||
+      ingestStatement.includes('Screen damaged') ||
+      ingestStatement.includes('Flipkart order billed') ||
+      !ingestStatement.trim();
+    if (isDefaultStatement && DEFAULT_STATEMENTS_BY_REASON[newReason]) {
+      setIngestStatement(DEFAULT_STATEMENTS_BY_REASON[newReason]);
+    }
+  };
 
   const handleIngestNewDispute = async () => {
     setIsSubmitting(true);
@@ -70,13 +93,30 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
       cardholder_statement: ingestStatement,
       merchant_sla_hours: 48
     });
+
+    const newCaseId = res.data?.header?.dispute_id;
+    if (newCaseId && ingestAttachedFile) {
+      const ext = (ingestAttachedFile.name.split('.').pop()?.toUpperCase() as any) || 'PDF';
+      saveDisputeEvidenceItem(newCaseId, {
+        id: `EV-${newCaseId}-INITIAL-${Date.now()}`,
+        fileName: ingestAttachedFile.name,
+        type: ext,
+        fileSize: `${(ingestAttachedFile.size / 1024).toFixed(1)} KB`,
+        uploadedAt: 'Today',
+        uploadedBy: 'Cardholder',
+        status: 'Parsed',
+        tag: 'Initial Ingestion Proof'
+      });
+    }
+
     setIsSubmitting(false);
     setIsIngestModalOpen(false);
+    setIngestAttachedFile(null);
 
     onAddToast?.({
       type: 'success',
       title: 'Dispute Ingested to Queue',
-      message: `New dispute registered under ${res.data?.header?.dispute_id?.slice(0, 8) || 'active case'} with 48h SLA.`
+      message: `New dispute registered under ${newCaseId?.slice(0, 16) || 'active case'} with 48h SLA.`
     });
     loadQueue();
   };
@@ -345,8 +385,8 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
                   <label className="text-[11px] font-bold text-slate-600 block mb-1">Dispute Reason</label>
                   <select
                     value={ingestReason}
-                    onChange={(e) => setIngestReason(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                    onChange={(e) => handleReasonChange(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none bg-white font-medium"
                   >
                     <option value="PRODUCT_DAMAGED_OR_DEFECTIVE">Product Damaged / Defective</option>
                     <option value="PRODUCT_NOT_RECEIVED">Product Not Received</option>
@@ -365,6 +405,44 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
                   onChange={(e) => setIngestStatement(e.target.value)}
                   className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                  Supporting Evidence <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    id="case-ingest-evidence-file"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setIngestAttachedFile(e.target.files[0]);
+                      }
+                    }}
+                    accept=".pdf,.png,.jpg,.jpeg,.csv"
+                  />
+                  <label
+                    htmlFor="case-ingest-evidence-file"
+                    className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 text-xs font-medium transition"
+                  >
+                    <UploadCloud className="w-4 h-4 text-slate-500" />
+                    <span>{ingestAttachedFile ? ingestAttachedFile.name : 'Attach File (PDF, JPG, PNG)'}</span>
+                  </label>
+                  {ingestAttachedFile && (
+                    <button
+                      type="button"
+                      onClick={() => setIngestAttachedFile(null)}
+                      className="text-xs text-rose-500 hover:text-rose-700 font-semibold"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Leave empty to test 0-evidence unassisted ingestion, or attach proof to seed initial artifacts.
+                </p>
               </div>
             </div>
 

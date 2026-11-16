@@ -11,9 +11,10 @@ import {
   Info,
   Loader2,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  FileQuestion
 } from 'lucide-react';
-import { fetchDisputeDetail, fetchEvidenceItems, scoreDisputeCase, uploadEvidenceFile, updateDisputeStatus } from '../../services/api';
+import { fetchDisputeDetail, fetchEvidenceItems, scoreDisputeCase, uploadEvidenceFile, updateDisputeStatus, saveDisputeEvidenceItem } from '../../services/api';
 import { StatusBadge } from '../common/StatusBadge';
 import { ScoreGauge } from '../common/ScoreGauge';
 import { ProgressBar } from '../common/ProgressBar';
@@ -119,6 +120,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
       status: 'Parsed',
       tag: 'Verified File'
     };
+    saveDisputeEvidenceItem(caseDetails?.id || disputeId, newDoc);
     setEvidenceList(prev => [...prev, newDoc]);
     onAddToast?.({
       type: 'success',
@@ -343,19 +345,36 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {evidenceList.map((item) => (
-                <EvidenceCard
-                  key={item.id}
-                  fileName={item.fileName}
-                  type={item.type}
-                  fileSize={item.fileSize}
-                  uploadedAt={item.uploadedAt}
-                  status={item.status}
-                  onPreview={() => setSelectedDoc(item)}
-                />
-              ))}
-            </div>
+            {evidenceList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/60 text-center">
+                <FileQuestion className="w-10 h-10 text-slate-300 mb-2" />
+                <p className="text-sm font-bold text-slate-700">No Evidence Documents Attached</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                  This dispute claim was submitted without supporting files. Click below to attach documentation or upload counter-evidence via Merchant Portal.
+                </p>
+                <button
+                  onClick={handleManualUpload}
+                  className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-lg transition"
+                >
+                  <UploadCloud className="w-3.5 h-3.5" />
+                  <span>Attach Document Now</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {evidenceList.map((item) => (
+                  <EvidenceCard
+                    key={item.id}
+                    fileName={item.fileName}
+                    type={item.type}
+                    fileSize={item.fileSize}
+                    uploadedAt={item.uploadedAt}
+                    status={item.status}
+                    onPreview={() => setSelectedDoc(item)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -374,7 +393,11 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
             </div>
 
             <div className="flex justify-center py-2">
-              <ScoreGauge score={aiEval.score} label="Confidence Score" favourText={aiEval.favourText} />
+              <ScoreGauge
+                score={caseDetails.aiScoring?.score || aiEval.score}
+                label="Confidence Score"
+                favourText={aiEval.favourText}
+              />
             </div>
 
             <div className="space-y-3 pt-2 border-t border-slate-100">

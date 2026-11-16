@@ -15,7 +15,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { MERCHANT_PORTAL_DATA } from '../../data/mockData';
-import { uploadEvidenceFile, submitStatement, updateDisputeStatus } from '../../services/api';
+import { uploadEvidenceFile, submitStatement, updateDisputeStatus, saveDisputeEvidenceItem, removeDisputeEvidenceItem } from '../../services/api';
 import { ToastMessage } from '../common/Toast';
 import { MiniSparkline } from '../charts/MiniSparkline';
 import { BenchmarkChart } from '../charts/BenchmarkChart';
@@ -172,6 +172,7 @@ export const MerchantPortalScreen: React.FC<MerchantPortalScreenProps> = ({ onAd
   };
 
   const handleRemoveFile = (fileId: string, fileName: string) => {
+    removeDisputeEvidenceItem(selectedCaseId, fileId);
     setEvidenceMap(prev => {
       const updated = {
         ...prev,

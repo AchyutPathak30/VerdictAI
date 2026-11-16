@@ -226,6 +226,78 @@ const SEED_DISPUTES: UnifiedDisputeRecord[] = [
   }
 ];
 
+export function computeStableScore(reasonOrItem: any, _disputeId?: string): number {
+  const text = (typeof reasonOrItem === 'string' ? reasonOrItem : (reasonOrItem?.reason || reasonOrItem?.disputeReason || '')).toUpperCase();
+  if (text.includes('DUPLICATE')) return 97;
+  if (text.includes('FRAUD') || text.includes('UNRECOGNIZED')) return 91;
+  if (text.includes('NOT_RECEIVED') || text.includes('NON-DELIVERY')) return 87;
+  if (text.includes('DAMAGE') || text.includes('DEFECTIVE')) return 84;
+  if (text.includes('SUBSCRIPTION')) return 78;
+  if (text.includes('WRONG')) return 58;
+  if (text.includes('SERVICE') || text.includes('HOTEL')) return 44;
+  return 85;
+}
+
+const EVIDENCE_STORE_KEY = 'verdictai_dispute_evidence_store_v2';
+
+export function getDisputeEvidenceList(disputeId: string): EvidenceItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(EVIDENCE_STORE_KEY);
+    if (raw) {
+      const map = JSON.parse(raw);
+      const clean = (disputeId || '').replace(/^Case\s+/i, '').trim().toUpperCase();
+      for (const k of Object.keys(map)) {
+        if (clean === k || clean.includes(k) || k.includes(clean)) {
+          return map[k] || [];
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse dispute evidence list:', e);
+  }
+  return [];
+}
+
+export function saveDisputeEvidenceItem(disputeId: string, item: EvidenceItem): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(EVIDENCE_STORE_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    const clean = (disputeId || '').replace(/^Case\s+/i, '').trim().toUpperCase();
+    if (!map[clean]) {
+      map[clean] = [];
+    }
+    const existingIndex = map[clean].findIndex((e: EvidenceItem) => e.id === item.id || e.fileName === item.fileName);
+    if (existingIndex >= 0) {
+      map[clean][existingIndex] = item;
+    } else {
+      map[clean].push(item);
+    }
+    localStorage.setItem(EVIDENCE_STORE_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.error('Failed to save dispute evidence item:', e);
+  }
+}
+
+export function removeDisputeEvidenceItem(disputeId: string, fileId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(EVIDENCE_STORE_KEY);
+    if (!raw) return;
+    const map = JSON.parse(raw);
+    const clean = (disputeId || '').replace(/^Case\s+/i, '').trim().toUpperCase();
+    for (const k of Object.keys(map)) {
+      if (clean === k || clean.includes(k) || k.includes(clean)) {
+        map[k] = (map[k] || []).filter((e: EvidenceItem) => e.id !== fileId);
+      }
+    }
+    localStorage.setItem(EVIDENCE_STORE_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.error('Failed to remove dispute evidence item:', e);
+  }
+}
+
 export function getMasterDisputes(): UnifiedDisputeRecord[] {
   if (typeof window === 'undefined') return SEED_DISPUTES;
   try {
@@ -233,6 +305,20 @@ export function getMasterDisputes(): UnifiedDisputeRecord[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        let hasChanges = false;
+        for (const item of parsed) {
+          if (item.reason) {
+            const expectedScore = computeStableScore(item.reason);
+            const rUpper = item.reason.toUpperCase();
+            if (!item.aiScore || (item.aiScore === 88 && (rUpper.includes('DUPLICATE') || rUpper.includes('FRAUD') || rUpper.includes('SERVICE') || rUpper.includes('WRONG')))) {
+              item.aiScore = expectedScore;
+              hasChanges = true;
+            }
+          }
+        }
+        if (hasChanges) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        }
         return parsed;
       }
     }
@@ -360,6 +446,7 @@ export interface NewDisputeInput {
 export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeRecord {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   const id = `CHB-${randomNum}-IN`;
+  const calculatedScore = computeStableScore(input.reason);
 
   const newRecord: UnifiedDisputeRecord = {
     id,
@@ -376,8 +463,10 @@ export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeReco
     slaCountdown: '47h 59m remaining',
     sha256Hash: `sha256_${Date.now()}_simulated_hash_verdictai`,
     courier: 'Awaiting Merchant Counter-Proof',
-    aiVerdict: 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.',
-    aiScore: 88,
+    aiVerdict: calculatedScore >= 90
+      ? `High-confidence (${calculatedScore}%) automated member recommendation. Pattern matches known errata rubric.`
+      : 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.',
+    aiScore: calculatedScore,
     cardholderId: input.cardholderId || 'usr_pooja_01',
     cardholderName: input.cardholderName || 'Pooja Iyer',
     cardholderStatement: input.statement,

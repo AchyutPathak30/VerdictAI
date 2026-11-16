@@ -25,10 +25,14 @@ import {
   getCaseQueueItems,
   createUnifiedDispute,
   updateDisputeStatus,
-  UnifiedDisputeRecord
+  UnifiedDisputeRecord,
+  computeStableScore,
+  getDisputeEvidenceList,
+  saveDisputeEvidenceItem,
+  removeDisputeEvidenceItem
 } from './disputeStore';
 
-export { updateDisputeStatus };
+export { updateDisputeStatus, computeStableScore, getDisputeEvidenceList, saveDisputeEvidenceItem, removeDisputeEvidenceItem };
 
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -150,29 +154,6 @@ export async function fetchDashboardStats(): Promise<ApiResponse<typeof ADMIN_ST
 // 2. Dispute Queue & Lifecycle APIs
 // --------------------------------------------------------------------------
 
-export function computeStableScore(itemOrReason: any, _disputeId?: string): number {
-  if (typeof itemOrReason === 'string') {
-    const reason = itemOrReason.toUpperCase();
-    if (reason.includes('DUPLICATE')) return 97;
-    if (reason.includes('PRODUCT') || reason.includes('NOT_RECEIVED')) return 87;
-    if (reason.includes('FRAUD') || reason.includes('UNRECOGNIZED')) return 91;
-    if (reason.includes('SERVICE')) return 44;
-    if (reason.includes('SUBSCRIPTION')) return 78;
-    return 85;
-  }
-  const item = itemOrReason || {};
-  if (item.resolution?.confidence_score) {
-    return Math.round(item.resolution.confidence_score);
-  }
-  const reason = (item.header?.dispute_reason || item.reason || '').toUpperCase();
-  if (reason.includes('DUPLICATE')) return 97;
-  if (reason.includes('PRODUCT') || reason.includes('NOT_RECEIVED')) return 87;
-  if (reason.includes('FRAUD') || reason.includes('UNRECOGNIZED')) return 91;
-  if (reason.includes('SERVICE')) return 44;
-  if (reason.includes('SUBSCRIPTION')) return 78;
-  return 85;
-}
-
 export interface CreateDisputePayload {
   transaction_id: string;
   cardholder_id: string;
@@ -264,46 +245,78 @@ export async function fetchAdminQueue(statusFilter: string = 'MANUAL_REVIEW_QUEU
 }
 
 export function getEvidenceForDispute(disputeId: string): EvidenceItem[] {
-  const clean = (disputeId || '').toUpperCase();
+  const clean = (disputeId || '').replace(/^Case\s+/i, '').trim().toUpperCase();
+  const customFiles = getDisputeEvidenceList(clean);
+
+  let baseFiles: EvidenceItem[] = [];
   if (clean.includes('9021')) {
-    return [
+    baseFiles = [
       { id: 'EV-9021-1', fileName: 'Reliance_Tax_Invoice_9021.pdf', type: 'PDF', fileSize: '1.4 MB', uploadedAt: '14 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'GST Tax Invoice' },
       { id: 'EV-9021-2', fileName: 'Delhivery_Carrier_Manifest_POD.pdf', type: 'PDF', fileSize: '890 KB', uploadedAt: '14 Oct 2026', uploadedBy: 'System', status: 'Parsed', tag: 'Courier Telematics' },
       { id: 'EV-9021-3', fileName: 'Unboxing_Screen_Crack_Photo.jpg', type: 'JPG', fileSize: '2.8 MB', uploadedAt: '14 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Visual Damage Proof' },
       { id: 'EV-9021-4', fileName: 'Customer_Damage_Complaint_Log.pdf', type: 'PDF', fileSize: '420 KB', uploadedAt: '14 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Customer Support Escalation' },
     ];
-  }
-  if (clean.includes('8942')) {
-    return [
+  } else if (clean.includes('8942')) {
+    baseFiles = [
       { id: 'EV-8942-1', fileName: 'Flipkart_Order_Details_8942.pdf', type: 'PDF', fileSize: '750 KB', uploadedAt: '13 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Merchant Order Slip' },
       { id: 'EV-8942-2', fileName: 'RuPay_Bank_Fraud_Intimation.pdf', type: 'PDF', fileSize: '1.2 MB', uploadedAt: '13 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'HDFC Cyber Cell Report' },
       { id: 'EV-8942-3', fileName: 'Overseas_IP_Telemetry_Logs.csv', type: 'CSV', fileSize: '610 KB', uploadedAt: '13 Oct 2026', uploadedBy: 'System', status: 'Parsed', tag: 'Network Proxy Forensics' },
       { id: 'EV-8942-4', fileName: 'SIM_Swap_Telecom_Verification.pdf', type: 'PDF', fileSize: '940 KB', uploadedAt: '13 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Cell Tower Telemetry' },
     ];
-  }
-  if (clean.includes('8812')) {
-    return [
+  } else if (clean.includes('8812')) {
+    baseFiles = [
       { id: 'EV-8812-1', fileName: 'Taj_Reservation_Voucher_8812.pdf', type: 'PDF', fileSize: '980 KB', uploadedAt: '11 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Booking Voucher' },
       { id: 'EV-8812-2', fileName: 'Cancellation_Notice_Email_Chain.pdf', type: 'PDF', fileSize: '1.3 MB', uploadedAt: '11 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: '48h Cancellation Proof' },
       { id: 'EV-8812-3', fileName: 'Hotel_Retention_Policy_Terms.pdf', type: 'PDF', fileSize: '1.1 MB', uploadedAt: '11 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Property Cancellation Policy' },
       { id: 'EV-8812-4', fileName: 'Bank_Chargeback_Mandate_Notice.docx', type: 'DOCX', fileSize: '520 KB', uploadedAt: '11 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Chargeback Reversal Mandate' },
     ];
-  }
-  if (clean.includes('8755')) {
-    return [
+  } else if (clean.includes('8755')) {
+    baseFiles = [
       { id: 'EV-8755-1', fileName: 'Swiggy_Order_Tax_Invoice_8755.pdf', type: 'PDF', fileSize: '480 KB', uploadedAt: '10 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Instamart POS Bill' },
       { id: 'EV-8755-2', fileName: 'UPI_Dual_Debit_Bank_Statement.pdf', type: 'PDF', fileSize: '1.1 MB', uploadedAt: '10 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Bank Passbook Ledger' },
       { id: 'EV-8755-3', fileName: 'POS_Terminal_Transaction_Audit.csv', type: 'CSV', fileSize: '340 KB', uploadedAt: '10 Oct 2026', uploadedBy: 'System', status: 'Parsed', tag: 'NPCI Gateway Settlement Log' },
     ];
-  }
-  if (clean.includes('8701')) {
-    return [
+  } else if (clean.includes('8701')) {
+    baseFiles = [
       { id: 'EV-8701-1', fileName: 'Zomato_Order_Receipt_8701.pdf', type: 'PDF', fileSize: '520 KB', uploadedAt: '09 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Order KOT Receipt' },
       { id: 'EV-8701-2', fileName: 'Delivered_Food_Package_Photo.jpg', type: 'JPG', fileSize: '2.4 MB', uploadedAt: '09 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Unsealed Wrong Platter Photo' },
       { id: 'EV-8701-3', fileName: 'Merchant_Kitchen_KOT_Log.pdf', type: 'PDF', fileSize: '390 KB', uploadedAt: '09 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Kitchen Order Ticket' },
     ];
+  } else if (clean.includes('1041')) {
+    baseFiles = EVIDENCE_FILES;
+  } else {
+    // Check if master dispute record has attachedFile
+    const master = getMasterDisputes().find(d => {
+      const dId = d.id.toUpperCase();
+      return dId === clean || dId.includes(clean) || clean.includes(dId);
+    });
+    if (master?.attachedFile) {
+      const ext = (master.attachedFile.split('.').pop()?.toUpperCase() as any) || 'PDF';
+      baseFiles = [{
+        id: `EV-${master.id}-ATTACHED`,
+        fileName: master.attachedFile,
+        type: ext,
+        fileSize: '1.2 MB',
+        uploadedAt: 'Today',
+        uploadedBy: 'Cardholder',
+        status: 'Parsed',
+        tag: 'Initial Ingestion Proof'
+      }];
+    } else {
+      // Newly ingested dispute without attachments starts with 0 files
+      baseFiles = [];
+    }
   }
-  return EVIDENCE_FILES;
+
+  // Combine base files and custom uploaded files, avoiding duplicates
+  const combined = [...baseFiles];
+  for (const cf of customFiles) {
+    if (!combined.some(b => b.id === cf.id || b.fileName.toLowerCase() === cf.fileName.toLowerCase())) {
+      combined.push(cf);
+    }
+  }
+
+  return combined;
 }
 
 export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse<typeof DSP_1041_DETAILS>> {
@@ -386,7 +399,7 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
       evidence: evidenceList,
       aiScoring: {
         ...DSP_1041_DETAILS.aiScoring,
-        score: matched.aiScore || 85
+        score: matched.aiScore || computeStableScore(matched.reason)
       }
     },
     error: null,
@@ -446,17 +459,19 @@ export async function uploadEvidenceFile(
 
     if (res.ok) {
       const data = await res.json();
+      const uploadedItem: EvidenceItem = {
+        id: data.evidence_id || `EV-${Date.now()}`,
+        fileName: file.name,
+        type: getFileTypeExtension(file.name),
+        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+        uploadedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        uploadedBy: source === 'MERCHANT' ? 'Merchant' : 'Cardholder',
+        status: 'Parsed',
+        tag: evidenceType
+      };
+      saveDisputeEvidenceItem(disputeId, uploadedItem);
       return {
-        data: {
-          id: data.evidence_id || `EV-${Date.now()}`,
-          fileName: file.name,
-          type: getFileTypeExtension(file.name),
-          fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-          uploadedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          uploadedBy: source === 'MERCHANT' ? 'Merchant' : 'Cardholder',
-          status: 'Parsed',
-          tag: evidenceType
-        },
+        data: uploadedItem,
         error: null,
         isBackendConnected: true
       };
@@ -465,17 +480,19 @@ export async function uploadEvidenceFile(
     return { data: null, error: errJson.detail || 'Upload failed', isBackendConnected: true };
   } catch (err: any) {
     // Offline fallback upload simulation
+    const fallbackItem: EvidenceItem = {
+      id: `EV-${Date.now()}`,
+      fileName: file.name,
+      type: getFileTypeExtension(file.name),
+      fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+      uploadedAt: 'Just now (Mock)',
+      uploadedBy: source === 'MERCHANT' ? 'Merchant' : 'Cardholder',
+      status: 'Uploaded',
+      tag: evidenceType
+    };
+    saveDisputeEvidenceItem(disputeId, fallbackItem);
     return {
-      data: {
-        id: `EV-${Date.now()}`,
-        fileName: file.name,
-        type: getFileTypeExtension(file.name),
-        fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-        uploadedAt: 'Just now (Mock)',
-        uploadedBy: source === 'MERCHANT' ? 'Merchant' : 'Cardholder',
-        status: 'Uploaded',
-        tag: evidenceType
-      },
+      data: fallbackItem,
       error: null,
       isBackendConnected: false
     };
