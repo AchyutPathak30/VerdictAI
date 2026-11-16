@@ -550,6 +550,18 @@ export async function updateSystemConfig(newConfig: Partial<SystemConfigData>): 
   return { data: mockConfig, error: null, isBackendConnected: true };
 }
 
+export interface GatewayIntegration {
+  name: string;
+  status: 'CONNECTED' | 'ACTION REQUIRED' | 'DISCONNECTED';
+  lastSync: string;
+  environment?: 'production' | 'sandbox';
+  merchantId?: string;
+  apiKey?: string;
+  webhookSecret?: string;
+  autoEvidence?: boolean;
+  urgentAlerts?: boolean;
+}
+
 export interface MerchantProfileData {
   entityName: string;
   id: string;
@@ -558,7 +570,7 @@ export interface MerchantProfileData {
   address: string;
   emailAlerts: boolean;
   smsAlerts: boolean;
-  integrations: Array<{ name: string; status: 'CONNECTED' | 'ACTION REQUIRED' | 'DISCONNECTED'; lastSync: string }>;
+  integrations: GatewayIntegration[];
 }
 
 let mockProfile: MerchantProfileData = {
