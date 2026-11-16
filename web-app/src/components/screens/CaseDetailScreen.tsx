@@ -159,7 +159,47 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
       };
     }
 
-    // Default: Product Not Received (Croma OnePlus tablet)
+    if (titleLower.includes('service') || reasonLower.includes('service') || reasonLower.includes('hotel') || titleLower.includes('8812')) {
+      return {
+        score: 44,
+        favourText: 'FAVOUR MERCHANT (OVERRIDE QUEUE)',
+        factors: [
+          { label: 'Booking Cut-off Cancellation Window', value: 38, color: 'amber' as const },
+          { label: 'Merchant Non-Refundable Deposit Terms', value: 85, color: 'blue' as const },
+          { label: 'Cardholder Pre-Arrival Notification', value: 90, color: 'green' as const },
+          { label: 'Merchant Goodwill Discretion Score', value: 20, color: 'amber' as const }
+        ],
+        rationale: 'Hotel booking cancelled prior to stay per cardholder, but property ledger enforced non-refundable deposit terms. Escalated to senior investigator override console.'
+      };
+    }
+
+    if (titleLower.includes('wrong') || reasonLower.includes('wrong') || titleLower.includes('8701')) {
+      return {
+        score: 58,
+        favourText: 'FAVOUR MEMBER',
+        factors: [
+          { label: 'OCR Receipt Food Item Parity', value: 88, color: 'green' as const },
+          { label: 'Delivery Handover Package Condition', value: 45, color: 'amber' as const },
+          { label: 'Merchant Kitchen Dispatch Verification', value: 60, color: 'blue' as const },
+          { label: 'Member Historical Credibility', value: 92, color: 'green' as const }
+        ],
+        rationale: 'Photographic evidence confirms unsealed wrong vegetarian platter delivered rather than ordered meal box. Automated adjustment recommended.'
+      };
+    }
+
+    if (titleLower.includes('damage') || reasonLower.includes('damage') || titleLower.includes('9021')) {
+      return {
+        score: 84,
+        favourText: 'FAVOUR MEMBER',
+        factors: [
+          { label: 'Carrier Transit Packaging Puncture', value: 92, color: 'green' as const },
+          { label: 'Cardholder Unboxing Image Forensics', value: 94, color: 'green' as const },
+          { label: 'Member Claim Promptness (< 4h)', value: 98, color: 'green' as const },
+          { label: 'Merchant RMA Return Authorization', value: 50, color: 'amber' as const }
+        ],
+        rationale: 'Unboxing photographic proof demonstrates Smart TV panel cracked during transit with outer carton puncture. High confidence recommendation to approve customer refund.'
+      };
+    }
     return {
       score: 87,
       favourText: 'FAVOUR MEMBER',

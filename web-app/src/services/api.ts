@@ -242,42 +242,135 @@ export async function fetchAdminQueue(statusFilter: string = 'MANUAL_REVIEW_QUEU
   return { data: overrideCases.length > 0 ? overrideCases : allCases, error: null, isBackendConnected: true };
 }
 
-export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse<typeof DSP_1041_DETAILS>> {
-  const master = getMasterDisputes().find((d) => d.id === disputeId || disputeId.includes(d.id));
-  if (master) {
-    return {
-      data: {
-        id: `Case ${master.id}`,
-        title: `Case ${master.id} – ${master.reason}`,
-        status: master.status as any,
-        initiatedDate: master.date === 'Today' ? getDynamicDateString(0) : master.date,
-        deadline: getDynamicDateString(48),
-        deadlineDaysLeft: 2,
-        deadlineHoursLeft: 48,
-        transaction: {
-          id: `TXN-${master.id.replace(/[^0-9]/g, '').slice(0, 6) || '882910'}`,
-          merchant: master.merchant,
-          merchantId: 'MID-IN-00441',
-          totalAmount: master.amount,
-          currency: master.currency === '₹' ? 'INR' : master.currency,
-          txnDate: getDynamicDateString(-2) + ' 11:30:00 IST',
-          memberName: master.cardholderName || 'Pooja Iyer',
-          memberAccount: 'HDFC Bank RuPay **** 4492',
-          disputeReason: master.cardholderStatement || `Cardholder registered claim for ${master.merchant} regarding ${master.reason}.`
-        },
-        merchantProfile: DSP_1041_DETAILS.merchantProfile,
-        evidence: DSP_1041_DETAILS.evidence,
-        aiScoring: {
-          ...DSP_1041_DETAILS.aiScoring,
-          score: master.aiScore || 85
-        }
-      },
-      error: null,
-      isBackendConnected: true
-    };
+export function getEvidenceForDispute(disputeId: string): EvidenceItem[] {
+  const clean = (disputeId || '').toUpperCase();
+  if (clean.includes('9021')) {
+    return [
+      { id: 'EV-9021-1', fileName: 'Reliance_Tax_Invoice_9021.pdf', type: 'PDF', fileSize: '1.4 MB', uploadedAt: '14 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'GST Tax Invoice' },
+      { id: 'EV-9021-2', fileName: 'Delhivery_Carrier_Manifest_POD.pdf', type: 'PDF', fileSize: '890 KB', uploadedAt: '14 Oct 2026', uploadedBy: 'System', status: 'Parsed', tag: 'Courier Telematics' },
+      { id: 'EV-9021-3', fileName: 'Unboxing_Screen_Crack_Photo.jpg', type: 'JPG', fileSize: '2.8 MB', uploadedAt: '14 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Visual Damage Proof' },
+      { id: 'EV-9021-4', fileName: 'Customer_Damage_Complaint_Log.pdf', type: 'PDF', fileSize: '420 KB', uploadedAt: '14 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Customer Support Escalation' },
+    ];
   }
+  if (clean.includes('8942')) {
+    return [
+      { id: 'EV-8942-1', fileName: 'Flipkart_Order_Details_8942.pdf', type: 'PDF', fileSize: '750 KB', uploadedAt: '13 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Merchant Order Slip' },
+      { id: 'EV-8942-2', fileName: 'RuPay_Bank_Fraud_Intimation.pdf', type: 'PDF', fileSize: '1.2 MB', uploadedAt: '13 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'HDFC Cyber Cell Report' },
+      { id: 'EV-8942-3', fileName: 'Overseas_IP_Telemetry_Logs.csv', type: 'CSV', fileSize: '610 KB', uploadedAt: '13 Oct 2026', uploadedBy: 'System', status: 'Parsed', tag: 'Network Proxy Forensics' },
+      { id: 'EV-8942-4', fileName: 'SIM_Swap_Telecom_Verification.pdf', type: 'PDF', fileSize: '940 KB', uploadedAt: '13 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Cell Tower Telemetry' },
+    ];
+  }
+  if (clean.includes('8812')) {
+    return [
+      { id: 'EV-8812-1', fileName: 'Taj_Reservation_Voucher_8812.pdf', type: 'PDF', fileSize: '980 KB', uploadedAt: '11 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Booking Voucher' },
+      { id: 'EV-8812-2', fileName: 'Cancellation_Notice_Email_Chain.pdf', type: 'PDF', fileSize: '1.3 MB', uploadedAt: '11 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: '48h Cancellation Proof' },
+      { id: 'EV-8812-3', fileName: 'Hotel_Retention_Policy_Terms.pdf', type: 'PDF', fileSize: '1.1 MB', uploadedAt: '11 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Property Cancellation Policy' },
+      { id: 'EV-8812-4', fileName: 'Bank_Chargeback_Mandate_Notice.docx', type: 'DOCX', fileSize: '520 KB', uploadedAt: '11 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Chargeback Reversal Mandate' },
+    ];
+  }
+  if (clean.includes('8755')) {
+    return [
+      { id: 'EV-8755-1', fileName: 'Swiggy_Order_Tax_Invoice_8755.pdf', type: 'PDF', fileSize: '480 KB', uploadedAt: '10 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Instamart POS Bill' },
+      { id: 'EV-8755-2', fileName: 'UPI_Dual_Debit_Bank_Statement.pdf', type: 'PDF', fileSize: '1.1 MB', uploadedAt: '10 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Bank Passbook Ledger' },
+      { id: 'EV-8755-3', fileName: 'POS_Terminal_Transaction_Audit.csv', type: 'CSV', fileSize: '340 KB', uploadedAt: '10 Oct 2026', uploadedBy: 'System', status: 'Parsed', tag: 'NPCI Gateway Settlement Log' },
+    ];
+  }
+  if (clean.includes('8701')) {
+    return [
+      { id: 'EV-8701-1', fileName: 'Zomato_Order_Receipt_8701.pdf', type: 'PDF', fileSize: '520 KB', uploadedAt: '09 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Order KOT Receipt' },
+      { id: 'EV-8701-2', fileName: 'Delivered_Food_Package_Photo.jpg', type: 'JPG', fileSize: '2.4 MB', uploadedAt: '09 Oct 2026', uploadedBy: 'Cardholder', status: 'Parsed', tag: 'Unsealed Wrong Platter Photo' },
+      { id: 'EV-8701-3', fileName: 'Merchant_Kitchen_KOT_Log.pdf', type: 'PDF', fileSize: '390 KB', uploadedAt: '09 Oct 2026', uploadedBy: 'Merchant', status: 'Parsed', tag: 'Kitchen Order Ticket' },
+    ];
+  }
+  return EVIDENCE_FILES;
+}
 
-  return { data: DSP_1041_DETAILS, error: null, isBackendConnected: false };
+export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse<typeof DSP_1041_DETAILS>> {
+  const disputes = getMasterDisputes();
+  const cleanId = (disputeId || '').replace(/^Case\s+/i, '').trim();
+  const master = disputes.find((d) => 
+    d.id.toLowerCase() === cleanId.toLowerCase() || 
+    d.id.toLowerCase().includes(cleanId.toLowerCase()) || 
+    cleanId.toLowerCase().includes(d.id.toLowerCase())
+  );
+
+  const matched = master || {
+    id: cleanId || 'DS-9021',
+    merchant: cleanId.includes('9021') ? 'Reliance Digital Retail Ltd'
+      : cleanId.includes('8942') ? 'Flipkart India Pvt Ltd'
+      : cleanId.includes('8812') ? 'Taj Hotels & Resorts (IHCL)'
+      : cleanId.includes('8755') ? 'Swiggy Instamart India'
+      : cleanId.includes('8701') ? 'Zomato Dining & Gold'
+      : 'Croma Electronics India',
+    amount: cleanId.includes('9021') ? 14999
+      : cleanId.includes('8942') ? 4499
+      : cleanId.includes('8812') ? 28500
+      : cleanId.includes('8755') ? 849
+      : cleanId.includes('8701') ? 1299
+      : 18999,
+    currency: '₹',
+    reason: cleanId.includes('9021') ? 'Product Not Received'
+      : cleanId.includes('8942') ? 'Fraudulent Transaction'
+      : cleanId.includes('8812') ? 'Service Not Provided'
+      : cleanId.includes('8755') ? 'Duplicate Charge'
+      : cleanId.includes('8701') ? 'Wrong Item Delivered'
+      : 'Non-Delivery of Goods',
+    date: '14 Oct 2026',
+    status: cleanId.includes('8812') ? 'Escalated' : cleanId.includes('8942') ? 'Evidence Pending' : 'Review Required',
+    riskLevel: cleanId.includes('8812') ? 'High' : cleanId.includes('8942') ? 'Low' : 'Medium',
+    action: cleanId.includes('8812') ? 'Override' : 'Review',
+    slaCountdown: '2 days left',
+    aiScore: computeStableScore(cleanId),
+    cardholderName: cleanId.includes('9021') ? 'Rahul Verma'
+      : cleanId.includes('8942') ? 'Ananya Sen'
+      : cleanId.includes('8812') ? 'Vikram Malhotra'
+      : cleanId.includes('8701') ? 'Aarav Mehta'
+      : 'Pooja Iyer',
+    cardholderStatement: cleanId.includes('9021') ? 'Smart TV delivered damaged with screen cracked upon opening courier packaging.'
+      : cleanId.includes('8942') ? 'Unrecognized e-commerce swipe while traveling abroad; 2FA was never received.'
+      : cleanId.includes('8812') ? 'Reservation cancelled within free cancellation window; full refund denied by property.'
+      : cleanId.includes('8755') ? 'UPI payment debited twice for same grocery order within 3 minutes on Swiggy Instamart.'
+      : cleanId.includes('8701') ? 'Ordered signature gourmet meal box, but completely different unsealed vegetarian platter was delivered.'
+      : 'The package containing the OnePlus Tablet was never delivered to my residence at Indiranagar, Bengaluru.'
+  };
+
+  const evidenceList = getEvidenceForDispute(matched.id);
+
+  return {
+    data: {
+      id: `Case ${matched.id}`,
+      title: `Case ${matched.id} – ${matched.reason}`,
+      status: matched.status as any,
+      initiatedDate: matched.date === 'Today' ? getDynamicDateString(0) : matched.date,
+      deadline: getDynamicDateString(48),
+      deadlineDaysLeft: 2,
+      deadlineHoursLeft: 48,
+      transaction: {
+        id: `TXN-${matched.id.replace(/[^0-9]/g, '').slice(0, 6) || '882910'}`,
+        merchant: matched.merchant,
+        merchantId: 'MID-IN-00441',
+        totalAmount: matched.amount,
+        currency: matched.currency === '₹' ? 'INR' : matched.currency,
+        txnDate: getDynamicDateString(-2) + ' 11:30:00 IST',
+        memberName: matched.cardholderName || 'Pooja Iyer',
+        memberAccount: 'HDFC Bank RuPay **** 4492',
+        disputeReason: matched.cardholderStatement || `Cardholder registered claim for ${matched.merchant} regarding ${matched.reason}.`
+      },
+      merchantProfile: {
+        name: `${matched.merchant} Enterprise Division`,
+        tier: 'Tier 1 • National Enterprise Merchant',
+        riskRating: 'Low Risk (A+)',
+        historicalDisputeRate: '0.28%'
+      },
+      evidence: evidenceList,
+      aiScoring: {
+        ...DSP_1041_DETAILS.aiScoring,
+        score: matched.aiScore || 85
+      }
+    },
+    error: null,
+    isBackendConnected: true
+  };
 }
 
 // --------------------------------------------------------------------------
@@ -383,7 +476,7 @@ export async function fetchEvidenceItems(disputeId: string): Promise<ApiResponse
     }));
     return { data: mapped, error: null, isBackendConnected: true };
   }
-  return { data: EVIDENCE_FILES, error: null, isBackendConnected: false };
+  return { data: getEvidenceForDispute(disputeId), error: null, isBackendConnected: false };
 }
 
 export async function submitStatement(payload: { dispute_id: string; statement_type: 'CARDHOLDER' | 'MERCHANT'; statement_text: string; author: string }): Promise<ApiResponse<any>> {

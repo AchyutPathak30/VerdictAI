@@ -30,11 +30,32 @@ export interface UnifiedDisputeRecord {
   attachedFile?: string;
 }
 
-const STORAGE_KEY = 'verdictai_master_disputes_v2';
+const STORAGE_KEY = 'verdictai_master_disputes_v3';
 const EVENT_NAME = 'verdictai_disputes_updated';
 
 // Default initial demo cases seeded on first launch
 const SEED_DISPUTES: UnifiedDisputeRecord[] = [
+  {
+    id: 'DSP-1041',
+    caseFileId: 'CF-1041',
+    merchant: 'Croma Electronics India',
+    amount: 18999.00,
+    currency: '₹',
+    reason: 'Non-Delivery of Goods',
+    date: '14 Oct 2026',
+    status: 'Pending Review',
+    statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
+    riskLevel: 'High',
+    action: 'Review',
+    slaCountdown: '22 hours left',
+    sha256Hash: '1041abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345',
+    courier: 'Blue Dart Express (BLUEDART-88192034)',
+    aiVerdict: 'Fair-Weighing ML recommends approval in customer favor. Courier GPS shows unauthorized drop-off 3.2km away.',
+    aiScore: 87,
+    cardholderId: 'usr_pooja_01',
+    cardholderName: 'Pooja Iyer',
+    cardholderStatement: "The package containing the OnePlus Tablet was never delivered to my residence at Indiranagar, Bengaluru. Blue Dart tracking marks it as 'Delivered', but society security logs and gate CCTV show no courier delivery occurred."
+  },
   {
     id: 'CHB-882941-DX',
     caseFileId: 'CF-882941',
@@ -117,7 +138,7 @@ const SEED_DISPUTES: UnifiedDisputeRecord[] = [
     aiScore: 87,
     cardholderId: 'usr_rahul_02',
     cardholderName: 'Rahul Verma',
-    cardholderStatement: 'Smart TV delivered damaged with screen cracked.'
+    cardholderStatement: 'Smart TV delivered damaged with screen cracked upon opening courier packaging.'
   },
   {
     id: 'DS-8942',
@@ -138,7 +159,7 @@ const SEED_DISPUTES: UnifiedDisputeRecord[] = [
     aiScore: 89,
     cardholderId: 'usr_ananya_03',
     cardholderName: 'Ananya Sen',
-    cardholderStatement: 'Unrecognized e-commerce swipe while traveling abroad.'
+    cardholderStatement: 'Unrecognized e-commerce swipe while traveling abroad; 2FA was never received.'
   },
   {
     id: 'DS-8812',
@@ -160,6 +181,48 @@ const SEED_DISPUTES: UnifiedDisputeRecord[] = [
     cardholderId: 'usr_vikram_04',
     cardholderName: 'Vikram Malhotra',
     cardholderStatement: 'Reservation cancelled within free cancellation window; full refund denied by property.'
+  },
+  {
+    id: 'DS-8755',
+    caseFileId: 'CF-8755',
+    merchant: 'Swiggy Instamart India',
+    amount: 849.00,
+    currency: '₹',
+    reason: 'Duplicate Charge',
+    date: '10 Oct 2026',
+    status: 'Review Required',
+    statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
+    riskLevel: 'Low',
+    action: 'Review',
+    slaCountdown: '4 days left',
+    sha256Hash: '8755abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345',
+    courier: 'Direct Delivery (Swiggy Fleet)',
+    aiVerdict: 'Dual deduction detected on UPI gateway within 118 seconds. Automated refund recommended.',
+    aiScore: 61,
+    cardholderId: 'usr_pooja_01',
+    cardholderName: 'Pooja Iyer',
+    cardholderStatement: 'UPI payment debited twice for same grocery order within 3 minutes on Swiggy Instamart.'
+  },
+  {
+    id: 'DS-8701',
+    caseFileId: 'CF-8701',
+    merchant: 'Zomato Dining & Gold',
+    amount: 1299.00,
+    currency: '₹',
+    reason: 'Wrong Item Delivered',
+    date: '09 Oct 2026',
+    status: 'Review Required',
+    statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
+    riskLevel: 'Medium',
+    action: 'Review',
+    slaCountdown: '6 days left',
+    sha256Hash: '8701abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345',
+    courier: 'Zomato Delivery Fleet',
+    aiVerdict: 'OCR receipt parsing confirms mismatch between ordered gourmet platter and billed vegetarian combo.',
+    aiScore: 58,
+    cardholderId: 'usr_aarav_05',
+    cardholderName: 'Aarav Mehta',
+    cardholderStatement: 'Ordered signature gourmet meal box, but completely different unsealed vegetarian platter was delivered.'
   }
 ];
 
@@ -175,35 +238,37 @@ export function getMasterDisputes(): UnifiedDisputeRecord[] {
     }
 
     // Smooth migration: check if previous session stored disputes in legacy keys
+    const prevV2 = localStorage.getItem('verdictai_master_disputes_v2');
     const legacyCardholder = localStorage.getItem('verdictai_cardholder_disputes');
     const migrated: UnifiedDisputeRecord[] = [];
 
-    if (legacyCardholder) {
+    const candidateSources = [prevV2, legacyCardholder].filter(Boolean);
+    for (const source of candidateSources) {
       try {
-        const parsedLegacy = JSON.parse(legacyCardholder);
+        const parsedLegacy = JSON.parse(source!);
         if (Array.isArray(parsedLegacy)) {
           for (const item of parsedLegacy) {
-            if (!SEED_DISPUTES.some(s => s.id === item.id)) {
+            if (!SEED_DISPUTES.some(s => s.id === item.id) && !migrated.some(m => m.id === item.id)) {
               migrated.push({
                 id: item.id || `CHB-${Math.floor(100000 + Math.random() * 900000)}-IN`,
-                caseFileId: `CF-${item.id?.replace(/[^0-9]/g, '') || '9999'}`,
+                caseFileId: item.caseFileId || `CF-${item.id?.replace(/[^0-9]/g, '') || '9999'}`,
                 merchant: item.merchant || 'Croma Electronics India',
                 amount: item.amount || 18999,
-                currency: '₹',
+                currency: item.currency || '₹',
                 reason: item.reason || 'Product Not Received',
                 date: item.date || 'Today',
                 status: item.status || 'Submitted (SLA Active)',
                 statusColor: item.statusColor || 'bg-blue-100 text-blue-800 border-blue-200',
-                riskLevel: item.amount > 10000 ? 'High' : 'Medium',
-                action: 'Review',
+                riskLevel: item.riskLevel || (item.amount > 10000 ? 'High' : 'Medium'),
+                action: item.action || 'Review',
                 slaCountdown: item.slaCountdown || '47h 59m remaining',
                 sha256Hash: item.sha256Hash || `sha256_${Date.now()}_migrated_fingerprint`,
                 courier: item.courier || 'Awaiting Merchant Counter-Proof',
                 aiVerdict: item.aiVerdict || 'Dispute ingested into Fair-Weighing ML queue. Merchant notified within 48-hour SLA.',
                 aiScore: item.aiScore || 88,
-                cardholderId: 'usr_pooja_01',
-                cardholderName: 'Pooja Iyer',
-                cardholderStatement: item.statement || item.reason || 'Contested transaction.'
+                cardholderId: item.cardholderId || 'usr_pooja_01',
+                cardholderName: item.cardholderName || 'Pooja Iyer',
+                cardholderStatement: item.cardholderStatement || item.statement || item.reason || 'Contested transaction.'
               });
             }
           }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Download,
@@ -13,7 +13,12 @@ import {
   Table,
   Camera,
   FileSpreadsheet,
-  FileCheck
+  FileCheck,
+  Play,
+  Pause,
+  Eye,
+  RefreshCw,
+  Video
 } from 'lucide-react';
 import { EvidenceItem } from '../../types/dispute';
 
@@ -30,9 +35,104 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   onClose,
   onDownloadToast
 }) => {
+  const [isCctvPlaying, setIsCctvPlaying] = useState(true);
+  const [cctvSeconds, setCctvSeconds] = useState(18);
+  const [isNightVision, setIsNightVision] = useState(true);
+
+  useEffect(() => {
+    if (!isCctvPlaying) return;
+    const interval = setInterval(() => {
+      setCctvSeconds((prev) => (prev >= 59 ? 0 : prev + 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isCctvPlaying]);
+
   if (!isOpen || !item) return null;
 
   const handleDownload = () => {
+    let content = '';
+    let mimeType = 'text/plain';
+
+    if (item.type === 'CSV' || isManifest) {
+      mimeType = 'text/csv';
+      content = `TIMESTAMP,EVENT_CODE,DISPATCH_TRACKING,VEHICLE_REG,DRIVER_AGENT,TELEMETRICS_STATUS\n` +
+        `2026-10-14 09:12:00,DEPOT_IN,BLUEDART-88192034,KA-03-HA-8821,Ramesh Yadav,PACKAGE_LOADED\n` +
+        `2026-10-14 11:30:45,TRANSIT,BLUEDART-88192034,KA-03-HA-8821,Ramesh Yadav,DISPATCHED_TO_DELIVERY\n` +
+        `2026-10-14 15:42:18,GPS_DROP,BLUEDART-88192034,KA-03-HA-8821,Ramesh Yadav,DROP_OFF_CONFIRMED (OUTER_RING)\n` +
+        `2026-10-14 18:05:44,DEPOT_OUT,ALL_MANIFESTS,KA-03-HA-8821,Ramesh Yadav,ROUTE_COMPLETED\n`;
+    } else if (item.type === 'JPG' || item.type === 'PNG' || isImage) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280;
+      canvas.height = 720;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = isNightVision ? '#0a101d' : '#1e293b';
+        ctx.fillRect(0, 0, 1280, 720);
+        ctx.strokeStyle = isNightVision ? '#064e3b' : '#334155';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < 1280; x += 80) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 720); ctx.stroke();
+        }
+        for (let y = 0; y < 720; y += 80) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1280, y); ctx.stroke();
+        }
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(340, 160, 600, 400);
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(340, 160, 600, 400);
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 22px monospace';
+        ctx.fillText('CAM 04 - PALM HEIGHTS MAIN SECURITY GATE', 40, 50);
+        ctx.fillText(`14-OCT-2026 15:42:${String(cctvSeconds).padStart(2, '0')} IST  ● REC [1080P 30FPS]`, 40, 80);
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText('⚠️ ZERO DELIVERY ENTRY DETECTED AT 15:42:18 IST', 370, 360);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '16px monospace';
+        ctx.fillText('VerdictAI Cryptographic Proof Hash: SHA256_EVIDENCE_GATE_CCTV_VERIFIED', 40, 680);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = item.fileName.endsWith('.jpg') ? item.fileName : `${item.fileName}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/jpeg');
+        onDownloadToast?.(item.fileName);
+        return;
+      }
+    } else {
+      mimeType = 'application/pdf';
+      content = `%PDF-1.4\n% VerdictAI Evidence Export File\nDocument: ${item.fileName}\nSource: ${item.uploadedBy}\nUploaded At: ${item.uploadedAt}\nFile Size: ${item.fileSize}\nStatus: Parsed & Cryptographically Verified\n\n` +
+        `----------------------------------------------------------------------\n` +
+        `VERDICTAI CHARGEBACK EVIDENCE DOSSIER\n` +
+        `----------------------------------------------------------------------\n` +
+        `Evidence File ID: ${item.id}\n` +
+        `File Name: ${item.fileName}\n` +
+        `File Type: ${item.type}\n` +
+        `Verification Status: SHA-256 Checksum Verified\n` +
+        `Classification: ${item.tag || 'Supporting Dispute Artifact'}\n` +
+        `Audited by: VerdictAI Multi-Modal OCR Pipeline\n\n` +
+        `Summary of Findings:\n` +
+        `All data points extracted from this artifact have been mapped to the active chargeback case ledger.\n` +
+        `Non-repudiation proof signed by issuing bank gateway node.\n`;
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = item.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     onDownloadToast?.(item.fileName);
   };
 
@@ -323,45 +423,119 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             </div>
           )}
 
-          {/* Security Gate CCTV Frame Preview */}
+          {/* High-Fidelity Security Gate CCTV Surveillance Feed & Video Player */}
           {isImage && (
-            <div className="max-w-2xl mx-auto bg-slate-950 rounded-xl border border-slate-800 shadow-2xl p-4 space-y-3 text-slate-100">
-              <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
-                <span className="flex items-center gap-1.5 font-bold text-white">
-                  <Camera className="w-4 h-4 text-rose-500" />
-                  SOCIETY GATE CCTV LOG &bull; CAMERA #04
+            <div className="max-w-3xl mx-auto bg-slate-950 rounded-xl border border-slate-800 shadow-2xl p-4 sm:p-5 space-y-3 text-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                  <span className="font-bold text-white flex items-center gap-1.5 font-mono">
+                    <Video className="w-4 h-4 text-rose-500" />
+                    CAM #04 &bull; PALM HEIGHTS MAIN ENTRY GATE
+                  </span>
+                  <span className="font-mono text-emerald-400 text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">
+                    LIVE REPLAY &bull; 1080P 30FPS
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsNightVision(!isNightVision)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-700 transition"
+                    title="Toggle IR Night Vision"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{isNightVision ? 'IR Night Vision' : 'Color Mode'}</span>
+                  </button>
+                  <button
+                    onClick={() => setIsCctvPlaying(!isCctvPlaying)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold rounded-lg transition"
+                  >
+                    {isCctvPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                    <span>{isCctvPlaying ? 'Pause Video' : 'Play Video'}</span>
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold rounded-lg border border-slate-700 transition"
+                    title="Export Image Snapshot"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Save Frame</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Video Monitor Frame */}
+              <div className={`relative aspect-video rounded-lg overflow-hidden border border-slate-800 flex flex-col justify-between p-4 transition-all duration-300 ${isNightVision ? 'bg-gradient-to-b from-slate-950 via-emerald-950/30 to-slate-950' : 'bg-slate-900'}`}>
+                {/* Top HUD Overlay */}
+                <div className="flex items-center justify-between text-xs font-mono z-10">
+                  <div className="flex items-center gap-2 bg-black/70 px-2.5 py-1 rounded border border-slate-700/60 text-emerald-400 text-[11px]">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse inline-block" />
+                    <span>REC &bull; 14-OCT-2026 15:42:{String(cctvSeconds).padStart(2, '0')} IST</span>
+                  </div>
+                  <div className="bg-black/70 px-2.5 py-1 rounded border border-slate-700/60 text-slate-300 text-[10px] space-x-2">
+                    <span className="text-emerald-400 font-bold">{isNightVision ? 'IR: ON (850nm)' : 'WDR: AUTO'}</span>
+                    <span>FPS: 30.0</span>
+                    <span>BITRATE: 4.2 Mbps</span>
+                  </div>
+                </div>
+
+                {/* Surveillance Scene Rendering */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {/* Gate Scene SVG Graphic */}
+                  <svg className="w-full h-full opacity-60" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Horizon & Roadway */}
+                    <path d="M 0 320 L 800 320" stroke="#1e293b" strokeWidth="2" />
+                    <polygon points="260,450 360,320 440,320 540,450" fill={isNightVision ? '#064e3b' : '#1e293b'} opacity="0.3" />
+                    <line x1="400" y1="330" x2="400" y2="440" stroke="#f59e0b" strokeWidth="2" strokeDasharray="8 6" />
+
+                    {/* Security Guard Cabin */}
+                    <rect x="520" y="240" width="130" height="90" fill="#0f172a" stroke="#334155" strokeWidth="2" />
+                    <rect x="540" y="255" width="40" height="30" fill={isNightVision ? '#047857' : '#38bdf8'} opacity="0.4" stroke="#64748b" />
+                    <text x="530" y="230" fill="#94a3b8" fontSize="10" fontFamily="monospace">SECURITY BOOTH #01</text>
+
+                    {/* Boom Barrier Gate Arm */}
+                    <rect x="330" y="315" width="200" height="6" fill="#ef4444" stroke="#ffffff" strokeWidth="1" />
+                    <circle cx="330" cy="318" r="8" fill="#475569" />
+
+                    {/* Motion Detection Wireframe */}
+                    <rect x="290" y="270" width="220" height="110" fill="none" stroke={isNightVision ? '#10b981' : '#38bdf8'} strokeWidth="1.5" strokeDasharray="4 4" />
+                    <text x="300" y="290" fill={isNightVision ? '#10b981' : '#38bdf8'} fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      [ ROI-1: ZERO DELIVERY VEHICLE ]
+                    </text>
+                  </svg>
+                </div>
+
+                {/* Center Analysis Banner */}
+                <div className="z-10 text-center my-auto px-4">
+                  <div className="inline-block bg-slate-950/90 border border-amber-500/40 rounded-xl p-4 shadow-xl max-w-lg mx-auto backdrop-blur-xs">
+                    <p className="text-amber-400 font-mono font-bold text-xs flex items-center justify-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      CARRIER GPS VS GATE SURVEILLANCE CROSS-CHECK
+                    </p>
+                    <p className="text-[11px] text-slate-300 mt-1.5 leading-relaxed font-sans">
+                      Blue Dart telematics marked delivery at <strong>15:42:18 IST</strong>. Camera #04 confirms <strong>zero commercial courier vehicles</strong> or delivery personnel entered Palm Heights Indiranagar between 15:30 and 16:00 IST.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom HUD Overlay */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono z-10 pt-2 border-t border-slate-800/80 bg-black/60 -mx-4 -mb-4 px-4 py-2">
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    GATE LOG STATUS: VERIFIED ZERO ENTRY AT 15:42 IST
+                  </span>
+                  <span className="text-slate-400 truncate max-w-xs">
+                    Merkle Proof: sha256_e4b78912cctv_frame_palm_heights
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 gap-1 pt-1">
+                <span>Submitted by: <strong>Pooja Iyer (Cardholder)</strong> &bull; HDFC RuPay **** 4492</span>
+                <span className="font-mono text-emerald-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Society Management Digital Stamp: Verified
                 </span>
-                <span className="font-mono text-emerald-400 text-[11px]">REC &bull; 1080P 30FPS</span>
-              </div>
-
-              {/* Simulated CCTV Frame */}
-              <div className="relative aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
-                <div className="absolute top-3 left-3 font-mono text-[11px] text-emerald-400 bg-black/60 px-2 py-1 rounded">
-                  CAM 04 - PALM HEIGHTS MAIN GATE &bull; 14-OCT-2026 15:42:18 IST
-                </div>
-                <div className="absolute top-3 right-3 font-mono text-[10px] text-white/70 bg-black/60 px-2 py-1 rounded">
-                  IR FILTER: ACTIVE
-                </div>
-
-                {/* CCTV Visual Illustration */}
-                <div className="text-center p-6 space-y-2">
-                  <Camera className="w-12 h-12 text-slate-700 mx-auto" />
-                  <p className="text-xs text-slate-400 font-mono">
-                    [ CCTV FOOTAGE STILL CAPTURE ]
-                  </p>
-                  <p className="text-[11px] text-slate-300 max-w-md mx-auto">
-                    During recorded Blue Dart drop-off timestamp (15:42:18 IST), security gate log shows no commercial delivery vans entered Palm Heights premises.
-                  </p>
-                </div>
-
-                <div className="absolute bottom-3 left-3 font-mono text-[10px] text-amber-400 bg-black/70 px-2 py-1 rounded border border-amber-500/30">
-                  ⚠️ ZERO DELIVERY ENTRY DETECTED AT 15:42:18 IST
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-                <span>Submitted by: Cardholder (Pooja Iyer)</span>
-                <span className="font-mono">Security Desk Signature: Logged</span>
               </div>
             </div>
           )}

@@ -45,11 +45,7 @@ export const App: React.FC = () => {
 
   const handleSelectCase = (caseItem: CaseQueueItem) => {
     setActiveCaseId(caseItem.id);
-    if (caseItem.id === 'DS-8812' || caseItem.action === 'Override') {
-      setActiveScreen('override-console');
-    } else {
-      setActiveScreen('case-detail');
-    }
+    setActiveScreen('case-detail');
   };
 
   const handleLogout = () => {
