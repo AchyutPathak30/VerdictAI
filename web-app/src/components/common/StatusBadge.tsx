@@ -12,15 +12,15 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
   let styles = 'bg-slate-100 text-slate-700 border-slate-200';
   let dotColor = 'bg-slate-400';
 
-  if (normalized.includes('review') || normalized.includes('warning') || normalized === 'pending review') {
-    styles = 'bg-amber-50 text-amber-700 border-amber-300';
-    dotColor = 'bg-amber-500';
-  } else if (normalized.includes('escalat') || normalized.includes('critical') || normalized === 'lost') {
-    styles = 'bg-red-50 text-red-700 border-red-300';
-    dotColor = 'bg-red-500';
-  } else if (normalized.includes('auto-res') || normalized.includes('resolved') || normalized.includes('won') || normalized === 'stable' || normalized === 'completed' || normalized === 'attached') {
+  if (normalized.includes('approv') || normalized.includes('accept') || normalized.includes('auto-res') || normalized.includes('resolved') || normalized.includes('won') || normalized === 'stable' || normalized === 'completed' || normalized === 'attached') {
     styles = 'bg-emerald-50 text-emerald-700 border-emerald-300';
     dotColor = 'bg-emerald-500';
+  } else if (normalized.includes('reject') || normalized.includes('refut') || normalized.includes('escalat') || normalized.includes('critical') || normalized === 'lost') {
+    styles = 'bg-red-50 text-red-700 border-red-300';
+    dotColor = 'bg-red-500';
+  } else if (normalized.includes('review') || normalized.includes('warning') || normalized === 'pending review') {
+    styles = 'bg-amber-50 text-amber-700 border-amber-300';
+    dotColor = 'bg-amber-500';
   } else if (normalized.includes('pending') || normalized.includes('evidence')) {
     styles = 'bg-slate-100 text-slate-600 border-slate-300';
     dotColor = 'bg-slate-400';

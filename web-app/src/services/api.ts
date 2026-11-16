@@ -24,8 +24,11 @@ import {
   getMasterDisputes,
   getCaseQueueItems,
   createUnifiedDispute,
+  updateDisputeStatus,
   UnifiedDisputeRecord
 } from './disputeStore';
+
+export { updateDisputeStatus };
 
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;

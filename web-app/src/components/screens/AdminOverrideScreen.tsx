@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { CHB_99281_OVERRIDE_DATA } from '../../data/mockData';
 import { EvidenceCard } from '../common/EvidenceCard';
-import { overrideDisputeDecision } from '../../services/api';
+import { overrideDisputeDecision, updateDisputeStatus } from '../../services/api';
 import { ToastMessage } from '../common/Toast';
 import { ScoreGauge } from '../common/ScoreGauge';
 import { BenchmarkChart } from '../charts/BenchmarkChart';
@@ -54,10 +54,16 @@ export const AdminOverrideScreen: React.FC<AdminOverrideScreenProps> = ({
 
     if (res.data) {
       setIsSuccess(true);
+      updateDisputeStatus(disputeId, selectedOutcome === 'FAVOUR_MEMBER' ? 'Resolved (Override)' : 'Refuted (Override)', {
+        action: 'Override',
+        riskLevel: 'Low',
+        aiVerdict: `Admin Override: ${reasoning}`,
+        slaCountdown: 'Resolved'
+      });
       onAddToast?.({
         type: 'success',
         title: 'Decision Committed',
-        message: 'Admin override logged immutably in cryptographic audit chain.'
+        message: 'Admin override logged immutably in cryptographic audit chain and updated in queue.'
       });
     }
   };

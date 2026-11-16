@@ -13,7 +13,7 @@ import {
   RefreshCw,
   Sparkles
 } from 'lucide-react';
-import { fetchDisputeDetail, fetchEvidenceItems, scoreDisputeCase, uploadEvidenceFile } from '../../services/api';
+import { fetchDisputeDetail, fetchEvidenceItems, scoreDisputeCase, uploadEvidenceFile, updateDisputeStatus } from '../../services/api';
 import { StatusBadge } from '../common/StatusBadge';
 import { ScoreGauge } from '../common/ScoreGauge';
 import { ProgressBar } from '../common/ProgressBar';
@@ -56,7 +56,17 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
       fetchEvidenceItems(disputeId)
     ]);
 
-    if (detailRes.data) setCaseDetails(detailRes.data);
+    if (detailRes.data) {
+      setCaseDetails(detailRes.data);
+      const st = (detailRes.data.status || '').toLowerCase();
+      if (st.includes('approv') || st.includes('accept') || st.includes('refund') || st.includes('won') || st.includes('auto-res') || st.includes('settled')) {
+        setResolutionStatus('accepted');
+      } else if (st.includes('refut') || st.includes('reject') || st.includes('lost')) {
+        setResolutionStatus('rejected');
+      } else {
+        setResolutionStatus('pending');
+      }
+    }
     if (evidenceRes.data) setEvidenceList(evidenceRes.data);
     setIsBackendConnected(detailRes.isBackendConnected);
     setLoading(false);
@@ -386,30 +396,72 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
             {/* Decision CTAs */}
             <div className="pt-4 border-t border-slate-100 space-y-2">
               {resolutionStatus === 'accepted' ? (
-                <div className="p-3 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-bold text-center border border-emerald-200">
-                  Dispute Accepted (Member Refunded)
+                <div className="space-y-2">
+                  <div className="p-3 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-bold text-center border border-emerald-200">
+                    Dispute Accepted (Member Refunded)
+                  </div>
+                  <button
+                    onClick={() => {
+                      setResolutionStatus('pending');
+                      const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
+                      updateDisputeStatus(targetId, 'Review Required', { action: 'Review', slaCountdown: '22 hours left' });
+                      setCaseDetails((prev: any) => prev ? { ...prev, status: 'Review Required' } : prev);
+                      onAddToast?.({ type: 'info', title: 'Case Reopened', message: `${targetId} status reset to Review Required.` });
+                    }}
+                    className="w-full py-1 text-[11px] text-slate-500 hover:text-slate-800 hover:underline text-center cursor-pointer"
+                  >
+                    Change Determination / Re-evaluate
+                  </button>
                 </div>
               ) : resolutionStatus === 'rejected' ? (
-                <div className="p-3 rounded-lg bg-rose-50 text-rose-800 text-xs font-bold text-center border border-rose-200">
-                  Dispute Refuted (Merchant Upheld)
+                <div className="space-y-2">
+                  <div className="p-3 rounded-lg bg-rose-50 text-rose-800 text-xs font-bold text-center border border-rose-200">
+                    Dispute Refuted (Merchant Upheld)
+                  </div>
+                  <button
+                    onClick={() => {
+                      setResolutionStatus('pending');
+                      const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
+                      updateDisputeStatus(targetId, 'Review Required', { action: 'Review', slaCountdown: '22 hours left' });
+                      setCaseDetails((prev: any) => prev ? { ...prev, status: 'Review Required' } : prev);
+                      onAddToast?.({ type: 'info', title: 'Case Reopened', message: `${targetId} status reset to Review Required.` });
+                    }}
+                    className="w-full py-1 text-[11px] text-slate-500 hover:text-slate-800 hover:underline text-center cursor-pointer"
+                  >
+                    Change Determination / Re-evaluate
+                  </button>
                 </div>
               ) : (
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
                       setResolutionStatus('rejected');
-                      onAddToast?.({ type: 'error', title: 'Dispute Refuted', message: 'Case status set to REJECTED.' });
+                      const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
+                      updateDisputeStatus(targetId, 'Refuted', {
+                        action: 'Closed',
+                        slaCountdown: 'Closed',
+                        aiVerdict: 'Dispute refuted by Dispute-Ops Lead. Merchant counter-evidence upheld.'
+                      });
+                      setCaseDetails((prev: any) => prev ? { ...prev, status: 'Refuted' } : prev);
+                      onAddToast?.({ type: 'error', title: 'Dispute Refuted', message: `Case ${targetId} status set to REFUTED and updated in queue.` });
                     }}
-                    className="flex-1 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold text-slate-700 transition"
+                    className="flex-1 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold text-slate-700 transition cursor-pointer"
                   >
                     Refute Claim
                   </button>
                   <button
                     onClick={() => {
                       setResolutionStatus('accepted');
-                      onAddToast?.({ type: 'success', title: 'Dispute Approved', message: 'Case status set to ACCEPTED.' });
+                      const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
+                      updateDisputeStatus(targetId, 'Approved', {
+                        action: 'Resolved',
+                        slaCountdown: 'Settled',
+                        aiVerdict: 'Dispute approved by Dispute-Ops Lead. Provisional credit of full amount confirmed.'
+                      });
+                      setCaseDetails((prev: any) => prev ? { ...prev, status: 'Approved' } : prev);
+                      onAddToast?.({ type: 'success', title: 'Dispute Approved', message: `Case ${targetId} status set to APPROVED and updated in queue.` });
                     }}
-                    className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
+                    className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
                   >
                     Approve Dispute
                   </button>

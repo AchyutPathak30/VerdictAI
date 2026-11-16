@@ -390,3 +390,46 @@ export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeReco
 
   return newRecord;
 }
+
+export function updateDisputeStatus(
+  disputeId: string,
+  newStatus: string,
+  options?: {
+    action?: string;
+    riskLevel?: 'Low' | 'Medium' | 'High';
+    aiVerdict?: string;
+    slaCountdown?: string;
+  }
+): boolean {
+  const clean = (disputeId || '').replace(/^Case\s+/i, '').trim().toUpperCase();
+  const current = getMasterDisputes();
+  const index = current.findIndex(d => {
+    const idUpper = d.id.toUpperCase();
+    return idUpper === clean || idUpper.includes(clean) || clean.includes(idUpper);
+  });
+
+  let statusColor = 'bg-blue-100 text-blue-800 border-blue-200';
+  const norm = newStatus.toLowerCase();
+  if (norm.includes('accept') || norm.includes('approv') || norm.includes('refund') || norm.includes('won') || norm.includes('auto-res') || norm.includes('settled')) {
+    statusColor = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  } else if (norm.includes('reject') || norm.includes('refut') || norm.includes('lost')) {
+    statusColor = 'bg-rose-100 text-rose-800 border-rose-200';
+  } else if (norm.includes('escalat') || norm.includes('review') || norm.includes('investigat')) {
+    statusColor = 'bg-amber-100 text-amber-800 border-amber-200';
+  }
+
+  if (index !== -1) {
+    current[index] = {
+      ...current[index],
+      status: newStatus,
+      statusColor,
+      action: options?.action || (norm.includes('approv') || norm.includes('accept') ? 'Resolved' : norm.includes('refut') ? 'Closed' : current[index].action),
+      slaCountdown: options?.slaCountdown || (norm.includes('approv') || norm.includes('accept') || norm.includes('refut') ? 'Settled' : current[index].slaCountdown),
+      ...(options?.riskLevel ? { riskLevel: options.riskLevel } : {}),
+      ...(options?.aiVerdict ? { aiVerdict: options.aiVerdict } : {})
+    };
+    saveMasterDisputes(current);
+    return true;
+  }
+  return false;
+}
