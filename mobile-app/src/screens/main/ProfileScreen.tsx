@@ -8,15 +8,17 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  Platform,
 } from 'react-native';
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
+import { setAuthToken } from '../../services/apiClient';
 
 const DEMO_USER = {
   name: 'Pooja Iyer',
-  cardholderID: 'usr_pooja_01',
+  cardholderID: 'usr_pooja_iyer',
   email: 'pooja.iyer@gmail.com',
   card: '•••• •••• •••• 4492',
   cardType: 'HDFC RuPay Platinum',
@@ -26,7 +28,30 @@ const DEMO_USER = {
 export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  const executeSignOut = async () => {
+    await setAuthToken(null);
+    try {
+      const parent = navigation.getParent();
+      if (parent) {
+        parent.reset({ index: 0, routes: [{ name: 'Auth' }] });
+        return;
+      }
+      navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+    } catch {
+      (navigation as any).navigate('Auth');
+    }
+  };
+
   const handleSignOut = () => {
+    if (Platform.OS === 'web') {
+      const g = globalThis as unknown as { confirm?: (msg: string) => boolean };
+      const confirmed = typeof g.confirm === 'function' ? g.confirm('Are you sure you want to sign out?') : true;
+      if (confirmed) {
+        executeSignOut();
+      }
+      return;
+    }
+
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
@@ -35,9 +60,7 @@ export default function ProfileScreen() {
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: () => {
-            navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
-          },
+          onPress: executeSignOut,
         },
       ]
     );

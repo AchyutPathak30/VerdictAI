@@ -9,7 +9,7 @@ import { Transaction, UnifiedCaseFile, EvidenceItem } from '../types';
 export const FALLBACK_TRANSACTIONS: Transaction[] = [
   {
     id: 'txn_croma_18999',
-    user_id: 'usr_pooja_01',
+    user_id: 'usr_pooja_iyer',
     merchant_id: 'm_croma_004',
     merchant_name: 'Croma Electronics India',
     amount: 18999.00,
@@ -21,7 +21,7 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'txn_swiggy_1499',
-    user_id: 'usr_pooja_01',
+    user_id: 'usr_pooja_iyer',
     merchant_id: 'm_swiggy_002',
     merchant_name: 'Swiggy Instamart',
     amount: 1499.00,
@@ -33,7 +33,7 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'txn_reliance_28500',
-    user_id: 'usr_pooja_01',
+    user_id: 'usr_pooja_iyer',
     merchant_id: 'm_reliance_003',
     merchant_name: 'Reliance Digital Retail Ltd',
     amount: 28500.00,
@@ -45,7 +45,7 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'txn_tatacliq_24999',
-    user_id: 'usr_pooja_01',
+    user_id: 'usr_pooja_iyer',
     merchant_id: 'm_tatacliq_001',
     merchant_name: 'Tata CLiQ Luxury',
     amount: 24999.00,
@@ -57,7 +57,7 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'txn_flipkart_4599',
-    user_id: 'usr_pooja_01',
+    user_id: 'usr_pooja_iyer',
     merchant_id: 'm_flipkart_005',
     merchant_name: 'Flipkart India Pvt Ltd',
     amount: 4599.00,
@@ -88,7 +88,7 @@ export const FALLBACK_DISPUTES: UnifiedCaseFile[] = [
     },
     transaction: {
       transaction_id: 'txn_croma_18999',
-      cardholder_id: 'usr_pooja_01',
+      cardholder_id: 'usr_pooja_iyer',
       merchant_id: 'm_croma_004',
       merchant_name: 'Croma Electronics India',
       amount: 18999.00,
@@ -135,7 +135,7 @@ export const FALLBACK_DISPUTES: UnifiedCaseFile[] = [
     },
     transaction: {
       transaction_id: 'txn_swiggy_1499',
-      cardholder_id: 'usr_pooja_01',
+      cardholder_id: 'usr_pooja_iyer',
       merchant_id: 'm_swiggy_002',
       merchant_name: 'Swiggy Instamart',
       amount: 1499.00,
@@ -167,7 +167,7 @@ export const FALLBACK_DISPUTES: UnifiedCaseFile[] = [
     },
     transaction: {
       transaction_id: 'txn_reliance_28500',
-      cardholder_id: 'usr_pooja_01',
+      cardholder_id: 'usr_pooja_iyer',
       merchant_id: 'm_reliance_003',
       merchant_name: 'Reliance Digital Retail Ltd',
       amount: 2850.00,
@@ -215,7 +215,7 @@ export const FALLBACK_DISPUTES: UnifiedCaseFile[] = [
     },
     transaction: {
       transaction_id: 'txn_tatacliq_24999',
-      cardholder_id: 'usr_pooja_01',
+      cardholder_id: 'usr_pooja_iyer',
       merchant_id: 'm_tatacliq_001',
       merchant_name: 'Tata CLiQ Luxury',
       amount: 24999.00,

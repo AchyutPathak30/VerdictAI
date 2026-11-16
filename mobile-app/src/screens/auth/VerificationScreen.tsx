@@ -15,6 +15,7 @@ import { AuthStackParamList, RootStackParamList } from '../../types';
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp as RootNav } from '@react-navigation/native-stack';
+import { setAuthToken } from '../../services/apiClient';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Verification'>;
@@ -43,13 +44,14 @@ export default function VerificationScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const code = otp.join('');
     if (code.length < 6) {
       Alert.alert('Incomplete Code', 'Please enter all 6 digits of your verification code.');
       return;
     }
     setLoading(true);
+    await setAuthToken(`session_${Date.now()}_usr_pooja_iyer`);
     setTimeout(() => {
       setLoading(false);
       rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });

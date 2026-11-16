@@ -20,11 +20,21 @@ declare const process: {
 
 const AUTH_TOKEN_KEY = 'verdictai_auth_token';
 
-// Dynamic Base URL Resolution (Android Emulator maps host loopback to 10.0.2.2)
+// Dynamic Base URL Resolution
+// 1. Explicit env override: EXPO_PUBLIC_API_URL
+// 2. Production Web (Netlify, Vercel, etc.): routes automatically to live Render cloud gateway
+// 3. Android Emulator: maps host loopback to 10.0.2.2:8000
+// 4. Local dev / iOS simulator: localhost:8000
 const resolveBaseUrl = (): string => {
   const envApiUrl = typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_API_URL : undefined;
   if (envApiUrl) {
     return envApiUrl;
+  }
+  if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
+    const loc = (globalThis as unknown as { location?: { hostname?: string } })?.location;
+    if (loc?.hostname && loc.hostname !== 'localhost' && loc.hostname !== '127.0.0.1') {
+      return 'https://verdictai-api-i4yd.onrender.com/api/v1';
+    }
   }
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:8000/api/v1';
@@ -103,7 +113,7 @@ export const getAuthToken = async (): Promise<string | null> => {
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 3500, // Fast 3.5s timeout for seamless offline demo fallback
+  timeout: 8000, // 8s timeout for cloud roundtrips (Render cold starts) with offline fallback
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

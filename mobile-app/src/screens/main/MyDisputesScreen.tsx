@@ -21,8 +21,8 @@ type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'MyDisputes'>;
 };
 
-// Hardcoded demo cardholder ID matching backend seed data
-const DEMO_CARDHOLDER_ID = 'usr_alice_01';
+// Demo cardholder ID matching localized Indian user (Pooja Iyer in live database)
+const DEMO_CARDHOLDER_ID = 'usr_pooja_iyer';
 
 const STATUS_CONFIG: Record<
   string,
