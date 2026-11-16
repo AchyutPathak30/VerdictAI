@@ -23,7 +23,7 @@ The entire platform is production-ready, containerized, and deployed with zero e
 | Deliverable / Interface | Public URL | Purpose & Capabilities |
 | :--- | :--- | :--- |
 | **Live Working Web App** | [`https://verdictai-web.onrender.com`](https://verdictai-web.onrender.com) | Multi-role dispute resolution console (Cardholder, Merchant, Investigator, Admin Lead) |
-| **API & Interactive Docs** | [`https://verdictai-api.onrender.com/docs`](https://verdictai-api.onrender.com/docs) | Interactive Swagger API explorer for all dispute lifecycle, evidence, & auth endpoints |
+| **API & Interactive Docs** | [`https://verdictai-api-i4yd.onrender.com/docs`](https://verdictai-api-i4yd.onrender.com/docs) | Interactive Swagger API explorer for all dispute lifecycle, evidence, & auth endpoints |
 | **GitHub Repository** | [`https://github.com/AchyutPathak30/VerdictAI`](https://github.com/AchyutPathak30/VerdictAI) | Complete source code, Docker configs, and automated GitHub Actions CI/CD workflows |
 
 > **Local Mirror (via Docker Compose):**
@@ -109,7 +109,7 @@ VerdictAI leverages **Render Cloud PaaS** and **Docker containerization** for au
        plan: free
        envVars:
          - key: VITE_API_BASE_URL
-           value: https://verdictai-api.onrender.com/api/v1
+           value: https://verdictai-api-i4yd.onrender.com/api/v1
    ```
 
 ---
@@ -179,8 +179,9 @@ Enforced globally across every HTTP response by `SecurityHeadersMiddleware`:
 * `Permissions-Policy`: Restricts browser hardware access (disabling geolocation, microphone, and camera leakage).
 
 ### 5.2. Cross-Origin Resource Sharing (CORS) Policy
-Configured in `backend/app/core/config.py` to allow secure cross-origin communication between the web/mobile clients and API gateway:
-* Whitelisted Origins: `https://verdictai-web.onrender.com`, `http://localhost:5173`, `http://localhost:3000`, `http://localhost:8081`.
+Configured in `backend/app/main.py` and `backend/app/core/config.py` to allow secure cross-origin communication between the web/mobile clients and API gateway:
+* Whitelisted Origins: `https://verdictai-web.onrender.com`, `https://verdictai-api-i4yd.onrender.com`, `http://localhost:5173`, `http://localhost:3000`, `http://localhost:8081`.
+* Cloud PaaS Dynamic Regex: `allow_origin_regex=r"https://.*\.onrender\.com"` (guarantees automated subdomains on Render connect seamlessly with zero CORS rejections).
 * Full support for credentials (`allow_credentials=True`), authorization headers, and REST HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`).
 
 ### 5.3. Per-Client Token Bucket Rate Limiting
