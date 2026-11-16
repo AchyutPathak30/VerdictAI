@@ -24,6 +24,8 @@ class Settings(BaseModel):
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "https://verdictai.onrender.com",
+        "https://verdictai-web.onrender.com",
+        "https://verdictai-api-i4yd.onrender.com",
         "https://verdictai.railway.app",
         "*"
     ]

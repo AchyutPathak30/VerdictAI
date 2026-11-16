@@ -15,7 +15,7 @@ import {
   Loader2,
   Trash2
 } from 'lucide-react';
-import { GatewayIntegration } from '../../services/api';
+import { GatewayIntegration, BASE_URL } from '../../services/api';
 
 interface GatewayIntegrationModalProps {
   isOpen: boolean;
@@ -107,7 +107,7 @@ export const GatewayIntegrationModal: React.FC<GatewayIntegrationModalProps> = (
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latency?: number } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const webhookEndpoint = 'https://verdictai-api.onrender.com/api/v1/integrations/webhooks/gateway';
+  const webhookEndpoint = `${BASE_URL}/integrations/webhooks/gateway`;
 
   useEffect(() => {
     if (gateway) {

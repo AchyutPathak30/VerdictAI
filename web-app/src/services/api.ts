@@ -27,7 +27,25 @@ import {
   UnifiedDisputeRecord
 } from './disputeStore';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  const isRenderHost = typeof window !== 'undefined' && window.location.hostname.includes('onrender.com');
+
+  if (isRenderHost) {
+    if (!envUrl || envUrl.includes('localhost') || (envUrl.includes('verdictai-api.onrender.com') && !envUrl.includes('verdictai-api-i4yd'))) {
+      return 'https://verdictai-api-i4yd.onrender.com/api/v1';
+    }
+    return envUrl;
+  }
+
+  if (envUrl && envUrl.includes('verdictai-api.onrender.com') && !envUrl.includes('verdictai-api-i4yd')) {
+    return 'https://verdictai-api-i4yd.onrender.com/api/v1';
+  }
+
+  return envUrl || 'http://localhost:8000/api/v1';
+};
+
+export const BASE_URL = getApiBaseUrl();
 
 export interface ApiResponse<T> {
   data: T | null;

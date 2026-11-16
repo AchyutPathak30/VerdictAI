@@ -26,4 +26,4 @@ services:
     plan: free
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://verdictai-api.onrender.com/api/v1
+        value: https://verdictai-api-i4yd.onrender.com/api/v1
