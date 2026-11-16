@@ -28,6 +28,7 @@ import { ToastMessage } from '../common/Toast';
 import { REPORTS_ANALYTICS_DATA, AUDIT_EXPORTS } from '../../data/mockData';
 import { BarChart, BarSeries } from '../charts/BarChart';
 import { DonutChart } from '../charts/DonutChart';
+import { jsPDF } from 'jspdf';
 import { MiniSparkline } from '../charts/MiniSparkline';
 
 interface ReportsAnalyticsScreenProps {
@@ -74,13 +75,9 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({ 
       : (itemOrName.format || 'PDF');
     const reportId = typeof itemOrName === 'object' ? itemOrName.id : 'EXP-IN-9921';
 
-    let content = '';
-    let mimeType = 'text/plain';
-    const fileExtension = format.toLowerCase();
-
     if (format === 'CSV') {
-      mimeType = 'text/csv';
-      content = `REPORT_ID,TRANSACTION_ID,MERCHANT,CATEGORY,DISPUTED_SUM_INR,STP_SCORE,DECISION,TIMESTAMP,RBI_COMPLIANCE_STATUS,MERKLE_ROOT\n` +
+      const mimeType = 'text/csv';
+      const content = `REPORT_ID,TRANSACTION_ID,MERCHANT,CATEGORY,DISPUTED_SUM_INR,STP_SCORE,DECISION,TIMESTAMP,RBI_COMPLIANCE_STATUS,MERKLE_ROOT\n` +
         `${reportId},TXN-882910,Croma Electronics India,Non-Delivery of Goods,18999.00,87,APPROVED_CUSTOMER,2026-10-14 15:42:18,RBI_DPSS_COMPLIANT,0x7f9a2b8c4d1e3a6f\n` +
         `${reportId},TXN-104200,Swiggy Instamart,Duplicate Billing,1499.00,97,APPROVED_CUSTOMER,2026-10-18 11:20:10,RBI_DPSS_COMPLIANT,0x8b3e1c9d2f4a5b6c\n` +
         `${reportId},TXN-992810,Tata CLiQ Luxury,Unrecognized Online Charge,24999.00,91,APPROVED_CUSTOMER,2026-10-12 19:44:00,RBI_DPSS_COMPLIANT,0x9c4f2d0e3a5b6c7d\n` +
@@ -89,47 +86,189 @@ export const ReportsAnalyticsScreen: React.FC<ReportsAnalyticsScreenProps> = ({ 
         `${reportId},TXN-881200,Taj Hotels & Resorts (IHCL),Service Not Provided,28500.00,44,ADMIN_OVERRIDE_RESOLVED,2026-10-11 20:30:00,RBI_DPSS_COMPLIANT,0x2f7c5a3b6d8e9f0a\n` +
         `${reportId},TXN-875500,Swiggy Instamart India,Duplicate Charge,849.00,61,AUTO_RESOLVED_REFUND,2026-10-10 12:15:00,RBI_DPSS_COMPLIANT,0x3a8d6b4c7e9f0a1b\n` +
         `${reportId},TXN-870100,Zomato Dining & Gold,Wrong Item Delivered,1299.00,58,AUTO_RESOLVED_REFUND,2026-10-09 18:50:00,RBI_DPSS_COMPLIANT,0x4b9e7c5d8f0a1b2c\n`;
+
+      const cleanFileName = reportName.includes('.') ? reportName : `${reportName}.csv`;
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = cleanFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } else {
-      mimeType = 'application/pdf';
-      content = `%PDF-1.4\n% VerdictAI Enterprise Regulatory Audit Package\n` +
-        `========================================================================================\n` +
-        `VERDICTAI REGULATORY COMPLIANCE AUDIT REPORT (${reportId})\n` +
-        `PACKAGE NAME: ${reportName}\n` +
-        `GOVERNING CIRCULAR: RBI/2020-21/74 DPSS.CO.PD.No.1164/02.14.003/2020-21\n` +
-        `GENERATION TIMESTAMP: ${new Date().toISOString()} IST\n` +
-        `EVALUATION PERIOD: ${dateRange} | CATEGORY FILTER: ${category}\n` +
-        `CRYPTOGRAPHIC MERKLE ROOT: 0x7f9a2b8c4d1e3a6f882941992810a4b7\n` +
-        `AUDIT LEDGER INTEGRITY: 100% NON-REPUDIABLE SHA-256 SIGNED\n` +
-        `========================================================================================\n\n` +
-        `1. EXECUTIVE SUMMARY\n` +
-        `During the audit window (${dateRange}), VerdictAI monitored and processed automated dispute\n` +
-        `and chargeback claims across NPCI UPI AutoPay, RuPay Card-Not-Present, and POS Gateway networks.\n` +
-        `Straight-Through Processing (STP) rate achieved: 92.7%.\n` +
-        `Average case turnaround time: 4.2 minutes (Exceeds RBI 48-hour SLA mandate by 99.1%).\n` +
-        `Model False Positive Rate: 1.3% (Beats NFR-14 < 2% threshold).\n\n` +
-        `2. MANDATORY STATUTORY RECONCILIATIONS\n` +
-        `* Section 4.1: Customer Zero-Liability turnaround verified across HDFC Bank, SBI, ICICI issuing feeds.\n` +
-        `* Section 4.2: Merchant rebuttal 48h SLA notification delivered with 100% delivery acknowledgment.\n` +
-        `* Section 4.3: Carrier physical drop-off telematics verified via Blue Dart & Delhivery GPS logs.\n\n` +
-        `3. CRYPTOGRAPHIC SIGNATURES\n` +
-        `Issuing Bank Auditor Signature: VALIDATED (HDFC Bank Enterprise PKI - KeyID: 0x9812)\n` +
-        `Acquiring Network Auditor Signature: VALIDATED (NPCI RuPay Core Switch Node #3)\n` +
-        `VerdictAI AI Model Attestation: Fair-Weighing ML Calibration Hash: sha256_fw_model_v1.4\n` +
-        `========================================================================================\n` +
-        `END OF OFFICIAL COMPLIANCE AUDIT RECORD - VERDICTAI GATEWAY V1.0\n`;
+      const cleanFileName = reportName.includes('.') ? reportName : `${reportName}.pdf`;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Primary Header Bar
+      doc.setFillColor(30, 58, 138);
+      doc.rect(0, 0, pageWidth, 28, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('VERDICTAI REGULATORY COMPLIANCE AUDIT', 14, 12);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.text('Autonomous Chargeback & Dispute Resolution Platform • Reserve Bank of India (RBI) DPSS Filing', 14, 19);
+
+      // Metadata Card
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, 34, pageWidth - 28, 42, 2, 2, 'FD');
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('AUDIT PACKAGE SPECIFICATION', 18, 42);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(71, 85, 105);
+
+      const leftX = 18;
+      const rightX = 110;
+      let metaY = 49;
+
+      doc.text(`Report ID: ${reportId}`, leftX, metaY);
+      doc.text('Governing Circular: RBI/2020-21/74 DPSS.CO', rightX, metaY);
+      metaY += 6;
+
+      doc.text(`Package: ${reportName}`, leftX, metaY);
+      doc.text('Ledger Integrity: 100% SHA-256 Non-Repudiable', rightX, metaY);
+      metaY += 6;
+
+      doc.text(`Evaluation Period: ${dateRange}`, leftX, metaY);
+      doc.text('Merkle Root: 0x7f9a2b8c4d1e3a6f882941992810a4b7', rightX, metaY);
+      metaY += 6;
+
+      doc.text(`Category Filter: ${category}`, leftX, metaY);
+      doc.text(`Generated At: ${new Date().toISOString()} IST`, rightX, metaY);
+
+      // Section 1: Executive Summary
+      let y = 86;
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('1. Executive Summary & Regulatory KPIs', 14, y);
+
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(51, 65, 85);
+
+      const bullets = [
+        '• Straight-Through Processing (STP) Rate: 92.7% across 142 dispute claims in evaluation window.',
+        '• Turnaround Performance: Mean resolution time of 4.2 minutes vs. RBI statutory SLA mandate of 48.0 hours.',
+        '• Fair-Weighing ML Rating Precision: Model false-positive rate 1.3% (comfortably below NFR-14 < 2.0% threshold).',
+        '• Net Financial Reconciled Volume: INR 24,19,480 processed with zero unresolved discrepancy.',
+        '• Zero-Liability Mandate Compliance: 100% of legitimate cardholder fraud complaints provisionally credited within 3 days.'
+      ];
+
+      bullets.forEach(b => {
+        doc.text(b, 16, y);
+        y += 5.5;
+      });
+
+      // Section 2: Reconciled Case Sampling Table
+      y += 4;
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('2. Audited Dispute Case Log (Representative Batch)', 14, y);
+
+      y += 6;
+      // Table Header
+      doc.setFillColor(241, 245, 249);
+      doc.rect(14, y, pageWidth - 28, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(30, 41, 59);
+
+      doc.text('Case ID', 16, y + 5);
+      doc.text('Merchant', 38, y + 5);
+      doc.text('Dispute Category', 85, y + 5);
+      doc.text('Amount (INR)', 128, y + 5);
+      doc.text('STP Score', 155, y + 5);
+      doc.text('Final Determination', 174, y + 5);
+
+      const cases = [
+        ['DS-1041', 'Croma Electronics India', 'Non-Delivery of Goods', '18,999.00', '87%', 'Favours Member'],
+        ['DS-1042', 'Swiggy Instamart', 'Duplicate Billing Charge', '1,499.00', '97%', 'Auto-Refunded'],
+        ['DS-9928', 'Tata CLiQ Luxury', 'Unrecognized Charge', '24,999.00', '91%', 'Settled (Bank)'],
+        ['DS-9021', 'Reliance Digital Retail', 'Defective Item Received', '14,999.00', '84%', 'Favours Member'],
+        ['DS-8942', 'Flipkart India Pvt Ltd', 'Fraudulent Transaction', '4,499.00', '89%', 'Favours Member'],
+        ['DS-8812', 'Taj Hotels & Resorts', 'Service Not Provided', '28,500.00', '44%', 'Admin Override']
+      ];
+
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+
+      cases.forEach((c, idx) => {
+        if (idx % 2 === 1) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(14, y, pageWidth - 28, 6.5, 'F');
+        }
+        doc.setTextColor(30, 41, 59);
+        doc.text(c[0], 16, y + 4.5);
+        doc.text(c[1], 38, y + 4.5);
+        doc.text(c[2], 85, y + 4.5);
+        doc.text(c[3], 128, y + 4.5);
+        doc.text(c[4], 155, y + 4.5);
+
+        if (c[5].includes('Member') || c[5].includes('Refund')) {
+          doc.setTextColor(22, 101, 52);
+        } else {
+          doc.setTextColor(30, 64, 175);
+        }
+        doc.text(c[5], 174, y + 4.5);
+        y += 6.5;
+      });
+
+      // Section 3: Statutory Reconciliations & Attestation
+      y += 6;
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('3. Cryptographic Merkle Attestations & Signatures', 14, y);
+
+      y += 6;
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(203, 213, 225);
+      doc.roundedRect(14, y, pageWidth - 28, 30, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+
+      let sigY = y + 7;
+      doc.text('• Issuing Bank Auditor Signature: VALIDATED (HDFC Bank Enterprise PKI - KeyID: 0x9812A4)', 18, sigY);
+      sigY += 6;
+      doc.text('• Acquiring Network Switch Signature: VALIDATED (NPCI RuPay Core Switch Node #3 - HMAC-SHA256)', 18, sigY);
+      sigY += 6;
+      doc.text('• ML Fair-Weighing Weights Hash: VERIFIED (Model v1.4 sha256_e84f901ab29c48f88921a4f)', 18, sigY);
+      sigY += 6;
+      doc.text('• Statutory Circular Compliance: Form DPSS-VII Certified for Automated Dispute Ledger', 18, sigY);
+
+      // Footer
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, pageHeight - 14, pageWidth - 14, pageHeight - 14);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text('VerdictAI Enterprise Gateway V1.0 • Confidential • For RBI/NPCI Regulatory Audit Only', 14, pageHeight - 8);
+      doc.text('Page 1 of 1', pageWidth - 26, pageHeight - 8);
+
+      doc.save(cleanFileName);
     }
 
-    const cleanFileName = reportName.includes('.') ? reportName : `${reportName}.${fileExtension}`;
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = cleanFileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
+    const cleanFileName = reportName.includes('.') ? reportName : `${reportName}.${format.toLowerCase()}`;
     onAddToast?.({
       type: 'success',
       title: 'Audit Package Downloaded',
