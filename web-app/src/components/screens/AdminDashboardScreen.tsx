@@ -12,6 +12,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { fetchDashboardStats, fetchDisputes } from '../../services/api';
+import { subscribeToDisputeUpdates } from '../../services/disputeStore';
 import { StatusBadge, RiskDot } from '../common/StatusBadge';
 import { CaseQueueItem } from '../../types/dispute';
 import { ToastMessage } from '../common/Toast';
@@ -37,6 +38,10 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
   useEffect(() => {
     loadDashboardData();
+    const unsubscribe = subscribeToDisputeUpdates(() => {
+      loadDashboardData();
+    });
+    return unsubscribe;
   }, []);
 
   const loadDashboardData = async () => {

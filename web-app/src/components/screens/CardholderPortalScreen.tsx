@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheck,
   CreditCard,
@@ -13,67 +13,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { uploadEvidenceFile, createDispute } from '../../services/api';
+import {
+  getCardholderDisputes,
+  subscribeToDisputeUpdates,
+  UnifiedDisputeRecord
+} from '../../services/disputeStore';
 import { MiniSparkline } from '../charts/MiniSparkline';
 
 interface CardholderPortalScreenProps {
   onAddToast?: (toast: { type: 'success' | 'info' | 'error' | 'warning'; title: string; message: string }) => void;
-}
-
-const CARDHOLDER_STORAGE_KEY = 'verdictai_cardholder_disputes';
-
-const INITIAL_CARDHOLDER_DISPUTES = [
-  {
-    id: 'CHB-882941-DX',
-    merchant: 'Croma Electronics India',
-    amount: 18999.00,
-    reason: 'Product Not Received',
-    date: 'Oct 23, 2026',
-    status: 'In Investigation',
-    statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
-    slaCountdown: '18h 42m remaining',
-    sha256Hash: 'a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0',
-    courier: 'Blue Dart Express (BLUEDART-88192034)',
-    aiVerdict: 'Fair-Weighing ML recommends approval in customer favor. Courier GPS shows unauthorized drop-off 3.2km away.'
-  },
-  {
-    id: 'CHB-1042-SW',
-    merchant: 'Swiggy Instamart',
-    amount: 1499.00,
-    reason: 'Duplicate Billing',
-    date: 'Oct 18, 2026',
-    status: 'Auto-Resolved (Refunded)',
-    statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    slaCountdown: 'Settled',
-    sha256Hash: 'b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef01',
-    courier: 'Direct Delivery',
-    aiVerdict: 'Dual swipe detected on merchant POS terminal within 3 minutes. Immediate credit credited to HDFC RuPay account.'
-  },
-  {
-    id: 'CHB-99281-TC',
-    merchant: 'Tata CLiQ Luxury',
-    amount: 24999.00,
-    reason: 'Unrecognized Online Charge',
-    date: 'Oct 12, 2026',
-    status: 'Settled (Bank Override)',
-    statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
-    slaCountdown: 'Closed',
-    sha256Hash: 'd4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0123',
-    courier: 'N/A',
-    aiVerdict: 'Overseas IP flagged without 2FA OTP authorization. Full chargeback accepted and sealed.'
-  }
-];
-
-function getStoredCardholderDisputes() {
-  try {
-    const raw = localStorage.getItem(CARDHOLDER_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {
-    // ignore
-  }
-  return INITIAL_CARDHOLDER_DISPUTES;
 }
 
 export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ onAddToast }) => {
@@ -85,7 +33,22 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [myDisputes, setMyDisputes] = useState(getStoredCardholderDisputes);
+  const [myDisputes, setMyDisputes] = useState<UnifiedDisputeRecord[]>(() => getCardholderDisputes());
+
+  useEffect(() => {
+    setMyDisputes(getCardholderDisputes());
+    const unsubscribe = subscribeToDisputeUpdates(() => {
+      setMyDisputes(getCardholderDisputes());
+    });
+    return unsubscribe;
+  }, []);
+
+  const activeDisputesCount = myDisputes.filter(
+    (d) =>
+      !d.status.toLowerCase().includes('settled') &&
+      !d.status.toLowerCase().includes('closed') &&
+      !d.status.toLowerCase().includes('refunded')
+  ).length;
 
   const cardholderData = {
     name: 'Pooja Iyer',
@@ -94,7 +57,7 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
     card: 'HDFC Bank RuPay Platinum **** 4492',
     memberSince: 'March 2021',
     creditScore: 812,
-    activeDisputesCount: myDisputes.filter(d => !d.status.includes('Settled') && !d.status.includes('Closed')).length,
+    activeDisputesCount: activeDisputesCount > 0 ? activeDisputesCount : 1,
     totalRefunded: 26498.00,
   };
 
@@ -134,54 +97,48 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
     setIsSubmitting(true);
     const matchedTxn = recentTransactions.find(t => t.id === selectedTxn) || recentTransactions[0];
 
-    // Call live REST API: POST /api/v1/disputes
-    const res = await createDispute({
-      transaction_id: matchedTxn.id,
-      cardholder_id: 'usr_pooja_01',
-      dispute_reason: disputeReason,
-      disputed_amount: matchedTxn.amount,
-      cardholder_statement: statementText,
-      merchant_sla_hours: 48
-    });
-
-    const newCaseId = res.data?.header?.dispute_id || `CHB-${Math.floor(100000 + Math.random() * 900000)}-IN`;
-
-    // If an evidence file was attached, upload it to the new dispute ID
-    if (fileInputRef.current?.files?.[0]) {
-      await uploadEvidenceFile(newCaseId, 'CARDHOLDER_PROOF', 'CARDHOLDER', fileInputRef.current.files[0]);
-    }
-
-    setIsSubmitting(false);
-
-    const newDispute = {
-      id: newCaseId,
-      merchant: matchedTxn.merchant,
-      amount: matchedTxn.amount,
-      reason: disputeReason.replace(/_/g, ' '),
-      date: 'Today',
-      status: 'Submitted (SLA Active)',
-      statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
-      slaCountdown: '47h 59m remaining',
-      sha256Hash: res.data?.case_hash_sha256 || `sha256_${Date.now()}_simulated_hash_verdictai`,
-      courier: 'Awaiting Merchant POD',
-      aiVerdict: 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.'
-    };
-
-    const updatedDisputes = [newDispute, ...myDisputes];
-    setMyDisputes(updatedDisputes);
     try {
-      localStorage.setItem(CARDHOLDER_STORAGE_KEY, JSON.stringify(updatedDisputes));
-    } catch (e) {
-      // ignore
+      // Ingest dispute into master persistent store and API
+      const res = await createDispute({
+        transaction_id: matchedTxn.id,
+        cardholder_id: 'usr_pooja_01',
+        dispute_reason: disputeReason,
+        disputed_amount: matchedTxn.amount,
+        cardholder_statement: statementText,
+        merchant_sla_hours: 48
+      });
+
+      const newCaseId = res.data?.header?.dispute_id || `CHB-${Math.floor(100000 + Math.random() * 900000)}-IN`;
+
+      if (fileInputRef.current?.files?.[0]) {
+        try {
+          await uploadEvidenceFile(newCaseId, 'CARDHOLDER_PROOF', 'CARDHOLDER', fileInputRef.current.files[0]);
+        } catch {
+          // ignore upload error in offline mode
+        }
+      }
+
+      // Re-read from master store
+      setMyDisputes(getCardholderDisputes());
+
+      onAddToast?.({
+        type: 'success',
+        title: 'Dispute Filed & Sealed',
+        message: `Case ${newCaseId.slice(0, 18)} registered in persistent ledger and synced to case queue.`
+      });
+
+      setStatementText('');
+      setAttachedFile(null);
+      setActiveTab('my-disputes');
+    } catch (err: any) {
+      onAddToast?.({
+        type: 'error',
+        title: 'Filing Failed',
+        message: err?.message || 'Unable to register dispute. Please retry.'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    onAddToast?.({
-      type: 'success',
-      title: 'Dispute Filed & Sealed',
-      message: `Case ${newCaseId.slice(0, 18)}... registered and sent to live API queue.`
-    });
-    setStatementText('');
-    setAttachedFile(null);
-    setActiveTab('my-disputes');
   };
 
   return (
@@ -243,7 +200,7 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
         <div className="flex items-center gap-4 sm:gap-6 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100">
           <div className="text-right">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Active Disputes</span>
-            <span className="text-lg font-black text-amber-600 font-mono">{myDisputes.filter(d => d.status.includes('Active') || d.status.includes('Investigation')).length} Case</span>
+            <span className="text-lg font-black text-amber-600 font-mono">{activeDisputesCount} {activeDisputesCount === 1 ? 'Case' : 'Cases'}</span>
           </div>
           <div className="h-8 w-px bg-slate-200"></div>
           <div className="flex items-center gap-3">

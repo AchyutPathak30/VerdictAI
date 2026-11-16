@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { fetchDisputes, createDispute } from '../../services/api';
+import { subscribeToDisputeUpdates } from '../../services/disputeStore';
 import { StatusBadge, RiskDot } from '../common/StatusBadge';
 import { CaseQueueItem } from '../../types/dispute';
 import { ToastMessage } from '../common/Toast';
@@ -32,6 +33,10 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
 
   useEffect(() => {
     loadQueue();
+    const unsubscribe = subscribeToDisputeUpdates(() => {
+      loadQueue();
+    });
+    return unsubscribe;
   }, [search, statusFilter, page]);
 
   const loadQueue = async () => {
