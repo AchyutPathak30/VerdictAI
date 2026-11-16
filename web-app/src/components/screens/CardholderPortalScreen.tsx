@@ -19,6 +19,63 @@ interface CardholderPortalScreenProps {
   onAddToast?: (toast: { type: 'success' | 'info' | 'error' | 'warning'; title: string; message: string }) => void;
 }
 
+const CARDHOLDER_STORAGE_KEY = 'verdictai_cardholder_disputes';
+
+const INITIAL_CARDHOLDER_DISPUTES = [
+  {
+    id: 'CHB-882941-DX',
+    merchant: 'Croma Electronics India',
+    amount: 18999.00,
+    reason: 'Product Not Received',
+    date: 'Oct 23, 2026',
+    status: 'In Investigation',
+    statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
+    slaCountdown: '18h 42m remaining',
+    sha256Hash: 'a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0',
+    courier: 'Blue Dart Express (BLUEDART-88192034)',
+    aiVerdict: 'Fair-Weighing ML recommends approval in customer favor. Courier GPS shows unauthorized drop-off 3.2km away.'
+  },
+  {
+    id: 'CHB-1042-SW',
+    merchant: 'Swiggy Instamart',
+    amount: 1499.00,
+    reason: 'Duplicate Billing',
+    date: 'Oct 18, 2026',
+    status: 'Auto-Resolved (Refunded)',
+    statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    slaCountdown: 'Settled',
+    sha256Hash: 'b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef01',
+    courier: 'Direct Delivery',
+    aiVerdict: 'Dual swipe detected on merchant POS terminal within 3 minutes. Immediate credit credited to HDFC RuPay account.'
+  },
+  {
+    id: 'CHB-99281-TC',
+    merchant: 'Tata CLiQ Luxury',
+    amount: 24999.00,
+    reason: 'Unrecognized Online Charge',
+    date: 'Oct 12, 2026',
+    status: 'Settled (Bank Override)',
+    statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
+    slaCountdown: 'Closed',
+    sha256Hash: 'd4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0123',
+    courier: 'N/A',
+    aiVerdict: 'Overseas IP flagged without 2FA OTP authorization. Full chargeback accepted and sealed.'
+  }
+];
+
+function getStoredCardholderDisputes() {
+  try {
+    const raw = localStorage.getItem(CARDHOLDER_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return INITIAL_CARDHOLDER_DISPUTES;
+}
+
 export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ onAddToast }) => {
   const [activeTab, setActiveTab] = useState<'my-disputes' | 'file-dispute'>('my-disputes');
   const [selectedTxn, setSelectedTxn] = useState<string>('txn_croma_18999');
@@ -28,6 +85,8 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [myDisputes, setMyDisputes] = useState(getStoredCardholderDisputes);
+
   const cardholderData = {
     name: 'Pooja Iyer',
     accountId: 'usr_pooja_01',
@@ -35,51 +94,9 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
     card: 'HDFC Bank RuPay Platinum **** 4492',
     memberSince: 'March 2021',
     creditScore: 812,
-    activeDisputesCount: 1,
+    activeDisputesCount: myDisputes.filter(d => !d.status.includes('Settled') && !d.status.includes('Closed')).length,
     totalRefunded: 26498.00,
   };
-
-  const [myDisputes, setMyDisputes] = useState([
-    {
-      id: 'CHB-882941-DX',
-      merchant: 'Croma Electronics India',
-      amount: 18999.00,
-      reason: 'Product Not Received',
-      date: 'Oct 23, 2026',
-      status: 'In Investigation',
-      statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
-      slaCountdown: '18h 42m remaining',
-      sha256Hash: 'a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0',
-      courier: 'Blue Dart Express (BLUEDART-88192034)',
-      aiVerdict: 'Fair-Weighing ML recommends approval in customer favor. Courier GPS shows unauthorized drop-off 3.2km away.'
-    },
-    {
-      id: 'CHB-1042-SW',
-      merchant: 'Swiggy Instamart',
-      amount: 1499.00,
-      reason: 'Duplicate Billing',
-      date: 'Oct 18, 2026',
-      status: 'Auto-Resolved (Refunded)',
-      statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      slaCountdown: 'Settled',
-      sha256Hash: 'b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef01',
-      courier: 'Direct Delivery',
-      aiVerdict: 'Dual swipe detected on merchant POS terminal within 3 minutes. Immediate credit credited to HDFC RuPay account.'
-    },
-    {
-      id: 'CHB-99281-TC',
-      merchant: 'Tata CLiQ Luxury',
-      amount: 24999.00,
-      reason: 'Unrecognized Online Charge',
-      date: 'Oct 12, 2026',
-      status: 'Settled (Bank Override)',
-      statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
-      slaCountdown: 'Closed',
-      sha256Hash: 'd4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0123',
-      courier: 'N/A',
-      aiVerdict: 'Overseas IP flagged without 2FA OTP authorization. Full chargeback accepted and sealed.'
-    }
-  ]);
 
   const recentTransactions = [
     { id: 'txn_croma_18999', merchant: 'Croma Electronics India', amount: 18999.00, date: 'Oct 20, 2026', category: 'Consumer Electronics' },
@@ -150,7 +167,13 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
       aiVerdict: 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.'
     };
 
-    setMyDisputes(prev => [newDispute, ...prev]);
+    const updatedDisputes = [newDispute, ...myDisputes];
+    setMyDisputes(updatedDisputes);
+    try {
+      localStorage.setItem(CARDHOLDER_STORAGE_KEY, JSON.stringify(updatedDisputes));
+    } catch (e) {
+      // ignore
+    }
     onAddToast?.({
       type: 'success',
       title: 'Dispute Filed & Sealed',

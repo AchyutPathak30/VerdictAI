@@ -17,7 +17,8 @@ import {
   EVIDENCE_FILES,
   AUDIT_TRAIL,
   REASONING_FACTORS,
-  AUDIT_EXPORTS
+  AUDIT_EXPORTS,
+  getDynamicDateString
 } from '../data/mockData';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
@@ -154,44 +155,93 @@ export interface CreateDisputePayload {
   merchant_sla_hours?: number;
 }
 
+const QUEUE_STORAGE_KEY = 'verdictai_persisted_case_queue';
+
+export function getPersistedQueue(): CaseQueueItem[] {
+  try {
+    const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return [];
+}
+
+export function savePersistedQueueItem(item: CaseQueueItem): void {
+  try {
+    const current = getPersistedQueue();
+    const updated = [item, ...current.filter((c) => c.id !== item.id)];
+    localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    // ignore
+  }
+}
+
 export async function createDispute(payload: CreateDisputePayload): Promise<ApiResponse<any>> {
+  const tidLower = (payload.transaction_id || '').toLowerCase();
+  const merchantName = tidLower.includes('swiggy')
+    ? 'Swiggy Instamart'
+    : tidLower.includes('reliance')
+    ? 'Reliance Digital Retail Ltd'
+    : tidLower.includes('tatacliq') || tidLower.includes('tata')
+    ? 'Tata CLiQ Luxury'
+    : tidLower.includes('flipkart')
+    ? 'Flipkart India Pvt Ltd'
+    : 'Croma Electronics India';
+
   const res = await fetchApi<any>('/disputes', {
     method: 'POST',
     body: JSON.stringify(payload)
   });
 
+  const generatedId = res.connected && res.data?.header?.dispute_id
+    ? res.data.header.dispute_id
+    : `DSP-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  // Construct standardized CaseQueueItem for both Admin & Investigator views
+  const newQueueItem: CaseQueueItem = {
+    id: generatedId,
+    merchant: merchantName,
+    amount: payload.disputed_amount,
+    currency: '₹',
+    status: 'Review Required',
+    riskLevel: payload.disputed_amount > 10000 ? 'High' : 'Medium',
+    action: 'Review',
+    reason: formatReason(payload.dispute_reason),
+    filedDate: 'Today',
+    deadline: '2 days left',
+    aiScore: computeStableScore(payload.dispute_reason)
+  };
+
+  // Persist across browser sessions, logout/login, and memory
+  savePersistedQueueItem(newQueueItem);
+  ACTIVE_CASE_QUEUE.unshift(newQueueItem);
+
   if (res.connected && res.data) {
     return { data: res.data, error: null, isBackendConnected: true };
   }
 
-  // Fallback for offline mode: add to ACTIVE_CASE_QUEUE
-  const fakeId = `DSP-${Math.floor(100000 + Math.random() * 900000)}`;
-  const fakeItem: CaseQueueItem = {
-    id: fakeId,
-    merchant: payload.transaction_id.includes('swiggy') ? 'Swiggy Instamart' : payload.transaction_id.includes('reliance') ? 'Reliance Digital Retail Ltd' : payload.transaction_id.includes('tatacliq') ? 'Tata CLiQ Luxury' : 'Croma Electronics India',
-    amount: payload.disputed_amount,
-    currency: '₹',
-    status: 'Pending',
-    riskLevel: 'Medium',
-    action: 'Review',
-    reason: formatReason(payload.dispute_reason),
-    filedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    deadline: '2 days left',
-    aiScore: computeStableScore(payload.dispute_reason)
-  };
-  ACTIVE_CASE_QUEUE.unshift(fakeItem);
-
   return {
     data: {
       header: {
-        dispute_id: fakeId,
-        case_file_id: `CF-${fakeId}`,
-        case_reference_number: `CAS-${fakeId}`,
+        dispute_id: generatedId,
+        case_file_id: `CF-${generatedId}`,
+        case_reference_number: `CAS-${generatedId}`,
         dispute_reason: payload.dispute_reason,
         current_status: 'SUBMITTED',
         disputed_amount: payload.disputed_amount,
         currency: 'INR'
-      }
+      },
+      transaction: {
+        transaction_id: payload.transaction_id,
+        merchant_name: merchantName,
+        amount: payload.disputed_amount,
+        cardholder_name: 'Pooja Iyer'
+      },
+      cardholder_statement: payload.cardholder_statement
     },
     error: res.error,
     isBackendConnected: false
@@ -205,9 +255,11 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
   if (filters.reason && filters.reason !== 'All') queryParams.append('reason', filters.reason);
   if (filters.page) queryParams.append('page', filters.page.toString());
 
+  const persisted = getPersistedQueue();
+
   const res = await fetchApi<any>(`/disputes?${queryParams.toString()}`);
   if (res.connected && res.data && Array.isArray(res.data.items) && res.data.items.length > 0) {
-    const mapped: CaseQueueItem[] = res.data.items.map((item: any) => {
+    const backendItems: CaseQueueItem[] = res.data.items.map((item: any) => {
       const h = item.header || {};
       const t = item.transaction || {};
       return {
@@ -219,16 +271,35 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
         riskLevel: getRiskLevel(h.current_status, h.disputed_amount),
         action: h.current_status === 'MANUAL_REVIEW_QUEUE' ? 'Override' : 'Review',
         reason: formatReason(h.dispute_reason),
-        filedDate: h.created_at ? new Date(h.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 14, 2023',
-        deadline: h.sla_deadline ? `${Math.max(1, Math.ceil((new Date(h.sla_deadline).getTime() - Date.now()) / (1000 * 3600 * 24)))} days left` : '3 days left',
+        filedDate: h.created_at ? new Date(h.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        deadline: h.sla_deadline ? `${Math.max(1, Math.ceil((new Date(h.sla_deadline).getTime() - Date.now()) / (1000 * 3600 * 24)))} days left` : '2 days left',
         aiScore: computeStableScore(item)
       };
     });
-    return { data: mapped, error: null, isBackendConnected: true };
+
+    const backendIds = new Set(backendItems.map((b) => b.id));
+    const merged = [
+      ...persisted.filter((p) => !backendIds.has(p.id)),
+      ...backendItems
+    ];
+
+    let filtered = merged;
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      filtered = filtered.filter(c => c.id.toLowerCase().includes(q) || c.merchant.toLowerCase().includes(q));
+    }
+    if (filters.status && filters.status !== 'All') {
+      filtered = filtered.filter(c => c.status.toLowerCase().includes(filters.status!.toLowerCase()));
+    }
+
+    return { data: filtered, error: null, isBackendConnected: true };
   }
 
-  // Fallback to active mock queue with filter support
-  let filtered = [...ACTIVE_CASE_QUEUE];
+  // Fallback to active mock queue merged with persisted cases
+  const persistedIds = new Set(persisted.map((p) => p.id));
+  const combined = [...persisted, ...ACTIVE_CASE_QUEUE.filter((c) => !persistedIds.has(c.id))];
+
+  let filtered = [...combined];
   if (filters.search) {
     const q = filters.search.toLowerCase();
     filtered = filtered.filter(c => c.id.toLowerCase().includes(q) || c.merchant.toLowerCase().includes(q));
@@ -311,6 +382,42 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
       isBackendConnected: true
     };
   }
+
+  // Check if case is in locally persisted queue
+  const persisted = getPersistedQueue().find((p) => p.id === disputeId || disputeId.includes(p.id));
+  if (persisted) {
+    return {
+      data: {
+        id: `Case ${persisted.id}`,
+        title: `Case ${persisted.id} – ${persisted.reason}`,
+        status: persisted.status as any,
+        initiatedDate: getDynamicDateString(0),
+        deadline: getDynamicDateString(48),
+        deadlineDaysLeft: 2,
+        deadlineHoursLeft: 48,
+        transaction: {
+          id: `TXN-${persisted.id.replace(/[^0-9]/g, '').slice(0, 6) || '882910'}`,
+          merchant: persisted.merchant,
+          merchantId: 'MID-IN-00441',
+          totalAmount: persisted.amount,
+          currency: persisted.currency === '₹' ? 'INR' : persisted.currency,
+          txnDate: getDynamicDateString(-2) + ' 11:30:00 IST',
+          memberName: 'Pooja Iyer',
+          memberAccount: 'HDFC Bank RuPay **** 4492',
+          disputeReason: `Cardholder registered claim for ${persisted.merchant} under category ${persisted.reason}. Evidence telemetry queued for carrier verification.`
+        },
+        merchantProfile: DSP_1041_DETAILS.merchantProfile,
+        evidence: DSP_1041_DETAILS.evidence,
+        aiScoring: {
+          ...DSP_1041_DETAILS.aiScoring,
+          score: persisted.aiScore || 85
+        }
+      },
+      error: null,
+      isBackendConnected: res.connected
+    };
+  }
+
   return { data: DSP_1041_DETAILS, error: null, isBackendConnected: false };
 }
 

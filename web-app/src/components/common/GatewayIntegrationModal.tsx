@@ -499,3 +499,4 @@ export const GatewayIntegrationModal: React.FC<GatewayIntegrationModalProps> = (
     </div>
   );
 };
+
