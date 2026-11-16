@@ -16,7 +16,7 @@ import { RootStackParamList } from '../../types';
 
 const DEMO_USER = {
   name: 'Pooja Iyer',
-  cardholderID: 'usr_pooja_01',
+  cardholderID: 'usr_pooja_iyer',
   email: 'pooja.iyer@gmail.com',
   card: '•••• •••• •••• 4492',
   cardType: 'HDFC RuPay Platinum',

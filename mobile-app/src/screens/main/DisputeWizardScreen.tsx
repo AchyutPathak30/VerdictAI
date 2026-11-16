@@ -23,8 +23,8 @@ type Props = {
   navigation: NativeStackNavigationProp<FileDisputeStackParamList, 'DisputeWizard'>;
 };
 
-// Demo cardholder ID matching localized Indian user (Pooja Iyer)
-const DEMO_CARDHOLDER_ID = 'usr_pooja_01';
+// Demo cardholder ID matching localized Indian user (Pooja Iyer in live database)
+const DEMO_CARDHOLDER_ID = 'usr_pooja_iyer';
 
 const DISPUTE_REASONS: { value: DisputeReason; label: string; icon: string }[] = [
   { value: 'PRODUCT_NOT_RECEIVED', label: 'Item Not Received', icon: '📦' },

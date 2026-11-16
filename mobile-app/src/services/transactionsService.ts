@@ -17,18 +17,24 @@ export const getCardholderTransactions = async (
   try {
     const response = await apiClient.get(`/transactions/cardholder/${cardholderId}`);
     setBackendReachable(true);
-    return response.data;
+    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      // If backend has only 1 seeded transaction (e.g. Croma), augment with other domestic transactions
+      // so the cardholder has a realistic list of charges to choose from in Step 1 of the wizard
+      if (response.data.length < 3) {
+        const existingIds = new Set(response.data.map((t: Transaction) => t.id));
+        const additions = FALLBACK_TRANSACTIONS.filter((t) => !existingIds.has(t.id));
+        return [...response.data, ...additions];
+      }
+      return response.data;
+    }
+    // If backend returned empty list for this cardholder ID
+    return FALLBACK_TRANSACTIONS;
   } catch (err: any) {
     console.warn(
       `[VerdictAI] Transactions API offline (${err?.message || 'timeout'}). Using fallback seed data.`
     );
     setBackendReachable(false);
-    return FALLBACK_TRANSACTIONS.filter(
-      (t) =>
-        !cardholderId ||
-        t.user_id === cardholderId ||
-        (cardholderId.startsWith('usr_pooja') && t.user_id.startsWith('usr_pooja'))
-    );
+    return FALLBACK_TRANSACTIONS;
   }
 };
 
