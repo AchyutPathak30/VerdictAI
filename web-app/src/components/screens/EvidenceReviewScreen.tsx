@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { fetchEvidenceItems, fetchDisputeDetail } from '../../services/api';
 import { ToastMessage } from '../common/Toast';
+import { DocumentPreviewModal } from '../common/DocumentPreviewModal';
 
 interface EvidenceReviewScreenProps {
   disputeId?: string;
@@ -32,6 +33,7 @@ export const EvidenceReviewScreen: React.FC<EvidenceReviewScreenProps> = ({
   const [loading, setLoading] = useState(true);
   const [caseDetails, setCaseDetails] = useState<any>(null);
   const [evidenceItems, setEvidenceItems] = useState<any[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
   const [isBackendConnected, setIsBackendConnected] = useState(true);
 
   useEffect(() => {
@@ -140,13 +142,17 @@ export const EvidenceReviewScreen: React.FC<EvidenceReviewScreenProps> = ({
           <div className="space-y-2.5">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Attached Proof Documents</h3>
             {evidenceItems.filter(e => e.uploadedBy === 'Cardholder' || e.uploadedBy === 'System').map((file, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-300 transition bg-slate-50/50">
+              <div
+                key={idx}
+                onClick={() => setSelectedDoc(file)}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-sm transition bg-slate-50/50 cursor-pointer group"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-50 text-blue-600 font-bold text-xs">
+                  <div className="p-2 rounded-lg bg-blue-50 text-blue-600 font-bold text-xs group-hover:scale-105 transition-transform">
                     {file.type}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-900">{file.fileName}</p>
+                    <p className="text-xs font-semibold text-slate-900 group-hover:text-blue-600 transition">{file.fileName}</p>
                     <p className="text-[10px] text-slate-500">{file.fileSize} • Uploaded {file.uploadedAt}</p>
                   </div>
                 </div>
@@ -178,13 +184,17 @@ export const EvidenceReviewScreen: React.FC<EvidenceReviewScreenProps> = ({
           <div className="space-y-2.5">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Merchant Uploaded Records</h3>
             {evidenceItems.filter(e => e.uploadedBy === 'Merchant').map((file, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-indigo-300 transition bg-slate-50/50">
+              <div
+                key={idx}
+                onClick={() => setSelectedDoc(file)}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-sm transition bg-slate-50/50 cursor-pointer group"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs">
+                  <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs group-hover:scale-105 transition-transform">
                     {file.type}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-900">{file.fileName}</p>
+                    <p className="text-xs font-semibold text-slate-900 group-hover:text-indigo-600 transition">{file.fileName}</p>
                     <p className="text-[10px] text-slate-500">{file.fileSize} • Uploaded {file.uploadedAt}</p>
                   </div>
                 </div>
@@ -247,6 +257,20 @@ export const EvidenceReviewScreen: React.FC<EvidenceReviewScreenProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Real Document Lightbox / High-Fidelity Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={!!selectedDoc}
+        item={selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        onDownloadToast={(fileName) =>
+          onAddToast?.({
+            type: 'info',
+            title: 'Download Initiated',
+            message: `Saving ${fileName} to local files...`
+          })
+        }
+      />
     </div>
   );
 };

@@ -271,14 +271,24 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
   if (res.connected && res.data) {
     const h = res.data.header || {};
     const t = res.data.transaction || {};
+
+    // Synchronize SLA deadlines dynamically with real-time clock
+    const now = Date.now();
+    const initDate = h.created_at ? new Date(h.created_at) : new Date(now - 26 * 3600 * 1000);
+    const deadlineDate = h.sla_deadline ? new Date(h.sla_deadline) : new Date(initDate.getTime() + 48 * 3600 * 1000);
+    const diffMs = deadlineDate.getTime() - now;
+    const diffHours = Math.round(diffMs / (3600 * 1000));
+    const diffDays = Math.ceil(diffMs / (86400 * 1000));
+
     return {
       data: {
         id: `Case ${h.dispute_id || disputeId}`,
         title: `Case ${h.dispute_id || disputeId} – ${formatReason(h.dispute_reason)}`,
         status: formatStatus(h.current_status) as any,
-        initiatedDate: h.created_at ? new Date(h.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 14, 2023',
-        deadline: h.sla_deadline ? new Date(h.sla_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 28, 2023',
-        deadlineDaysLeft: 4,
+        initiatedDate: initDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        deadline: deadlineDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        deadlineDaysLeft: diffDays > 0 ? diffDays : 0,
+        deadlineHoursLeft: diffHours > 0 ? diffHours : 0,
         transaction: {
           id: t.transaction_id || 'TXN-882910',
           merchant: t.merchant_name || 'Croma Electronics India',

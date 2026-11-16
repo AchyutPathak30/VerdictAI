@@ -1,5 +1,11 @@
 import { CaseQueueItem, EvidenceItem, AuditLogEntry, ReasoningFactor, AuditExportItem } from '../types/dispute';
 
+// Helper to calculate real-time SLA dates dynamically synchronized with system clock
+export const getDynamicDateString = (offsetHours: number): string => {
+  const d = new Date(Date.now() + offsetHours * 3600 * 1000);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
 export const ADMIN_STATS = {
   totalDisputes: { value: '1,247', change: '+12.5%', isPositive: true },
   pendingReview: { value: '38', change: '-2.4%', isPositive: false },
@@ -17,7 +23,7 @@ export const ACTIVE_CASE_QUEUE: CaseQueueItem[] = [
     riskLevel: 'Medium',
     action: 'Review',
     reason: 'Product Not Received',
-    filedDate: '14 Oct 2026',
+    filedDate: getDynamicDateString(-48),
     deadline: '2 days left',
     aiScore: 87,
   },
@@ -30,7 +36,7 @@ export const ACTIVE_CASE_QUEUE: CaseQueueItem[] = [
     riskLevel: 'Low',
     action: 'View',
     reason: 'Fraudulent Transaction',
-    filedDate: '13 Oct 2026',
+    filedDate: getDynamicDateString(-72),
     deadline: '5 days left',
     aiScore: 89,
   },
@@ -43,7 +49,7 @@ export const ACTIVE_CASE_QUEUE: CaseQueueItem[] = [
     riskLevel: 'High',
     action: 'Override',
     reason: 'Service Not Provided',
-    filedDate: '11 Oct 2026',
+    filedDate: getDynamicDateString(-96),
     deadline: '1 day left',
     aiScore: 44,
   },
@@ -56,7 +62,7 @@ export const ACTIVE_CASE_QUEUE: CaseQueueItem[] = [
     riskLevel: 'Low',
     action: 'Review',
     reason: 'Duplicate Charge',
-    filedDate: '10 Oct 2026',
+    filedDate: getDynamicDateString(-120),
     deadline: '4 days left',
     aiScore: 61,
   },
@@ -69,7 +75,7 @@ export const ACTIVE_CASE_QUEUE: CaseQueueItem[] = [
     riskLevel: 'Medium',
     action: 'Review',
     reason: 'Wrong Item Delivered',
-    filedDate: '09 Oct 2026',
+    filedDate: getDynamicDateString(-144),
     deadline: '6 days left',
     aiScore: 58,
   },
@@ -79,9 +85,10 @@ export const DSP_1041_DETAILS = {
   id: 'Case DSP-1041',
   title: 'Case DSP-1041 – Non-Delivery of Goods',
   status: 'Pending Review' as const,
-  initiatedDate: '14 Oct 2026',
-  deadline: '28 Oct 2026',
-  deadlineDaysLeft: 4,
+  initiatedDate: getDynamicDateString(-26),
+  deadline: getDynamicDateString(22),
+  deadlineDaysLeft: 1,
+  deadlineHoursLeft: 22,
   transaction: {
     id: 'TXN-IN-882910',
     merchant: 'Croma Electronics India',

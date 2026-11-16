@@ -18,6 +18,7 @@ import { StatusBadge } from '../common/StatusBadge';
 import { ScoreGauge } from '../common/ScoreGauge';
 import { ProgressBar } from '../common/ProgressBar';
 import { EvidenceCard } from '../common/EvidenceCard';
+import { DocumentPreviewModal } from '../common/DocumentPreviewModal';
 import { EvidenceItem } from '../../types/dispute';
 import { ToastMessage } from '../common/Toast';
 
@@ -40,6 +41,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
   const [scoring, setScoring] = useState(false);
   const [caseDetails, setCaseDetails] = useState<any>(null);
   const [evidenceList, setEvidenceList] = useState<EvidenceItem[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<EvidenceItem | null>(null);
   const [resolutionStatus, setResolutionStatus] = useState<'pending' | 'accepted' | 'rejected'>('pending');
   const [isBackendConnected, setIsBackendConnected] = useState(true);
 
@@ -227,7 +229,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
         <p className="text-xs text-slate-500 mt-1">
           Dispute initiated on {caseDetails.initiatedDate}. Deadline for resolution:{' '}
           <strong className="text-rose-600 font-bold">
-            {caseDetails.deadline} ({caseDetails.deadlineDaysLeft} days left)
+            {caseDetails.deadline} ({caseDetails.deadlineHoursLeft && caseDetails.deadlineHoursLeft < 24 ? `${caseDetails.deadlineHoursLeft} hours left` : `${caseDetails.deadlineDaysLeft} ${caseDetails.deadlineDaysLeft === 1 ? 'day' : 'days'} left`})
           </strong>
         </p>
       </div>
@@ -300,7 +302,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
                   fileSize={item.fileSize}
                   uploadedAt={item.uploadedAt}
                   status={item.status}
-                  onPreview={() => onAddToast?.({ type: 'info', title: 'Document Lightbox', message: `Previewing ${item.fileName}` })}
+                  onPreview={() => setSelectedDoc(item)}
                 />
               ))}
             </div>
@@ -377,6 +379,20 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Real Document Lightbox / High-Fidelity Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={!!selectedDoc}
+        item={selectedDoc}
+        onClose={() => setSelectedDoc(null)}
+        onDownloadToast={(fileName) =>
+          onAddToast?.({
+            type: 'info',
+            title: 'Download Initiated',
+            message: `Saving ${fileName} to local files...`
+          })
+        }
+      />
     </div>
   );
 };

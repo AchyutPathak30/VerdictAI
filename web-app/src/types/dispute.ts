@@ -27,7 +27,7 @@ export interface CaseQueueItem {
 export interface EvidenceItem {
   id: string;
   fileName: string;
-  type: 'PDF' | 'CSV' | 'DOCX' | 'JPG' | 'LOG';
+  type: 'PDF' | 'CSV' | 'DOCX' | 'JPG' | 'PNG' | 'LOG';
   fileSize: string;
   uploadedAt: string;
   uploadedBy: 'System' | 'Merchant' | 'Cardholder';
