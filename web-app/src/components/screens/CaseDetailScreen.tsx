@@ -140,6 +140,21 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
   }
 
   const getCaseAiEvaluation = () => {
+    // If no evidence is attached and no AI score was evaluated, do not show artificial high score
+    if (!caseDetails?.aiScoring?.score && evidenceList.length === 0) {
+      return {
+        score: 0,
+        favourText: 'AWAITING EVIDENCE (NO FILES ATTACHED)',
+        factors: [
+          { label: 'Carrier Delivery / Waybill Proof', value: 0, color: 'blue' as const },
+          { label: 'Member Account Credibility Standing', value: 0, color: 'blue' as const },
+          { label: 'Merchant Counter-Evidence Ingestion', value: 0, color: 'amber' as const },
+          { label: 'Multimodal Forensic Verification', value: 0, color: 'amber' as const }
+        ],
+        rationale: 'Dispute claim was submitted without supporting evidence. Fair-Weighing ML confidence score cannot be evaluated without supporting documentation. Upload receipts, invoices, or delivery logs to run ML inference.'
+      };
+    }
+
     const titleLower = (caseDetails?.title || '').toLowerCase();
     const reasonLower = (caseDetails?.transaction?.disputeReason || '').toLowerCase();
 

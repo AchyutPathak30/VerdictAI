@@ -95,8 +95,17 @@ async def override_dispute_decision(
 
     prev_status = dispute_rec.get("current_status")
     
-    # Update dispute status to ADMIN_OVERRIDDEN
-    dispute_rec["current_status"] = DisputeStatus.ADMIN_OVERRIDDEN.value
+    # Update dispute status according to override decision
+    if payload.override_decision.value == "FAVOR_MERCHANT":
+        dispute_rec["current_status"] = DisputeStatus.REJECTED.value
+        dispute_rec["status"] = "Refuted"
+    elif payload.override_decision.value == "FAVOR_CARDHOLDER":
+        dispute_rec["current_status"] = DisputeStatus.AUTO_RESOLVED.value
+        dispute_rec["status"] = "Approved"
+    else:
+        dispute_rec["current_status"] = DisputeStatus.ADMIN_OVERRIDDEN.value
+        dispute_rec["status"] = "Overridden"
+
     dispute_rec["admin_override_outcome"] = payload.override_decision.value
     dispute_rec["admin_override_reason"] = payload.mandatory_reason
     dispute_rec["resolved_by_admin_id"] = payload.admin_id

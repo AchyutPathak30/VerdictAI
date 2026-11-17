@@ -106,12 +106,16 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
   }
 
   const status = caseFile.header.current_status;
+  const resolutionOutcome = String(caseFile.resolution?.outcome || '').toUpperCase();
+  const isRefuted = status === 'REJECTED' || resolutionOutcome.includes('MERCHANT') || resolutionOutcome.includes('REFUT');
+  const isApproved = status === 'AUTO_RESOLVED' || resolutionOutcome.includes('CARDHOLDER') || resolutionOutcome.includes('MEMBER') || resolutionOutcome.includes('APPROV');
+  const isResolved = isRefuted || isApproved || ['AUTO_RESOLVED', 'CLOSED', 'REJECTED', 'ADMIN_OVERRIDDEN'].includes(status) || !!caseFile.resolution;
+
   const slaDate = new Date(caseFile.header.sla_deadline);
   const now = new Date();
   const hoursLeft = Math.max(0, Math.floor((slaDate.getTime() - now.getTime()) / 3600000));
   const minsLeft = Math.max(0, Math.floor(((slaDate.getTime() - now.getTime()) % 3600000) / 60000));
-  const isResolved = ['AUTO_RESOLVED', 'CLOSED', 'REJECTED'].includes(status);
-  const currentStepIndex = LIFECYCLE_STEPS.indexOf(status as DisputeStatus);
+  const currentStepIndex = isResolved ? 4 : LIFECYCLE_STEPS.indexOf(status as DisputeStatus);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -139,8 +143,23 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
       >
         {/* Case Identity Card */}
         <View style={styles.identityCard}>
-          <Text style={styles.merchantName}>{caseFile.transaction.merchant_name}</Text>
-          <Text style={styles.caseRef}>{caseFile.header.case_reference_number}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.merchantName}>{caseFile.transaction.merchant_name}</Text>
+              <Text style={styles.caseRef}>{caseFile.header.case_reference_number}</Text>
+            </View>
+            <View style={[
+              styles.statusHeaderBadge,
+              isRefuted ? styles.badgeRefuted : isApproved ? styles.badgeApproved : styles.badgeSubmitted
+            ]}>
+              <Text style={[
+                styles.statusHeaderBadgeText,
+                isRefuted ? styles.textRefuted : isApproved ? styles.textApproved : styles.textSubmitted
+              ]}>
+                {isRefuted ? '• Refuted' : isApproved ? '• Approved' : `• ${STATUS_LABELS[status] || status}`}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.disputedAmount}>
             ₹{caseFile.header.disputed_amount.toLocaleString('en-IN')} {caseFile.header.currency}
           </Text>
@@ -162,13 +181,23 @@ export default function DisputeDetailScreen({ navigation, route }: Props) {
 
         {/* Resolution Banner */}
         {isResolved && (
-          <View style={styles.resolvedBanner}>
-            <Text style={styles.resolvedTitle}>✅ Dispute Resolved</Text>
-            {caseFile.resolution && (
-              <Text style={styles.resolvedOutcome}>
-                Outcome: {String(caseFile.resolution.outcome ?? 'Decision recorded')}
+          <View style={[styles.resolvedBanner, isRefuted ? styles.resolvedBannerRefuted : styles.resolvedBannerApproved]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 18 }}>{isRefuted ? '❌' : '✅'}</Text>
+              <Text style={[styles.resolvedTitle, isRefuted ? styles.textRefutedTitle : styles.textApprovedTitle]}>
+                {isRefuted ? 'Dispute Refuted & Closed' : 'Dispute Approved & Settled'}
               </Text>
-            )}
+            </View>
+            <Text style={[styles.resolvedOutcome, isRefuted ? styles.textRefutedSub : styles.textApprovedSub]}>
+              {isRefuted
+                ? 'Determination: Claim Denied — Merchant Counter-Evidence Upheld.'
+                : 'Determination: Claim Approved — Full Provisional Credit Confirmed.'}
+            </Text>
+            {Boolean(caseFile.resolution?.reasoning) ? (
+              <Text style={[styles.resolvedReason, isRefuted ? styles.textRefutedReason : styles.textApprovedReason]}>
+                Reason: "{String(caseFile.resolution?.reasoning)}"
+              </Text>
+            ) : null}
           </View>
         )}
 
@@ -337,15 +366,56 @@ const styles = StyleSheet.create({
   slaTime: { fontSize: Typography.xl, fontWeight: Typography.extrabold, color: '#92400E' },
   slaNote: { fontSize: Typography.xs, color: '#B45309' },
   resolvedBanner: {
-    backgroundColor: '#F0FDF4',
     borderRadius: Radius.lg,
     padding: Spacing.base,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
     gap: 4,
   },
-  resolvedTitle: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#16A34A' },
-  resolvedOutcome: { fontSize: Typography.sm, color: '#15803D', fontWeight: Typography.medium },
+  resolvedBannerApproved: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  resolvedBannerRefuted: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  resolvedTitle: { fontSize: Typography.md, fontWeight: Typography.bold },
+  textApprovedTitle: { color: '#16A34A' },
+  textRefutedTitle: { color: '#DC2626' },
+  resolvedOutcome: { fontSize: Typography.sm, fontWeight: Typography.bold },
+  textApprovedSub: { color: '#15803D' },
+  textRefutedSub: { color: '#991B1B' },
+  resolvedReason: { fontSize: Typography.xs, marginTop: 4, fontStyle: 'italic', lineHeight: 18 },
+  textApprovedReason: { color: '#166534' },
+  textRefutedReason: { color: '#7F1D1D' },
+
+  // Status Header Badges
+  statusHeaderBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  badgeRefuted: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  badgeApproved: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  badgeSubmitted: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  statusHeaderBadgeText: {
+    fontSize: 10,
+    fontWeight: Typography.bold,
+    textTransform: 'uppercase',
+  },
+  textRefuted: { color: '#DC2626' },
+  textApproved: { color: '#16A34A' },
+  textSubmitted: { color: '#D97706' },
   reasoningCard: {
     backgroundColor: '#EFF6FF',
     borderRadius: Radius.lg,

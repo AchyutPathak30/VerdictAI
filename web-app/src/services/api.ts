@@ -385,7 +385,7 @@ export async function updateDisputeStatus(
       await fetchApi(`/disputes/${encodeURIComponent(cleanId)}/override`, {
         method: 'POST',
         body: JSON.stringify({
-          override_decision: 'FAVOUR_MEMBER',
+          override_decision: 'FAVOR_CARDHOLDER',
           mandatory_reason: options?.aiVerdict || 'Dispute approved by Dispute-Ops Lead. Provisional credit of full amount confirmed.',
           admin_id: 'usr_priya_sharma',
           admin_name: 'Priya Sharma'
@@ -395,7 +395,7 @@ export async function updateDisputeStatus(
       await fetchApi(`/disputes/${encodeURIComponent(cleanId)}/override`, {
         method: 'POST',
         body: JSON.stringify({
-          override_decision: 'FAVOUR_MERCHANT',
+          override_decision: 'FAVOR_MERCHANT',
           mandatory_reason: options?.aiVerdict || 'Dispute refuted by Dispute-Ops Lead. Merchant counter-evidence upheld.',
           admin_id: 'usr_priya_sharma',
           admin_name: 'Priya Sharma'
@@ -713,9 +713,16 @@ export async function submitStatement(payload: { dispute_id: string; statement_t
 // --------------------------------------------------------------------------
 
 export async function overrideDisputeDecision(disputeId: string, payload: { override_decision: string; mandatory_reason: string; admin_id: string; admin_name: string }): Promise<ApiResponse<any>> {
+  const normDecision = payload.override_decision.toUpperCase().includes('CARDHOLDER') || payload.override_decision.toUpperCase().includes('MEMBER')
+    ? 'FAVOR_CARDHOLDER'
+    : 'FAVOR_MERCHANT';
+
   const res = await fetchApi<any>(`/admin/disputes/${disputeId}/override`, {
     method: 'POST',
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      ...payload,
+      override_decision: normDecision
+    })
   });
   if (res.connected && res.data) {
     return { data: res.data, error: null, isBackendConnected: true };

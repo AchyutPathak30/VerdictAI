@@ -54,11 +54,12 @@ export const AdminOverrideScreen: React.FC<AdminOverrideScreenProps> = ({
 
     if (res.data) {
       setIsSuccess(true);
-      updateDisputeStatus(disputeId, selectedOutcome === 'FAVOUR_MEMBER' ? 'Resolved (Override)' : 'Refuted (Override)', {
-        action: 'Override',
+      const isFavourCardholder = selectedOutcome.toUpperCase().includes('CARDHOLDER') || selectedOutcome.toUpperCase().includes('MEMBER');
+      updateDisputeStatus(disputeId, isFavourCardholder ? 'Approved' : 'Refuted', {
+        action: isFavourCardholder ? 'Resolved' : 'Closed',
         riskLevel: 'Low',
         aiVerdict: `Admin Override: ${reasoning}`,
-        slaCountdown: 'Resolved'
+        slaCountdown: isFavourCardholder ? 'Settled' : 'Closed'
       });
       onAddToast?.({
         type: 'success',

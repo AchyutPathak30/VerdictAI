@@ -70,6 +70,20 @@ class AdminOverrideRequest(BaseModel):
     admin_id: str = Field(..., description="ID of the Dispute-Ops Administrator", json_schema_extra={"example": "adm_marcus_01"})
     admin_name: str = Field(default="Dispute-Ops Admin", description="Name of the administrator")
 
+    @field_validator("override_decision", mode="before")
+    @classmethod
+    def normalize_override_decision(cls, v: Any) -> ResolutionOutcome:
+        if isinstance(v, ResolutionOutcome):
+            return v
+        v_str = str(v).upper().replace(" ", "_")
+        if "MEMBER" in v_str or "CARDHOLDER" in v_str or "APPROV" in v_str or "ACCEPT" in v_str or "WON" in v_str:
+            return ResolutionOutcome.FAVOR_CARDHOLDER
+        if "MERCHANT" in v_str or "REFUT" in v_str or "REJECT" in v_str or "DENI" in v_str or "LOST" in v_str:
+            return ResolutionOutcome.FAVOR_MERCHANT
+        if "SPLIT" in v_str:
+            return ResolutionOutcome.SPLIT_LIABILITY
+        return ResolutionOutcome(v_str)
+
 
 class AssignCaseRequest(BaseModel):
     analyst_id: str = Field(..., description="ID of the analyst assigned to this case", json_schema_extra={"example": "ana_elena_02"})

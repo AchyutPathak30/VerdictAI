@@ -130,12 +130,14 @@ export default function MyDisputesScreen({ navigation }: Props) {
     }, [])
   );
 
-  const activeDisputes = disputes.filter(
-    (d) => !['AUTO_RESOLVED', 'CLOSED', 'REJECTED'].includes(d.header.current_status)
-  );
-  const resolvedDisputes = disputes.filter(
-    (d) => ['AUTO_RESOLVED', 'CLOSED', 'REJECTED'].includes(d.header.current_status)
-  );
+  const isCaseResolved = (d: UnifiedCaseFile) => {
+    const s = d.header.current_status;
+    const resOut = String(d.resolution?.outcome || '').toUpperCase();
+    return ['AUTO_RESOLVED', 'CLOSED', 'REJECTED', 'ADMIN_OVERRIDDEN', 'REFUTED', 'APPROVED'].includes(s) || resOut.includes('MERCHANT') || resOut.includes('CARDHOLDER');
+  };
+
+  const activeDisputes = disputes.filter((d) => !isCaseResolved(d));
+  const resolvedDisputes = disputes.filter((d) => isCaseResolved(d));
 
   const displayedDisputes =
     activeTab === 'all'
@@ -146,16 +148,27 @@ export default function MyDisputesScreen({ navigation }: Props) {
 
   const renderDisputeCard = ({ item }: { item: UnifiedCaseFile }) => {
     const status = item.header.current_status as DisputeStatus;
-    const statusConf = STATUS_CONFIG[status] ?? {
+    const resolutionOutcome = String(item.resolution?.outcome || '').toUpperCase();
+    const isRefuted = status === 'REJECTED' || resolutionOutcome.includes('MERCHANT') || resolutionOutcome.includes('REFUT');
+    const isApproved = status === 'AUTO_RESOLVED' || resolutionOutcome.includes('CARDHOLDER') || resolutionOutcome.includes('MEMBER') || resolutionOutcome.includes('APPROV');
+
+    let statusConf = STATUS_CONFIG[status] ?? {
       label: status,
       color: Colors.textSecondary,
       bg: '#F8FAFC',
       border: '#E2E8F0',
     };
+
+    if (isRefuted) {
+      statusConf = { label: 'Refuted ✕', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' };
+    } else if (isApproved) {
+      statusConf = { label: 'Approved ✓', color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0' };
+    }
+
     const slaDate = new Date(item.header.sla_deadline);
     const now = new Date();
     const hoursLeft = Math.max(0, Math.floor((slaDate.getTime() - now.getTime()) / 3600000));
-    const isResolved = ['AUTO_RESOLVED', 'CLOSED', 'REJECTED'].includes(status);
+    const isResolved = isCaseResolved(item);
     const dateFormatted = new Date(
       item.transaction.transaction_timestamp || item.header.created_at
     ).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
