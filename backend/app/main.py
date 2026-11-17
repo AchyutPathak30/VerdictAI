@@ -34,7 +34,8 @@ async def lifespan(app: FastAPI):
                 dispute_reason=DisputeReason.PRODUCT_NOT_RECEIVED,
                 disputed_amount=18999.00,
                 cardholder_statement="Ordered OnePlus tablet from Croma online; Blue Dart tracking shows delivered but parcel was not received at Bengaluru residence.",
-                merchant_sla_hours=48
+                merchant_sla_hours=48,
+                custom_dispute_id="8f95f224-c342-42f5-a1ac-a081e74a69fa"
             )
             case_service.attach_evidence(
                 dispute_id=c1.header.dispute_id,
@@ -56,7 +57,8 @@ async def lifespan(app: FastAPI):
                 dispute_reason=DisputeReason.DUPLICATE_PROCESSING,
                 disputed_amount=1499.00,
                 cardholder_statement="UPI payment debited twice on Swiggy Instamart order.",
-                merchant_sla_hours=48
+                merchant_sla_hours=48,
+                custom_dispute_id="2f6fb0a1-81cb-43af-8735-d82f64fa8ff6"
             )
             case_service.create_dispute_case(
                 transaction_id="TXN-TATACLIQ-99281",
@@ -64,7 +66,8 @@ async def lifespan(app: FastAPI):
                 dispute_reason=DisputeReason.FRAUD_UNRECOGNIZED_CHARGE,
                 disputed_amount=24999.00,
                 cardholder_statement="Unauthorized luxury apparel charge on RuPay Platinum card.",
-                merchant_sla_hours=24
+                merchant_sla_hours=24,
+                custom_dispute_id="3d822243-00a2-4138-b330-b1a400e2a04f"
             )
             case_service.create_dispute_case(
                 transaction_id="TXN-RELIANCE-9021",
@@ -72,7 +75,8 @@ async def lifespan(app: FastAPI):
                 dispute_reason=DisputeReason.PRODUCT_DAMAGED_OR_DEFECTIVE,
                 disputed_amount=14999.00,
                 cardholder_statement="Smart TV delivered with screen shattered upon unboxing courier parcel.",
-                merchant_sla_hours=48
+                merchant_sla_hours=48,
+                custom_dispute_id="f16a1e4b-151e-42a0-87d9-4c51ae744edb"
             )
         except Exception:
             pass

@@ -500,8 +500,84 @@ export function getEvidenceForDispute(disputeId: string): EvidenceItem[] {
 }
 
 export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse<typeof DSP_1041_DETAILS>> {
-  const disputes = getMasterDisputes();
   const cleanId = (disputeId || '').replace(/^Case\s+/i, '').trim();
+
+  // 1. Try querying the live backend API first
+  const apiRes = await fetchApi<any>(`/disputes/${encodeURIComponent(cleanId)}`);
+  if (apiRes.connected && apiRes.data) {
+    const cf = apiRes.data;
+    const header = cf.header || {};
+    const txn = cf.transaction || {};
+    const reasonRaw = String(header.dispute_reason || 'PRODUCT_NOT_RECEIVED');
+    const reasonFormatted = reasonRaw.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const amount = Number(header.disputed_amount || txn.amount || 0);
+    const currency = header.currency || txn.currency || 'INR';
+    const status = header.current_status || 'IN_ANALYSIS';
+    const resData = cf.resolution;
+    const reasoningPayload = resData?.reasoning_payload;
+
+    // Map evidence items
+    const liveEvidence: any[] = (cf.evidence_items || []).map((e: any, idx: number) => ({
+      id: e.evidence_id || `EV-${idx + 1}`,
+      fileName: e.file_name || `evidence_${idx + 1}.pdf`,
+      type: (e.file_name?.split('.').pop()?.toUpperCase() as any) || 'PDF',
+      fileSize: e.file_size_bytes ? `${(e.file_size_bytes / 1024).toFixed(1)} KB` : '124.5 KB',
+      uploadedAt: e.uploaded_at ? new Date(e.uploaded_at).toLocaleDateString() : 'Recent',
+      uploadedBy: e.source || 'Cardholder',
+      status: 'Parsed',
+      tag: e.evidence_type || 'Document'
+    }));
+
+    const calculatedScore = liveEvidence.length === 0
+      ? 0
+      : resData?.confidence_score
+      ? Math.round(Number(resData.confidence_score) * 100)
+      : computeStableScore(reasonRaw, cleanId);
+
+    const isRefuted = status === 'REJECTED' || String(resData?.outcome || '').includes('MERCHANT');
+    const isApproved = status === 'AUTO_RESOLVED' || String(resData?.outcome || '').includes('CARDHOLDER');
+
+    return {
+      data: {
+        id: `Case ${cleanId}`,
+        title: `Case ${header.case_reference_number || cleanId.slice(0, 8).toUpperCase()} – ${reasonFormatted}`,
+        status: isRefuted ? 'Refuted' : isApproved ? 'Approved' : 'Review Required' as any,
+        initiatedDate: header.created_at ? new Date(header.created_at).toLocaleDateString() : getDynamicDateString(0),
+        deadline: header.sla_deadline ? new Date(header.sla_deadline).toLocaleDateString() : getDynamicDateString(48),
+        deadlineDaysLeft: 2,
+        deadlineHoursLeft: 48,
+        transaction: {
+          id: txn.transaction_id || `TXN-${cleanId.slice(0, 6)}`,
+          merchant: txn.merchant_name || 'Merchant Partner',
+          merchantId: txn.merchant_id || 'MID-IN-001',
+          totalAmount: amount,
+          currency: currency === 'INR' ? '₹' : currency,
+          txnDate: txn.transaction_timestamp ? new Date(txn.transaction_timestamp).toLocaleString() : getDynamicDateString(-2) + ' 11:30:00 IST',
+          memberName: txn.cardholder_name || 'Cardholder Member',
+          memberAccount: txn.payment_method || 'HDFC Bank RuPay **** 4492',
+          disputeReason: cf.cardholder_statement || `Cardholder registered claim for ${txn.merchant_name || 'Merchant'}.`
+        },
+        merchantProfile: {
+          name: `${txn.merchant_name || 'Merchant'} Enterprise Division`,
+          tier: 'Tier 1 • National Enterprise Merchant',
+          riskRating: 'Low Risk (A+)',
+          historicalDisputeRate: '0.28%'
+        },
+        evidence: liveEvidence,
+        aiScoring: {
+          ...DSP_1041_DETAILS.aiScoring,
+          score: calculatedScore,
+          factors: reasoningPayload?.factor_breakdown || DSP_1041_DETAILS.aiScoring.factors,
+          narrativeSummary: resData?.justification_summary || DSP_1041_DETAILS.aiScoring.narrativeSummary
+        }
+      },
+      error: null,
+      isBackendConnected: true
+    };
+  }
+
+  // 2. Offline / local fallback
+  const disputes = getMasterDisputes();
   const master = disputes.find((d) => 
     d.id.toLowerCase() === cleanId.toLowerCase() || 
     d.id.toLowerCase().includes(cleanId.toLowerCase()) || 
@@ -515,26 +591,29 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
       : cleanId.includes('8812') ? 'Taj Hotels & Resorts (IHCL)'
       : cleanId.includes('8755') ? 'Swiggy Instamart India'
       : cleanId.includes('8701') ? 'Zomato Dining & Gold'
+      : cleanId.includes('3d822243') || cleanId.toLowerCase().includes('tata') ? 'Tata CLiQ Luxury'
       : 'Croma Electronics India',
     amount: cleanId.includes('9021') ? 14999
       : cleanId.includes('8942') ? 4499
       : cleanId.includes('8812') ? 28500
       : cleanId.includes('8755') ? 849
       : cleanId.includes('8701') ? 1299
+      : cleanId.includes('3d822243') || cleanId.toLowerCase().includes('tata') ? 24999
       : 18999,
     currency: '₹',
-    reason: cleanId.includes('9021') ? 'Product Not Received'
+    reason: cleanId.includes('9021') ? 'Product Damaged or Defective'
       : cleanId.includes('8942') ? 'Fraudulent Transaction'
       : cleanId.includes('8812') ? 'Service Not Provided'
       : cleanId.includes('8755') ? 'Duplicate Charge'
       : cleanId.includes('8701') ? 'Wrong Item Delivered'
+      : cleanId.includes('3d822243') || cleanId.toLowerCase().includes('tata') ? 'Fraudulent Unrecognized Charge'
       : 'Non-Delivery of Goods',
     date: '14 Oct 2026',
     status: cleanId.includes('8812') ? 'Escalated' : cleanId.includes('8942') ? 'Evidence Pending' : 'Review Required',
     riskLevel: cleanId.includes('8812') ? 'High' : cleanId.includes('8942') ? 'Low' : 'Medium',
     action: cleanId.includes('8812') ? 'Override' : 'Review',
     slaCountdown: '2 days left',
-    aiScore: computeStableScore(cleanId),
+    aiScore: computeStableScore(cleanId.includes('3d822243') ? 'FRAUD' : ((master as any)?.reason || 'NON_DELIVERY')),
     cardholderName: cleanId.includes('9021') ? 'Rahul Verma'
       : cleanId.includes('8942') ? 'Ananya Sen'
       : cleanId.includes('8812') ? 'Vikram Malhotra'
@@ -545,6 +624,7 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
       : cleanId.includes('8812') ? 'Reservation cancelled within free cancellation window; full refund denied by property.'
       : cleanId.includes('8755') ? 'UPI payment debited twice for same grocery order within 3 minutes on Swiggy Instamart.'
       : cleanId.includes('8701') ? 'Ordered signature gourmet meal box, but completely different unsealed vegetarian platter was delivered.'
+      : cleanId.includes('3d822243') ? 'Unauthorized luxury apparel charge on RuPay Platinum card.'
       : 'The package containing the OnePlus Tablet was never delivered to my residence at Indiranagar, Bengaluru.'
   };
 
@@ -579,11 +659,11 @@ export async function fetchDisputeDetail(disputeId: string): Promise<ApiResponse
       evidence: evidenceList,
       aiScoring: {
         ...DSP_1041_DETAILS.aiScoring,
-        score: matched.aiScore || computeStableScore(matched.reason)
+        score: evidenceList.length === 0 ? 0 : (matched.aiScore || computeStableScore(matched.reason))
       }
     },
     error: null,
-    isBackendConnected: true
+    isBackendConnected: false
   };
 }
 

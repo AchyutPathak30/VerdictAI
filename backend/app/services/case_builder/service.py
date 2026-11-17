@@ -39,9 +39,10 @@ class CaseService:
         dispute_reason: DisputeReason,
         disputed_amount: float,
         cardholder_statement: Optional[str] = None,
-        merchant_sla_hours: int = 48
+        merchant_sla_hours: int = 48,
+        custom_dispute_id: Optional[str] = None
     ) -> UnifiedCaseFile:
-        dispute_id = str(uuid.uuid4())
+        dispute_id = custom_dispute_id or str(uuid.uuid4())
         created_at = utc_now()
         sla_deadline = DisputeStateMachine.calculate_sla_deadline(created_at, merchant_sla_hours)
 
@@ -224,7 +225,13 @@ class CaseService:
                 cf_id = f"cf-{d_id[:8]}".lower()
                 cas_ref = f"cas-{d_id[:8]}".lower()
                 tx_id = str(d.get("transaction_id", "")).lower()
-                if clean_search in (d_id, cf_id, cas_ref, tx_id) or d_id.startswith(clean_search):
+                if (
+                    clean_search in (d_id, cf_id, cas_ref, tx_id)
+                    or d_id.startswith(clean_search)
+                    or clean_search.startswith(d_id[:8])
+                    or (len(clean_search) >= 8 and clean_search[:8] in d_id)
+                    or (len(d_id) >= 8 and d_id[:8] in clean_search)
+                ):
                     dispute_record = d
                     dispute_id = d.get("id", "")
                     break

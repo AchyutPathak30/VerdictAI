@@ -140,8 +140,8 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
   }
 
   const getCaseAiEvaluation = () => {
-    // If no evidence is attached and no AI score was evaluated, do not show artificial high score
-    if (!caseDetails?.aiScoring?.score && evidenceList.length === 0) {
+    // If no evidence is attached, do not show artificial high score
+    if (evidenceList.length === 0) {
       return {
         score: 0,
         favourText: 'AWAITING EVIDENCE (NO FILES ATTACHED)',
@@ -409,7 +409,7 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
 
             <div className="flex justify-center py-2">
               <ScoreGauge
-                score={caseDetails.aiScoring?.score || aiEval.score}
+                score={aiEval.score}
                 label="Confidence Score"
                 favourText={aiEval.favourText}
               />

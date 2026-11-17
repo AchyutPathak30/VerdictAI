@@ -51,9 +51,7 @@ export default function LoginScreen({ navigation }: Props) {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [infoBanner, setInfoBanner] = useState<string | null>(null);
 
-  // Biometrics modal state
-  const [isBiometricOpen, setIsBiometricOpen] = useState(false);
-  const [biometricStatus, setBiometricStatus] = useState<'scanning' | 'success' | 'failed'>('scanning');
+
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -80,20 +78,7 @@ export default function LoginScreen({ navigation }: Props) {
     setLoginError(null);
   };
 
-  const handleStartBiometrics = () => {
-    setLoginError(null);
-    setIsBiometricOpen(true);
-    setBiometricStatus('scanning');
-    setTimeout(() => {
-      setBiometricStatus('success');
-      setTimeout(() => {
-        setIsBiometricOpen(false);
-        // Direct entry to main app via strong biometric authentication
-        setCurrentUser(DEFAULT_USER);
-        rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
-      }, 700);
-    }, 1200);
-  };
+
 
   const handleForgotPassword = () => {
     const targetEmail = email.trim() || 'pooja.iyer@gmail.com';
@@ -237,20 +222,7 @@ export default function LoginScreen({ navigation }: Props) {
               )}
             </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
 
-            <TouchableOpacity
-              style={styles.biometricButton}
-              onPress={handleStartBiometrics}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.biometricIcon}>👆</Text>
-              <Text style={styles.biometricText}>Sign in with Face ID / Touch ID</Text>
-            </TouchableOpacity>
 
             <View style={styles.registerRow}>
               <Text style={styles.registerText}>Don't have an account? </Text>
@@ -376,52 +348,7 @@ export default function LoginScreen({ navigation }: Props) {
         </View>
       </Modal>
 
-      {/* ─── Biometrics Authentication Modal ────────────────────────────── */}
-      <Modal
-        visible={isBiometricOpen}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setIsBiometricOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.biometricModalCard}>
-            <View style={styles.biometricIconCircle}>
-              <Text style={{ fontSize: 44 }}>
-                {biometricStatus === 'success' ? '✅' : '👆'}
-              </Text>
-            </View>
 
-            <Text style={styles.biometricModalTitle}>
-              {biometricStatus === 'success'
-                ? 'Biometrics Verified!'
-                : 'Touch ID / Face ID'}
-            </Text>
-
-            <Text style={styles.biometricModalSub}>
-              {biometricStatus === 'success'
-                ? 'Identity confirmed. Signing you in...'
-                : `Glance at camera or place finger on sensor to authenticate as ${email || 'Pooja Iyer'}.`}
-            </Text>
-
-            {biometricStatus === 'scanning' && (
-              <ActivityIndicator
-                size="large"
-                color={Colors.primary}
-                style={{ marginTop: 12 }}
-              />
-            )}
-
-            {biometricStatus === 'scanning' && (
-              <TouchableOpacity
-                style={styles.cancelBiometricBtn}
-                onPress={() => setIsBiometricOpen(false)}
-              >
-                <Text style={styles.cancelBiometricText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -510,23 +437,6 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: { opacity: 0.6 },
   loginButtonText: { fontSize: Typography.md, fontWeight: Typography.bold, color: '#fff' },
-  divider: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginVertical: Spacing.xs },
-  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
-  dividerText: { fontSize: Typography.xs, color: Colors.textMuted, fontWeight: Typography.semibold },
-  biometricButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing.sm,
-    ...Shadow.card,
-  },
-  biometricIcon: { fontSize: 20 },
-  biometricText: { fontSize: Typography.base, color: Colors.textPrimary, fontWeight: Typography.semibold },
   registerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -579,31 +489,6 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: Typography.lg, fontWeight: Typography.bold, color: Colors.textPrimary },
   modalCloseBtn: { padding: 4 },
   modalCloseIcon: { fontSize: 20, color: Colors.textMuted },
-
-  biometricModalCard: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#fff',
-    borderRadius: Radius.xl,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    gap: 12,
-    ...Shadow.card,
-  },
-  biometricIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#EFF6FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#BFDBFE',
-  },
-  biometricModalTitle: { fontSize: Typography.xl, fontWeight: Typography.bold, color: Colors.textPrimary },
-  biometricModalSub: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
-  cancelBiometricBtn: { marginTop: 8, padding: 8 },
-  cancelBiometricText: { fontSize: Typography.sm, color: Colors.textMuted, fontWeight: Typography.semibold },
 
   errorBox: {
     backgroundColor: '#FEF2F2',
