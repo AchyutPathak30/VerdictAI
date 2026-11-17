@@ -222,3 +222,4 @@ export const logoutUser = async () => {
     } catch {}
   }
 };
+

@@ -13,18 +13,18 @@ import {
   Sparkles,
   Info,
   Store,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { ToastMessage } from '../common/Toast';
 import { ScreenId } from '../layout/Sidebar';
 
-export interface UserPersona {
-  name: string;
-  role: string;
-  email: string;
-  avatar: string;
-  userId?: string;
-}
+import { UserPersona } from '../../types/dispute';
+import { authenticateUser, registerCardholderWeb, registerMerchantWeb } from '../../services/api';
+export type { UserPersona };
 
 interface LoginScreenProps {
   onLogin: (user: UserPersona, targetScreen: ScreenId) => void;
@@ -104,14 +104,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   // Sign In form state
   const [email, setEmail] = useState('priya.sharma@verdictai-bank.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('VerdictAI@2026');
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'admin' | 'merchant' | 'cardholder'>('admin');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // Merchant Signup form state
   const [merchantForm, setMerchantForm] = useState({
     businessName: 'Tata Croma Infiniti Retail',
     managerName: 'Amit Patel',
     email: 'ops@croma.com',
+    password: 'VerdictAI@2026',
     taxId: '27AAACL3045K1Z3',
     mcc: '5732 - Electronic Sales',
   });
@@ -120,13 +124,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [cardholderForm, setCardholderForm] = useState({
     fullName: 'Pooja Iyer',
     email: 'pooja.iyer@gmail.com',
+    password: 'VerdictAI@2026',
     phone: '+91 98765 43210',
     cardType: 'HDFC RuPay Platinum Debit (•••• 4012)',
   });
 
-  const handleCustomSignIn = (e: React.FormEvent) => {
+  const handleCustomSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
+    setLoginError(null);
+
+    const emailClean = email.trim();
+    const pwdClean = password.trim();
+
+    if (!emailClean) {
+      setLoginError('Please enter your registered email address.');
       onAddToast?.({
         type: 'error',
         title: 'Validation Error',
@@ -135,92 +146,148 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       return;
     }
 
-    // Match or create persona based on selected role
-    let persona: UserPersona;
-    let targetScreen: ScreenId = 'dashboard';
-    const emailClean = email.trim().toLowerCase();
-    let computedUserId = `usr_${emailClean.split('@')[0].replace(/[^a-z0-9]/g, '_')}`;
-
-    if (emailClean.includes('pooja')) {
-      computedUserId = 'usr_pooja_01';
-    } else if (emailClean.includes('priya')) {
-      computedUserId = 'usr_priya_01';
-    } else if (emailClean.includes('rajesh')) {
-      computedUserId = 'usr_rajesh_01';
-    } else if (emailClean.includes('amit')) {
-      computedUserId = 'usr_amit_01';
+    if (!pwdClean) {
+      setLoginError('Please enter your password.');
+      onAddToast?.({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Please enter your password.',
+      });
+      return;
     }
 
-    if (selectedRole === 'admin') {
-      persona = {
-        name: email.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()),
-        role: 'Admin Lead',
-        email: email.trim(),
-        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
-        userId: computedUserId,
-      };
-      targetScreen = 'dashboard';
-    } else if (selectedRole === 'merchant') {
-      persona = {
-        name: email.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()),
-        role: 'Store Operations Manager',
-        email: email.trim(),
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
-        userId: computedUserId,
-      };
-      targetScreen = 'merchant-portal';
-    } else {
-      persona = {
-        name: email.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()),
-        role: 'Cardholder (Customer)',
-        email: email.trim(),
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-        userId: computedUserId,
-      };
-      targetScreen = 'cardholder-portal';
+    setIsAuthenticating(true);
+
+    try {
+      // Real backend credential verification against POST /api/v1/auth/login
+      const res = await authenticateUser(emailClean, pwdClean);
+
+      if (!res.data || res.error) {
+        const errorMsg = res.error || 'Invalid email or password. Please verify your credentials.';
+        setLoginError(errorMsg);
+        onAddToast?.({
+          type: 'error',
+          title: 'Authentication Failed',
+          message: errorMsg,
+        });
+        setIsAuthenticating(false);
+        // STRICT BLOCK - DO NOT PROCEED IF CREDENTIALS DO NOT MATCH
+        return;
+      }
+
+      const userPersona = res.data.user;
+      let targetScreen: ScreenId = 'dashboard';
+      const r = (userPersona.role || '').toLowerCase();
+      if (r.includes('admin')) {
+        targetScreen = 'dashboard';
+      } else if (r.includes('investigator')) {
+        targetScreen = 'case-queue';
+      } else if (r.includes('merchant') || r.includes('store')) {
+        targetScreen = 'merchant-portal';
+      } else {
+        targetScreen = 'cardholder-portal';
+      }
+
+      onLogin(userPersona, targetScreen);
+      onAddToast?.({
+        type: 'success',
+        title: 'Authentication Successful',
+        message: `Signed in as ${userPersona.name} (${userPersona.role})`,
+      });
+    } catch (err: any) {
+      const msg = err?.message || 'Authentication error. Please verify your credentials.';
+      setLoginError(msg);
+      onAddToast?.({
+        type: 'error',
+        title: 'Sign In Failed',
+        message: msg,
+      });
+    } finally {
+      setIsAuthenticating(false);
     }
-
-    onLogin(persona, targetScreen);
-    onAddToast?.({
-      type: 'success',
-      title: 'Authentication Successful',
-      message: `Signed in as ${persona.name} (${persona.role})`,
-    });
   };
 
-  const handleMerchantRegister = (e: React.FormEvent) => {
+  const handleMerchantRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const persona: UserPersona = {
-      name: merchantForm.managerName,
-      role: 'Store Operations Manager',
-      email: merchantForm.email,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
-      userId: `usr_${merchantForm.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
-    };
-    onAddToast?.({
-      type: 'success',
-      title: 'Merchant Onboarded',
-      message: `${merchantForm.businessName} successfully registered with Tax ID ${merchantForm.taxId}.`,
-    });
-    onLogin(persona, 'merchant-portal');
+    setLoginError(null);
+    setIsAuthenticating(true);
+
+    try {
+      const res = await registerMerchantWeb({
+        businessName: merchantForm.businessName,
+        managerName: merchantForm.managerName,
+        email: merchantForm.email,
+        taxId: merchantForm.taxId,
+        mcc: merchantForm.mcc,
+        password: merchantForm.password
+      });
+
+      if (!res.data || res.error) {
+        onAddToast?.({
+          type: 'error',
+          title: 'Onboarding Failed',
+          message: res.error || 'Could not register merchant profile.',
+        });
+        setIsAuthenticating(false);
+        return;
+      }
+
+      onAddToast?.({
+        type: 'success',
+        title: 'Merchant Onboarded',
+        message: `${merchantForm.businessName} successfully registered. Password configured.`,
+      });
+      onLogin(res.data.user, 'merchant-portal');
+    } catch (err: any) {
+      onAddToast?.({
+        type: 'error',
+        title: 'Registration Error',
+        message: err?.message || 'Failed to complete merchant onboarding.',
+      });
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
-  const handleCardholderRegister = (e: React.FormEvent) => {
+  const handleCardholderRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanId = `usr_${cardholderForm.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-    const persona: UserPersona = {
-      name: cardholderForm.fullName,
-      role: 'Cardholder (Customer)',
-      email: cardholderForm.email,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-      userId: cleanId,
-    };
-    onAddToast?.({
-      type: 'success',
-      title: 'Cardholder Account Created',
-      message: `Welcome, ${cardholderForm.fullName}! Mobile number verified.`,
-    });
-    onLogin(persona, 'cardholder-portal');
+    setLoginError(null);
+    setIsAuthenticating(true);
+
+    try {
+      const res = await registerCardholderWeb({
+        fullName: cardholderForm.fullName,
+        email: cardholderForm.email,
+        phone: cardholderForm.phone,
+        cardType: cardholderForm.cardType,
+        password: cardholderForm.password
+      });
+
+      if (!res.data || res.error) {
+        onAddToast?.({
+          type: 'error',
+          title: 'Registration Failed',
+          message: res.error || 'Could not create cardholder account.',
+        });
+        setIsAuthenticating(false);
+        return;
+      }
+
+      onAddToast?.({
+        type: 'success',
+        title: 'Cardholder Account Created',
+        message: `Welcome, ${cardholderForm.fullName}! Mobile number verified.`,
+      });
+      onLogin(res.data.user, 'cardholder-portal');
+    } catch (err: any) {
+      onAddToast?.({
+        type: 'error',
+        title: 'Registration Error',
+        message: err?.message || 'Failed to complete registration.',
+      });
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   return (
@@ -366,6 +433,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <p className="text-xs text-slate-500">Enter your enterprise email and credentials to enter your role-scoped environment.</p>
               </div>
 
+              {/* Login Error Alert Banner */}
+              {loginError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2.5 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-rose-800">Authentication Rejected</p>
+                    <p className="text-[11px] text-rose-600 mt-0.5">{loginError}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Role Selection Radio Pill */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">Target Role Scope</label>
@@ -375,6 +453,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     onClick={() => {
                       setSelectedRole('admin');
                       setEmail('priya.sharma@verdictai-bank.com');
+                      setPassword('VerdictAI@2026');
+                      setLoginError(null);
                     }}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border transition text-center ${
                       selectedRole === 'admin'
@@ -389,6 +469,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     onClick={() => {
                       setSelectedRole('merchant');
                       setEmail('amit.patel@croma.infiniti.com');
+                      setPassword('VerdictAI@2026');
+                      setLoginError(null);
                     }}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border transition text-center ${
                       selectedRole === 'merchant'
@@ -403,6 +485,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     onClick={() => {
                       setSelectedRole('cardholder');
                       setEmail('pooja.iyer@gmail.com');
+                      setPassword('VerdictAI@2026');
+                      setLoginError(null);
                     }}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border transition text-center ${
                       selectedRole === 'cardholder'
@@ -423,7 +507,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     type="email"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (loginError) setLoginError(null);
+                    }}
                     placeholder="name@domain.com"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                   />
@@ -444,22 +531,48 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <div className="relative">
                   <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (loginError) setLoginError(null);
+                    }}
+                    placeholder="Enter password..."
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition p-1"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Enterprise credentials password: <code className="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 text-[10px]">VerdictAI@2026</code>
+                </p>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 mt-2"
+                disabled={isAuthenticating}
+                className={`w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 mt-2 ${
+                  isAuthenticating ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                <span>Authorize & Enter Environment</span>
-                <ArrowRight className="w-4 h-4" />
+                {isAuthenticating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verifying Credentials...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Authorize & Enter Environment</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           )}
@@ -534,27 +647,56 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Merchant Category Code (MCC)</label>
-                <select
-                  value={merchantForm.mcc}
-                  onChange={(e) => setMerchantForm({ ...merchantForm, mcc: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
-                >
-                  <option value="5732 - Electronic Sales">5732 - Electronic Sales & Appliances</option>
-                  <option value="5411 - Grocery Stores & Supermarkets">5411 - Grocery Stores & Supermarkets</option>
-                  <option value="5651 - Family Clothing Stores">5651 - Family Clothing Stores</option>
-                  <option value="7011 - Hotels & Lodging">7011 - Hotels & Lodging</option>
-                  <option value="4816 - Computer Network / Information Services">4816 - Computer Network / Information Services</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Merchant Category Code (MCC)</label>
+                  <select
+                    value={merchantForm.mcc}
+                    onChange={(e) => setMerchantForm({ ...merchantForm, mcc: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                  >
+                    <option value="5732 - Electronic Sales">5732 - Electronic Sales & Appliances</option>
+                    <option value="5411 - Grocery Stores & Supermarkets">5411 - Grocery Stores & Supermarkets</option>
+                    <option value="5651 - Family Clothing Stores">5651 - Family Clothing Stores</option>
+                    <option value="7011 - Hotels & Lodging">7011 - Hotels & Lodging</option>
+                    <option value="4816 - Computer Network / Information Services">4816 - Computer Network / Information Services</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Create Merchant Password</label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="password"
+                      required
+                      value={merchantForm.password}
+                      onChange={(e) => setMerchantForm({ ...merchantForm, password: e.target.value })}
+                      className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                      placeholder="Min 6 characters"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 mt-2"
+                disabled={isAuthenticating}
+                className={`w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 mt-2 ${
+                  isAuthenticating ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                <span>Submit Merchant Onboarding & Enter Portal</span>
-                <ArrowRight className="w-4 h-4" />
+                {isAuthenticating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Registering Merchant Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Submit Merchant Onboarding & Enter Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           )}
@@ -616,26 +758,55 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Primary Bank Card / Account Link</label>
-                <div className="relative">
-                  <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={cardholderForm.cardType}
-                    onChange={(e) => setCardholderForm({ ...cardholderForm, cardType: e.target.value })}
-                    className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Primary Bank Card / Account Link</label>
+                  <div className="relative">
+                    <CreditCard className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={cardholderForm.cardType}
+                      onChange={(e) => setCardholderForm({ ...cardholderForm, cardType: e.target.value })}
+                      className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Create Account Password</label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="password"
+                      required
+                      value={cardholderForm.password}
+                      onChange={(e) => setCardholderForm({ ...cardholderForm, password: e.target.value })}
+                      className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                      placeholder="Min 6 characters"
+                    />
+                  </div>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 mt-2"
+                disabled={isAuthenticating}
+                className={`w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 mt-2 ${
+                  isAuthenticating ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                <span>Verify OTP & Enter Cardholder Portal</span>
-                <ArrowRight className="w-4 h-4" />
+                {isAuthenticating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Creating Cardholder Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Verify & Enter Cardholder Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           )}

@@ -53,6 +53,8 @@ USER_PASSWORDS: Dict[str, str] = {
     "rajesh.k@croma.infiniti.com": "VerdictAI@2026",
     "rajesh.verma@verdictai-bank.com": "VerdictAI@2026",
     "priya.sharma@verdictai-bank.com": "VerdictAI@2026",
+    "amit.patel@croma.infiniti.com": "VerdictAI@2026",
+    "rohan.mehta@verdictai-bank.com": "VerdictAI@2026",
 }
 
 
@@ -124,6 +126,7 @@ class MerchantRegisterRequest(BaseModel):
     email: str
     tax_id: str
     mcc: str = "5732"
+    password: Optional[str] = "VerdictAI@2026"
 
 
 @router.post("/token", response_model=TokenResponse, summary="Obtain JWT token for persona")
@@ -232,11 +235,15 @@ async def register_merchant(payload: MerchantRegisterRequest):
         role=UserRole.MERCHANT,
         scopes=list(ROLE_SCOPES[UserRole.MERCHANT])
     )
+    pwd = payload.password or "VerdictAI@2026"
+    USER_PASSWORDS[payload.email.strip().lower()] = pwd
+    USER_PASSWORDS[user_id] = pwd
     ENTERPRISE_PERSONAS[user_id] = user
     db_manager.insert_pg_record("users", user_id, {
         "id": user_id,
         "email": payload.email,
         "full_name": user.full_name,
+        "password": pwd,
         "role": UserRole.MERCHANT.value,
         "merchant_id": merchant_id,
         "is_active": True,

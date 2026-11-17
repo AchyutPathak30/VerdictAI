@@ -12,6 +12,14 @@ export type CaseStatus =
 
 export type RiskLevel = 'Low' | 'Medium' | 'High';
 
+export interface UserPersona {
+  name: string;
+  role: string;
+  email: string;
+  avatar: string;
+  userId?: string;
+}
+
 export interface CaseQueueItem {
   id: string;
   merchant: string;
