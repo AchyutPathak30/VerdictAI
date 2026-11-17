@@ -58,12 +58,30 @@ class DualDatabaseManager:
         return data
 
     def get_pg_record(self, table_name: str, record_id: str) -> Optional[Dict[str, Any]]:
-        return self.pg_tables.get(table_name, {}).get(record_id)
+        table = self.pg_tables.get(table_name, {})
+        if record_id in table:
+            return table[record_id]
+        # Robust lookup by case-insensitive ID, prefix/suffix, or transaction ID match
+        r_clean = str(record_id).upper().replace("CAS-", "").replace("CASE", "").strip()
+        for k, v in table.items():
+            k_upper = str(k).upper()
+            if r_clean and (r_clean in k_upper or k_upper in r_clean):
+                return v
+            rec_id = str(v.get("id", "")).upper()
+            if r_clean and (r_clean in rec_id or rec_id in r_clean):
+                return v
+            txn_id = str(v.get("transaction_id", "")).upper()
+            if r_clean and r_clean in txn_id:
+                return v
+        return None
 
     def update_pg_record(self, table_name: str, record_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         record = self.get_pg_record(table_name, record_id)
         if record:
             record.update(updates)
+            rec_id = record.get("id")
+            if rec_id and table_name in self.pg_tables and rec_id in self.pg_tables[table_name]:
+                self.pg_tables[table_name][rec_id].update(updates)
         return record
 
     def query_pg_records(self, table_name: str, filter_fn=None) -> List[Dict[str, Any]]:

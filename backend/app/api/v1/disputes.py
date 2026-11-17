@@ -172,6 +172,10 @@ async def get_dispute(dispute_id: str):
     "/{dispute_id}/status",
     summary="Transition dispute lifecycle status"
 )
+@router.post(
+    "/{dispute_id}/status",
+    summary="Transition dispute lifecycle status"
+)
 async def transition_status(dispute_id: str, payload: StateTransitionRequest):
     """
     Validates and performs deterministic state transitions across the dispute lifecycle (SRS FR-30, FR-32).

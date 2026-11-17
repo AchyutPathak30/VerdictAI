@@ -6,7 +6,9 @@ export type CaseStatus =
   | 'Warning' 
   | 'Pending' 
   | 'Auto-Resolved' 
-  | 'Closed';
+  | 'Closed'
+  | 'Approved'
+  | 'Refuted';
 
 export type RiskLevel = 'Low' | 'Medium' | 'High';
 

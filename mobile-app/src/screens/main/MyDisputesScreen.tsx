@@ -17,13 +17,11 @@ import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { getDisputes } from '../../services/disputesService';
 import { getBackendReachable } from '../../services/apiClient';
 import { getRuntimeDisputes } from '../../data/mockDisputes';
+import { getCurrentUser } from '../../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'MyDisputes'>;
 };
-
-// Demo cardholder ID matching backend seed data (Pooja Iyer)
-const DEMO_CARDHOLDER_ID = 'usr_pooja_01';
 
 const STATUS_CONFIG: Record<
   string,
@@ -54,10 +52,12 @@ export default function MyDisputesScreen({ navigation }: Props) {
     else setLoading(true);
 
     try {
-      const response = await getDisputes(DEMO_CARDHOLDER_ID);
+      const activeUser = getCurrentUser();
+      const cardholderId = activeUser.userId || 'usr_pooja_01';
+      const response = await getDisputes(cardholderId);
       const items = [...response.items];
 
-      // Web cross-storage sync: also surface any newly filed disputes from unified browser store
+      // Web cross-storage sync: also surface any newly filed disputes for this cardholder
       const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
       if (win && win.localStorage) {
         try {
@@ -66,6 +66,10 @@ export default function MyDisputesScreen({ navigation }: Props) {
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
               for (const p of parsed) {
+                // Strictly filter to this cardholder
+                if (p.cardholderId && p.cardholderId !== cardholderId) {
+                  continue;
+                }
                 if (!items.some((it) => it.header.dispute_id.toLowerCase() === p.id.toLowerCase())) {
                   items.unshift({
                     case_hash_sha256: p.sha256Hash || 'sha256_client_verified_hash',
@@ -217,7 +221,7 @@ export default function MyDisputesScreen({ navigation }: Props) {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>My Disputes</Text>
-          <Text style={styles.subGreeting}>Card Member Dispute Resolution</Text>
+          <Text style={styles.subGreeting}>{getCurrentUser().fullName} • Dispute Resolution</Text>
         </View>
         <View style={styles.headerRight}>
           <View style={[styles.connectionBadge, isLiveApi ? styles.badgeLive : styles.badgeOffline]}>

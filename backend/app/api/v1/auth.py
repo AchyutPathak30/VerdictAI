@@ -25,6 +25,11 @@ class TokenRequest(BaseModel):
     user_id: str
 
 
+class LoginCredentialsRequest(BaseModel):
+    email: str
+    password: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "Bearer"
@@ -35,8 +40,82 @@ class TokenResponse(BaseModel):
 class CardholderRegisterRequest(BaseModel):
     full_name: str
     email: str
-    phone: str
+    phone: Optional[str] = "9876543210"
     card_network: Optional[str] = "RuPay Platinum"
+    password: Optional[str] = "VerdictAI@2026"
+
+
+# Active credentials store
+USER_PASSWORDS: Dict[str, str] = {
+    "pooja.iyer@gmail.com": "VerdictAI@2026",
+    "usr_pooja_01": "VerdictAI@2026",
+    "usr_pooja_iyer": "VerdictAI@2026",
+    "rajesh.k@croma.infiniti.com": "VerdictAI@2026",
+    "rajesh.verma@verdictai-bank.com": "VerdictAI@2026",
+    "priya.sharma@verdictai-bank.com": "VerdictAI@2026",
+}
+
+
+@router.post("/login", response_model=TokenResponse, summary="Authenticate user with email and password")
+async def login_with_credentials(payload: LoginCredentialsRequest):
+    """
+    Authenticates a cardholder or enterprise staff with email and password.
+    Rejects invalid credentials with HTTP 401 Unauthorized.
+    """
+    email_clean = payload.email.strip().lower()
+
+    # Search in enterprise personas
+    target_user: Optional[AuthenticatedUser] = None
+    for u in ENTERPRISE_PERSONAS.values():
+        if u.email.lower() == email_clean or u.user_id.lower() == email_clean:
+            target_user = u
+            break
+
+    # Search in registered db users
+    if not target_user:
+        for u_data in db_manager.pg_tables.get("users", {}).values():
+            if u_data.get("email", "").lower() == email_clean or u_data.get("id", "").lower() == email_clean:
+                target_user = AuthenticatedUser(
+                    user_id=u_data["id"],
+                    email=u_data["email"],
+                    full_name=u_data["full_name"],
+                    role=UserRole(u_data.get("role", "CARDHOLDER")),
+                    scopes=list(ROLE_SCOPES[UserRole(u_data.get("role", "CARDHOLDER"))])
+                )
+                break
+
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password. Please verify your credentials."
+        )
+
+    # Check password
+    stored_password = (
+        USER_PASSWORDS.get(email_clean)
+        or USER_PASSWORDS.get(target_user.user_id)
+        or USER_PASSWORDS.get(target_user.email.lower())
+    )
+    user_rec = db_manager.get_pg_record("users", target_user.user_id)
+    if user_rec and "password" in user_rec:
+        stored_password = user_rec["password"]
+
+    if not stored_password:
+        stored_password = "VerdictAI@2026"
+
+    if payload.password != stored_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password. Please verify your credentials."
+        )
+
+    token = RBACManager.create_access_token(target_user)
+    return TokenResponse(
+        access_token=token,
+        token_type="Bearer",
+        expires_in=86400,
+        user=target_user
+    )
 
 
 class MerchantRegisterRequest(BaseModel):
@@ -107,12 +186,16 @@ async def register_cardholder(payload: CardholderRegisterRequest):
         scopes=list(ROLE_SCOPES[UserRole.CARDHOLDER])
     )
     # Store in memory/db
+    pwd = payload.password or "VerdictAI@2026"
+    USER_PASSWORDS[payload.email.strip().lower()] = pwd
+    USER_PASSWORDS[user_id] = pwd
     ENTERPRISE_PERSONAS[user_id] = user
     db_manager.insert_pg_record("users", user_id, {
         "id": user_id,
         "email": payload.email,
         "full_name": payload.full_name,
         "phone_number": payload.phone,
+        "password": pwd,
         "role": UserRole.CARDHOLDER.value,
         "is_active": True,
         "created_at": int(time.time())

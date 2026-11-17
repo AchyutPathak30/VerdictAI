@@ -16,6 +16,7 @@ import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
+import { getCurrentUser, logoutUser, AppUser } from '../../services/authService';
 
 export interface PaymentCard {
   id: string;
@@ -69,6 +70,11 @@ const STORAGE_CARDS_KEY = 'verdictai_mobile_payment_cards_v1';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [currentUser, setCurrentUser] = useState<AppUser>(() => getCurrentUser());
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
 
   // Cards State
   const [cards, setCards] = useState<PaymentCard[]>(DEFAULT_CARDS);
@@ -76,7 +82,7 @@ export default function ProfileScreen() {
 
   // Add Card Modal State
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
-  const [newCardholder, setNewCardholder] = useState('Pooja Iyer');
+  const [newCardholder, setNewCardholder] = useState(() => getCurrentUser().fullName);
   const [newBank, setNewBank] = useState('State Bank of India');
   const [newNetwork, setNewNetwork] = useState<'RuPay' | 'Visa' | 'Mastercard' | 'Amex'>('Visa');
   const [newCardNumber, setNewCardNumber] = useState('');
@@ -261,10 +267,19 @@ export default function ProfileScreen() {
     }, 1300);
   };
 
-  const executeSignOut = () => {
+  const executeSignOut = async () => {
     setIsSignOutModalOpen(false);
+    await logoutUser();
     navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
   };
+
+  const userInitials = (currentUser.fullName || 'Pooja Iyer')
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'PI';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -287,22 +302,22 @@ export default function ProfileScreen() {
         {/* User Identity Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>PI</Text>
+            <Text style={styles.avatarInitial}>{userInitials}</Text>
           </View>
           <View style={styles.userInfo}>
             <View style={styles.nameRow}>
-              <Text style={styles.userName}>{DEMO_USER.name}</Text>
+              <Text style={styles.userName}>{currentUser.fullName}</Text>
               <View style={styles.verifiedBadge}>
                 <Text style={styles.verifiedText}>✓ Verified Member</Text>
               </View>
             </View>
-            <Text style={styles.userEmail}>{DEMO_USER.email}</Text>
+            <Text style={styles.userEmail}>{currentUser.email}</Text>
             <View style={styles.metaRow}>
               <View style={styles.idBadge}>
-                <Text style={styles.idText}>ID: {DEMO_USER.cardholderID}</Text>
+                <Text style={styles.idText}>ID: {currentUser.userId}</Text>
               </View>
               <View style={styles.scoreBadge}>
-                <Text style={styles.scoreText}>Credit Score: {DEMO_USER.creditScore}</Text>
+                <Text style={styles.scoreText}>Credit Score: {currentUser.creditScore || '812 (Excellent)'}</Text>
               </View>
             </View>
           </View>
@@ -955,7 +970,7 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 36, marginBottom: 8 }}>🚪</Text>
               <Text style={styles.dialogHeading}>End Active Session?</Text>
               <Text style={styles.dialogBody}>
-                Are you sure you want to sign out of VerdictAI as Pooja Iyer (usr_pooja_01)?
+                Are you sure you want to sign out of VerdictAI as {currentUser.fullName} ({currentUser.userId})?
               </Text>
 
               <View style={styles.signOutBtnRow}>

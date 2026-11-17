@@ -424,10 +424,10 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
                     Dispute Accepted (Member Refunded)
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setResolutionStatus('pending');
                       const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
-                      updateDisputeStatus(targetId, 'Review Required', { action: 'Review', slaCountdown: '22 hours left' });
+                      await updateDisputeStatus(targetId, 'Review Required', { action: 'Review', slaCountdown: '22 hours left' });
                       setCaseDetails((prev: any) => prev ? { ...prev, status: 'Review Required' } : prev);
                       onAddToast?.({ type: 'info', title: 'Case Reopened', message: `${targetId} status reset to Review Required.` });
                     }}
@@ -442,10 +442,10 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
                     Dispute Refuted (Merchant Upheld)
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setResolutionStatus('pending');
                       const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
-                      updateDisputeStatus(targetId, 'Review Required', { action: 'Review', slaCountdown: '22 hours left' });
+                      await updateDisputeStatus(targetId, 'Review Required', { action: 'Review', slaCountdown: '22 hours left' });
                       setCaseDetails((prev: any) => prev ? { ...prev, status: 'Review Required' } : prev);
                       onAddToast?.({ type: 'info', title: 'Case Reopened', message: `${targetId} status reset to Review Required.` });
                     }}
@@ -457,10 +457,10 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
               ) : (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setResolutionStatus('rejected');
                       const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
-                      updateDisputeStatus(targetId, 'Refuted', {
+                      await updateDisputeStatus(targetId, 'Refuted', {
                         action: 'Closed',
                         slaCountdown: 'Closed',
                         aiVerdict: 'Dispute refuted by Dispute-Ops Lead. Merchant counter-evidence upheld.'
@@ -473,10 +473,10 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
                     Refute Claim
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setResolutionStatus('accepted');
                       const targetId = (caseDetails?.id || disputeId || '').replace(/^Case\s+/i, '').trim();
-                      updateDisputeStatus(targetId, 'Approved', {
+                      await updateDisputeStatus(targetId, 'Approved', {
                         action: 'Resolved',
                         slaCountdown: 'Settled',
                         aiVerdict: 'Dispute approved by Dispute-Ops Lead. Provisional credit of full amount confirmed.'

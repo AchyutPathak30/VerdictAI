@@ -27,39 +27,74 @@ class DisputeStateMachine:
         DisputeStatus.SUBMITTED: {
             DisputeStatus.EVIDENCE_PENDING,
             DisputeStatus.EVIDENCE_INGESTED,
-            DisputeStatus.REJECTED
+            DisputeStatus.IN_ANALYSIS,
+            DisputeStatus.SCORING_EVALUATED,
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.AUTO_RESOLVED,
+            DisputeStatus.ADMIN_OVERRIDDEN,
+            DisputeStatus.REJECTED,
+            DisputeStatus.CLOSED
         },
         DisputeStatus.EVIDENCE_PENDING: {
             DisputeStatus.EVIDENCE_INGESTED,
             DisputeStatus.IN_ANALYSIS,
-            DisputeStatus.AUTO_RESOLVED
+            DisputeStatus.SCORING_EVALUATED,
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.AUTO_RESOLVED,
+            DisputeStatus.ADMIN_OVERRIDDEN,
+            DisputeStatus.REJECTED
         },
         DisputeStatus.EVIDENCE_INGESTED: {
             DisputeStatus.IN_ANALYSIS,
+            DisputeStatus.SCORING_EVALUATED,
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.AUTO_RESOLVED,
+            DisputeStatus.ADMIN_OVERRIDDEN,
             DisputeStatus.REJECTED
         },
         DisputeStatus.IN_ANALYSIS: {
-            DisputeStatus.SCORING_EVALUATED
+            DisputeStatus.SCORING_EVALUATED,
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.AUTO_RESOLVED,
+            DisputeStatus.ADMIN_OVERRIDDEN,
+            DisputeStatus.REJECTED
         },
         DisputeStatus.SCORING_EVALUATED: {
             DisputeStatus.AUTO_RESOLVED,
-            DisputeStatus.MANUAL_REVIEW_QUEUE
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.ADMIN_OVERRIDDEN,
+            DisputeStatus.REJECTED
         },
         DisputeStatus.MANUAL_REVIEW_QUEUE: {
             DisputeStatus.ADMIN_OVERRIDDEN,
-            DisputeStatus.AUTO_RESOLVED
-        },
-        DisputeStatus.AUTO_RESOLVED: {
-            DisputeStatus.RESOLUTION_NOTIFIED
-        },
-        DisputeStatus.ADMIN_OVERRIDDEN: {
-            DisputeStatus.RESOLUTION_NOTIFIED
-        },
-        DisputeStatus.RESOLUTION_NOTIFIED: {
+            DisputeStatus.AUTO_RESOLVED,
+            DisputeStatus.REJECTED,
             DisputeStatus.CLOSED
         },
-        DisputeStatus.CLOSED: set(),
-        DisputeStatus.REJECTED: set()
+        DisputeStatus.AUTO_RESOLVED: {
+            DisputeStatus.RESOLUTION_NOTIFIED,
+            DisputeStatus.ADMIN_OVERRIDDEN,
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.CLOSED
+        },
+        DisputeStatus.ADMIN_OVERRIDDEN: {
+            DisputeStatus.RESOLUTION_NOTIFIED,
+            DisputeStatus.AUTO_RESOLVED,
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.CLOSED
+        },
+        DisputeStatus.RESOLUTION_NOTIFIED: {
+            DisputeStatus.CLOSED,
+            DisputeStatus.ADMIN_OVERRIDDEN
+        },
+        DisputeStatus.CLOSED: {
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.ADMIN_OVERRIDDEN
+        },
+        DisputeStatus.REJECTED: {
+            DisputeStatus.MANUAL_REVIEW_QUEUE,
+            DisputeStatus.ADMIN_OVERRIDDEN
+        }
     }
 
     @classmethod

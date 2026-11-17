@@ -25,10 +25,12 @@ export const App: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('dashboard');
   const [activeCaseId, setActiveCaseId] = useState<string>('DSP-1041');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [currentUser, setCurrentUser] = useState({
+  const [currentUser, setCurrentUser] = useState<UserPersona>({
     name: 'Priya Sharma',
     role: 'Admin Lead',
+    email: 'priya.sharma@verdictai-bank.com',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
+    userId: 'usr_priya_01',
   });
 
   const addToast = (toast: Omit<ToastMessage, 'id'>) => {
@@ -65,11 +67,7 @@ export const App: React.FC = () => {
         <ToastContainer toasts={toasts} onDismiss={removeToast} />
         <LoginScreen
           onLogin={(user: UserPersona, targetScreen: ScreenId) => {
-            setCurrentUser({
-              name: user.name,
-              role: user.role,
-              avatar: user.avatar,
-            });
+            setCurrentUser(user);
             setActiveScreen(targetScreen);
             setIsAuthenticated(true);
           }}
@@ -122,7 +120,13 @@ export const App: React.FC = () => {
           onLogout={handleLogout}
           onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
           onSwitchUser={(user) => {
-            setCurrentUser(user);
+            setCurrentUser({
+              name: user.name,
+              role: user.role,
+              avatar: user.avatar,
+              email: user.email || `${user.name.toLowerCase().replace(/\s+/g, '.')}@verdictai-bank.com`,
+              userId: user.userId || `usr_${user.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+            });
             setMobileMenuOpen(false);
             addToast({
               type: 'info',
@@ -198,6 +202,7 @@ export const App: React.FC = () => {
 
             {activeScreen === 'cardholder-portal' && (
               <CardholderPortalScreen
+                currentUser={currentUser}
                 onAddToast={addToast}
               />
             )}

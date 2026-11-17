@@ -67,6 +67,11 @@ class CaseService:
                 m_id = "MID-IN-00100"
                 m_name = "Merchant Partner India"
 
+            user_rec = db_manager.get_pg_record("users", cardholder_id)
+            c_name = user_rec.get("full_name") if user_rec else (
+                "Pooja Iyer" if "pooja" in str(cardholder_id).lower() else "Cardholder Member"
+            )
+
             txn_data = {
                 "id": transaction_id,
                 "user_id": cardholder_id,
@@ -74,7 +79,7 @@ class CaseService:
                 "merchant_name": m_name,
                 "amount": disputed_amount,
                 "currency": "INR",
-                "cardholder_name": "Pooja Iyer",
+                "cardholder_name": c_name,
                 "payment_method": "UPI_RUPAY",
                 "transaction_timestamp": created_at
             }

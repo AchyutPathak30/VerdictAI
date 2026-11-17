@@ -23,6 +23,7 @@ export interface UserPersona {
   role: string;
   email: string;
   avatar: string;
+  userId?: string;
 }
 
 interface LoginScreenProps {
@@ -44,6 +45,7 @@ const DEMO_PERSONAS: Array<{
       role: 'Admin Lead',
       email: 'priya.sharma@verdictai-bank.com',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
+      userId: 'usr_priya_01',
     },
     targetScreen: 'dashboard',
     badge: 'BANK ADMIN CORE',
@@ -56,6 +58,7 @@ const DEMO_PERSONAS: Array<{
       role: 'Senior Dispute Investigator',
       email: 'rajesh.verma@verdictai-bank.com',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
+      userId: 'usr_rajesh_01',
     },
     targetScreen: 'case-queue',
     badge: 'DISPUTE INVESTIGATOR',
@@ -68,6 +71,7 @@ const DEMO_PERSONAS: Array<{
       role: 'Store Operations Manager',
       email: 'amit.patel@croma.infiniti.com',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
+      userId: 'usr_amit_01',
     },
     targetScreen: 'merchant-portal',
     badge: 'STORE OPERATIONS (MERCHANT)',
@@ -80,6 +84,7 @@ const DEMO_PERSONAS: Array<{
       role: 'Cardholder (Customer)',
       email: 'pooja.iyer@gmail.com',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+      userId: 'usr_pooja_01',
     },
     targetScreen: 'cardholder-portal',
     badge: 'CONSUMER CARDHOLDER',
@@ -133,6 +138,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     // Match or create persona based on selected role
     let persona: UserPersona;
     let targetScreen: ScreenId = 'dashboard';
+    const emailClean = email.trim().toLowerCase();
+    let computedUserId = `usr_${emailClean.split('@')[0].replace(/[^a-z0-9]/g, '_')}`;
+
+    if (emailClean.includes('pooja')) {
+      computedUserId = 'usr_pooja_01';
+    } else if (emailClean.includes('priya')) {
+      computedUserId = 'usr_priya_01';
+    } else if (emailClean.includes('rajesh')) {
+      computedUserId = 'usr_rajesh_01';
+    } else if (emailClean.includes('amit')) {
+      computedUserId = 'usr_amit_01';
+    }
 
     if (selectedRole === 'admin') {
       persona = {
@@ -140,6 +157,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         role: 'Admin Lead',
         email: email.trim(),
         avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
+        userId: computedUserId,
       };
       targetScreen = 'dashboard';
     } else if (selectedRole === 'merchant') {
@@ -148,6 +166,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         role: 'Store Operations Manager',
         email: email.trim(),
         avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
+        userId: computedUserId,
       };
       targetScreen = 'merchant-portal';
     } else {
@@ -156,6 +175,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         role: 'Cardholder (Customer)',
         email: email.trim(),
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+        userId: computedUserId,
       };
       targetScreen = 'cardholder-portal';
     }
@@ -175,6 +195,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       role: 'Store Operations Manager',
       email: merchantForm.email,
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
+      userId: `usr_${merchantForm.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
     };
     onAddToast?.({
       type: 'success',
@@ -186,11 +207,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   const handleCardholderRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanId = `usr_${cardholderForm.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     const persona: UserPersona = {
       name: cardholderForm.fullName,
       role: 'Cardholder (Customer)',
       email: cardholderForm.email,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+      userId: cleanId,
     };
     onAddToast?.({
       type: 'success',

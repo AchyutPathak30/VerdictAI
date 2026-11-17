@@ -249,9 +249,21 @@ export const CaseQueueScreen: React.FC<CaseQueueScreenProps> = ({ onSelectCase, 
                       {item.currency}{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
-                        {item.aiScore}%
-                      </span>
+                      {item.aiScore != null && item.aiScore > 0 ? (
+                        <span className={`font-mono font-bold px-2 py-0.5 rounded border text-[11px] ${
+                          item.aiScore >= 80 
+                            ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
+                            : item.aiScore >= 60 
+                            ? 'text-blue-700 bg-blue-50 border-blue-200' 
+                            : 'text-amber-700 bg-amber-50 border-amber-200'
+                        }`}>
+                          {item.aiScore}%
+                        </span>
+                      ) : (
+                        <span className="font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-[10px] italic">
+                          Awaiting Eval
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-4">
                       <StatusBadge status={item.status} size="sm" />

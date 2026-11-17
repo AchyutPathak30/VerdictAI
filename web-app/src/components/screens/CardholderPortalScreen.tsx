@@ -21,10 +21,17 @@ import {
 import { MiniSparkline } from '../charts/MiniSparkline';
 
 interface CardholderPortalScreenProps {
+  currentUser?: {
+    name: string;
+    role: string;
+    email?: string;
+    avatar?: string;
+    userId?: string;
+  };
   onAddToast?: (toast: { type: 'success' | 'info' | 'error' | 'warning'; title: string; message: string }) => void;
 }
 
-export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ onAddToast }) => {
+export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ currentUser, onAddToast }) => {
   const [activeTab, setActiveTab] = useState<'my-disputes' | 'file-dispute'>('my-disputes');
   const [selectedTxn, setSelectedTxn] = useState<string>('txn_croma_18999');
   const [disputeReason, setDisputeReason] = useState<string>('PRODUCT_NOT_RECEIVED');
@@ -33,11 +40,24 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [myDisputes, setMyDisputes] = useState<UnifiedDisputeRecord[]>(() => getCardholderDisputes());
+  const activeUserId = currentUser?.userId || (currentUser?.email ? `usr_${currentUser.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}` : 'usr_pooja_01');
+  const activeUserName = currentUser?.name || 'Pooja Iyer';
+  const activeUserEmail = currentUser?.email || 'pooja.iyer@gmail.com';
+  const isPooja = activeUserId === 'usr_pooja_01' || activeUserName.toLowerCase().includes('pooja');
+
+  const initials = activeUserName
+    .split(' ')
+    .filter(Boolean)
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'CU';
+
+  const [myDisputes, setMyDisputes] = useState<UnifiedDisputeRecord[]>(() => getCardholderDisputes(activeUserId));
 
   const loadDisputes = async () => {
     try {
-      const res = await fetchDisputes({ cardholder_id: 'usr_pooja_01' });
+      const res = await fetchDisputes({ cardholder_id: activeUserId });
       if (res.isBackendConnected && res.data) {
         const mapped: UnifiedDisputeRecord[] = res.data.map(d => ({
           id: d.id,
@@ -48,23 +68,27 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
           reason: d.reason,
           date: d.filedDate || 'Today',
           status: d.status,
-          statusColor: d.status.toLowerCase().includes('auto-res') || d.status.toLowerCase().includes('refund') ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200',
+          statusColor: d.status.toLowerCase().includes('auto-res') || d.status.toLowerCase().includes('refund') || d.status.toLowerCase().includes('approv') 
+            ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+            : d.status.toLowerCase().includes('refut') || d.status.toLowerCase().includes('reject')
+            ? 'bg-rose-100 text-rose-800 border-rose-200'
+            : 'bg-amber-100 text-amber-800 border-amber-200',
           riskLevel: d.riskLevel,
           action: d.action,
           slaCountdown: d.deadline || '48h remaining',
           sha256Hash: `sha256_${d.id}_sealed`,
           courier: 'Carrier Telematics Active',
           aiVerdict: 'Fair-Weighing ML analysis evaluated.',
-          aiScore: d.aiScore || 88,
-          cardholderId: 'usr_pooja_01',
-          cardholderName: 'Pooja Iyer',
+          aiScore: d.aiScore,
+          cardholderId: activeUserId,
+          cardholderName: activeUserName,
           cardholderStatement: 'Contested transaction.'
         }));
         setMyDisputes(mapped);
         return;
       }
     } catch {}
-    setMyDisputes(getCardholderDisputes());
+    setMyDisputes(getCardholderDisputes(activeUserId));
   };
 
   useEffect(() => {
@@ -73,24 +97,25 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
       loadDisputes();
     });
     return unsubscribe;
-  }, []);
+  }, [activeUserId]);
 
   const activeDisputesCount = myDisputes.filter(
     (d) =>
       !d.status.toLowerCase().includes('settled') &&
       !d.status.toLowerCase().includes('closed') &&
-      !d.status.toLowerCase().includes('refunded')
+      !d.status.toLowerCase().includes('refunded') &&
+      !d.status.toLowerCase().includes('approv')
   ).length;
 
   const cardholderData = {
-    name: 'Pooja Iyer',
-    accountId: 'usr_pooja_01',
-    email: 'pooja.iyer@gmail.com',
-    card: 'HDFC Bank RuPay Platinum **** 4492',
-    memberSince: 'March 2021',
-    creditScore: 812,
-    activeDisputesCount: activeDisputesCount > 0 ? activeDisputesCount : 1,
-    totalRefunded: 26498.00,
+    name: activeUserName,
+    accountId: activeUserId,
+    email: activeUserEmail,
+    card: isPooja ? 'HDFC Bank RuPay Platinum **** 4492' : 'HDFC Bank RuPay Platinum **** 1011',
+    memberSince: isPooja ? 'March 2021' : 'November 2026',
+    creditScore: isPooja ? 812 : 790,
+    activeDisputesCount: activeDisputesCount,
+    totalRefunded: isPooja ? 26498.00 : 0.00,
   };
 
   const recentTransactions = [
@@ -133,7 +158,7 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
       // Ingest dispute into master persistent store and API
       const res = await createDispute({
         transaction_id: matchedTxn.id,
-        cardholder_id: 'usr_pooja_01',
+        cardholder_id: activeUserId,
         dispute_reason: disputeReason,
         disputed_amount: matchedTxn.amount,
         cardholder_statement: statementText,
@@ -151,7 +176,7 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
       }
 
       // Re-read from master store
-      setMyDisputes(getCardholderDisputes());
+      setMyDisputes(getCardholderDisputes(activeUserId));
 
       onAddToast?.({
         type: 'success',
@@ -206,7 +231,7 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white font-extrabold text-xl flex items-center justify-center shadow-md shadow-blue-500/20">
-            PI
+            {initials}
           </div>
           <div>
             <div className="flex items-center gap-2">

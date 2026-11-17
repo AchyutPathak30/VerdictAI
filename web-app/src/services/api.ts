@@ -25,7 +25,7 @@ import {
   getMasterDisputes,
   getCaseQueueItems,
   createUnifiedDispute,
-  updateDisputeStatus,
+  updateDisputeStatus as updateLocalDisputeStatus,
   UnifiedDisputeRecord,
   computeStableScore,
   getDisputeEvidenceList,
@@ -33,7 +33,7 @@ import {
   removeDisputeEvidenceItem
 } from './disputeStore';
 
-export { updateDisputeStatus, computeStableScore, getDisputeEvidenceList, saveDisputeEvidenceItem, removeDisputeEvidenceItem };
+export { computeStableScore, getDisputeEvidenceList, saveDisputeEvidenceItem, removeDisputeEvidenceItem };
 
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -235,22 +235,35 @@ export async function createDispute(payload: CreateDisputePayload): Promise<ApiR
 export function mapBackendCaseToQueueItem(item: any): CaseQueueItem {
   const header = item.header || {};
   const txn = item.transaction || {};
-  const statusStr = String(header.current_status || 'SUBMITTED');
+  const res = item.resolution || {};
+  const statusStr = String(header.current_status || 'SUBMITTED').toUpperCase();
 
   let displayStatus: CaseStatus = 'Review Required';
   let action = 'Review';
 
-  if (statusStr.includes('AUTO_RESOLVED') || statusStr.includes('RESOLVED')) {
-    displayStatus = 'Auto-Resolved';
-    action = 'Review';
-  } else if (statusStr.includes('ADMIN_OVERRIDDEN') || statusStr.includes('CLOSED')) {
+  if (statusStr.includes('AUTO_RESOLVED') || statusStr.includes('RESOLVED') || statusStr.includes('APPROVED') || statusStr.includes('ACCEPTED')) {
+    displayStatus = 'Approved';
+    action = 'Resolved';
+  } else if (statusStr.includes('ADMIN_OVERRIDDEN')) {
+    const outcome = String(res.outcome || header.admin_override_outcome || '').toUpperCase();
+    if (outcome.includes('MERCHANT') || outcome.includes('REFUT')) {
+      displayStatus = 'Refuted';
+      action = 'Closed';
+    } else {
+      displayStatus = 'Approved';
+      action = 'Resolved';
+    }
+  } else if (statusStr.includes('REJECTED') || statusStr.includes('REFUTED')) {
+    displayStatus = 'Refuted';
+    action = 'Closed';
+  } else if (statusStr.includes('CLOSED')) {
     displayStatus = 'Closed';
     action = 'Override';
   } else if (statusStr.includes('EVIDENCE_PENDING')) {
     displayStatus = 'Evidence Pending';
     action = 'Review';
-  } else if (statusStr.includes('SUBMITTED')) {
-    displayStatus = 'Pending';
+  } else if (statusStr.includes('SUBMITTED') || statusStr.includes('PENDING')) {
+    displayStatus = 'Review Required';
     action = 'Review';
   }
 
@@ -266,14 +279,26 @@ export function mapBackendCaseToQueueItem(item: any): CaseQueueItem {
   const amt = header.disputed_amount || txn.amount || 0;
   const reasonText = (header.dispute_reason || 'PRODUCT_NOT_RECEIVED').replace(/_/g, ' ');
 
+  // Compute AI score only if evidence has been evaluated by the ML engine
+  let calculatedScore: number | undefined = undefined;
+  if (item.scoring?.confidence_score) {
+    calculatedScore = Math.round(item.scoring.confidence_score);
+  } else if (item.aiScore != null && item.aiScore > 0) {
+    calculatedScore = item.aiScore;
+  } else if (statusStr.includes('AUTO_RESOLVED') || statusStr.includes('SCORING_EVALUATED')) {
+    calculatedScore = computeStableScore(reasonText);
+  }
+
+  const caseId = header.dispute_id || header.case_reference_number || 'DSP-000';
+
   return {
-    id: header.dispute_id || header.case_reference_number || 'DSP-000',
+    id: caseId,
     filedDate: dateFormatted,
     merchant: txn.merchant_name || 'Merchant Partner',
     reason: reasonText,
     amount: amt,
     currency: '₹',
-    aiScore: computeStableScore(reasonText),
+    aiScore: calculatedScore,
     status: displayStatus,
     riskLevel: amt > 20000 ? 'High' : amt > 5000 ? 'Medium' : 'Low',
     deadline: slaText,
@@ -295,6 +320,27 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
 
     if (res.connected && res.data && Array.isArray(res.data.items)) {
       const liveItems: CaseQueueItem[] = res.data.items.map((item: any) => mapBackendCaseToQueueItem(item));
+
+      // Reconcile and overlay local master status updates so admin overrides reflect immediately
+      const master = getMasterDisputes();
+      for (const item of liveItems) {
+        const clean = item.id.toUpperCase();
+        const matched = master.find(m => {
+          const mUpper = m.id.toUpperCase();
+          return mUpper === clean || mUpper.includes(clean) || clean.includes(mUpper);
+        });
+        if (matched && matched.status) {
+          const mNorm = matched.status.toLowerCase();
+          if (mNorm.includes('approv') || mNorm.includes('accept')) {
+            item.status = 'Approved';
+            item.action = 'Resolved';
+          } else if (mNorm.includes('refut') || mNorm.includes('reject')) {
+            item.status = 'Refuted';
+            item.action = 'Closed';
+          }
+        }
+      }
+
       return { data: liveItems, error: null, isBackendConnected: true };
     }
   } catch (err) {
@@ -313,6 +359,62 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
   }
 
   return { data: filtered, error: null, isBackendConnected: false };
+}
+
+export async function updateDisputeStatus(
+  disputeId: string,
+  newStatus: string,
+  options?: {
+    action?: string;
+    riskLevel?: 'Low' | 'Medium' | 'High';
+    aiVerdict?: string;
+    slaCountdown?: string;
+    actor?: string;
+  }
+): Promise<boolean> {
+  // 1. Update local Master Store first for instant reactive UI
+  const localSuccess = updateLocalDisputeStatus(disputeId, newStatus, options);
+
+  // 2. Dispatch to live backend to persist across database and queue
+  try {
+    const cleanId = (disputeId || '').replace(/^Case\s+/i, '').trim();
+    const norm = newStatus.toLowerCase();
+
+    if (norm.includes('approv') || norm.includes('accept') || norm.includes('won')) {
+      await fetchApi(`/disputes/${encodeURIComponent(cleanId)}/override`, {
+        method: 'POST',
+        body: JSON.stringify({
+          override_decision: 'FAVOUR_MEMBER',
+          mandatory_reason: options?.aiVerdict || 'Dispute approved by Dispute-Ops Lead. Provisional credit of full amount confirmed.',
+          admin_id: 'usr_priya_sharma',
+          admin_name: 'Priya Sharma'
+        })
+      });
+    } else if (norm.includes('refut') || norm.includes('reject') || norm.includes('lost')) {
+      await fetchApi(`/disputes/${encodeURIComponent(cleanId)}/override`, {
+        method: 'POST',
+        body: JSON.stringify({
+          override_decision: 'FAVOUR_MERCHANT',
+          mandatory_reason: options?.aiVerdict || 'Dispute refuted by Dispute-Ops Lead. Merchant counter-evidence upheld.',
+          admin_id: 'usr_priya_sharma',
+          admin_name: 'Priya Sharma'
+        })
+      });
+    } else {
+      await fetchApi(`/disputes/${encodeURIComponent(cleanId)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          target_status: 'MANUAL_REVIEW_QUEUE',
+          actor: options?.actor || 'ADMIN:priya_sharma',
+          reason: options?.aiVerdict || 'Case reopened for re-investigation'
+        })
+      });
+    }
+  } catch (err) {
+    console.warn('[VerdictAI] Failed to sync status transition to live backend:', err);
+  }
+
+  return localSuccess;
 }
 
 export async function fetchAdminQueue(statusFilter: string = 'MANUAL_REVIEW_QUEUE'): Promise<ApiResponse<CaseQueueItem[]>> {

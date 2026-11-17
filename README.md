@@ -13,6 +13,32 @@
 
 ---
 
+## 📋 Final Working Application Submission Documentation (Prof. JayPrakash Lalchandani)
+
+> Full submission report available in [FINAL_WORKING_APPLICATION_DOCUMENTATION.md](file:///d:/WSSOA%20Project/FINAL_WORKING_APPLICATION_DOCUMENTATION.md).
+
+- **Student Name & ID:** Nirav Kachhiya (DAU Student ID: 202512011) — Project Lead & Backend/Database Architect
+- **Course:** IT644 (Web Services & Service-Oriented Architecture)
+- **Live Web Portal:** [https://verdictai-web.onrender.com](https://verdictai-web.onrender.com)
+- **Live REST API Gateway:** [https://verdictai-api-i4yd.onrender.com/docs](https://verdictai-api-i4yd.onrender.com/docs)
+
+### Summary of Deliverables:
+1. **Complete Feature Set (Fully Functional App):**
+   - **Cardholder Consumer Experience (Mobile Expo & Web):** Secure login with wrong credential rejection, 3-step claim filing wizard, real-time SLA countdown, card management, biometric authentication, and Gemini 2.0 Flash XAI plain-language rationales.
+   - **Merchant Chargeback Rebuttal Console:** 48-hour SLA deadline counter, invoice and courier tracking upload, polymorphic evidence inspection, and rebuttal testimony.
+   - **Bank Admin & Dispute-Ops Core:** High-density case triage queue with multi-filtering, instant decision execution (`Approve Dispute` / `Refute Claim`), human-in-the-loop overrides with mandatory audit justification, and side-by-side NLP discrepancy matrix.
+   - **Autonomous ML & Cryptographic Engine:** Calibrated Fair-Weighing multi-factor ML scoring, tamper-evident SHA-256 hash chaining, and Merkle tree root verification (`0x7f9a2b8c4d1e3a6f...`).
+2. **Frontend + Backend + Database Integration:**
+   - **Web App (React 18 + TypeScript + Tailwind):** Sourced from live REST API with instantaneous state reconciliation and reactive client store.
+   - **Mobile App (React Native + Expo SDK 51):** Real token-based authentication and persistent per-cardholder dispute lists.
+   - **FastAPI Gateway (Python 3.11):** Deterministic lifecycle state machine enforcing valid transitions (`SUBMITTED` $\to$ `MANUAL_REVIEW_QUEUE` $\to$ `APPROVED`/`CLOSED`).
+   - **Polyglot Persistence Tier:** PostgreSQL (relational ACID cases, user profiles, transactions, resolutions) + MongoDB (polymorphic case documents, evidence hashes).
+3. **API Integration (On Need Basis):**
+   - OpenAPI REST interface covering `/auth`, `/disputes`, `/evidence`, `/transactions`, `/reasoning`, and `/system`.
+   - Complete request/response schemas, JWT bearer authorization, and deterministic state transition endpoints.
+
+---
+
 ## 📌 Executive Summary & Problem Statement
 
 In contemporary payment ecosystems, credit card chargebacks and merchant disputes represent a **$30+ Billion global industry pain point**. Today, contested charges take **14 to 45 business days** to navigate through card networks (Visa, Mastercard, Amex), issuing banks, and merchant acquirers.

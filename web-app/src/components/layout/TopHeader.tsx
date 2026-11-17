@@ -8,8 +8,10 @@ interface TopHeaderProps {
     name: string;
     role: string;
     avatar: string;
+    email?: string;
+    userId?: string;
   };
-  onSwitchUser?: (user: { name: string; role: string; avatar: string }) => void;
+  onSwitchUser?: (user: { name: string; role: string; avatar: string; email?: string; userId?: string }) => void;
   onNavigateToScreen?: (screen: ScreenId, caseId?: string) => void;
   onLogout?: () => void;
   onToggleMobileMenu?: () => void;
@@ -19,26 +21,36 @@ const USERS = [
   {
     name: 'Priya Sharma',
     role: 'Admin Lead',
+    email: 'priya.sharma@verdictai-bank.com',
+    userId: 'usr_priya_01',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
   },
   {
     name: 'Rohan Mehta',
     role: 'Senior Administrator',
+    email: 'rohan.mehta@verdictai-bank.com',
+    userId: 'usr_rohan_01',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
   },
   {
     name: 'Rajesh Verma',
     role: 'Senior Dispute Investigator',
+    email: 'rajesh.verma@verdictai-bank.com',
+    userId: 'usr_rajesh_01',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
   },
   {
     name: 'Amit Patel',
     role: 'Store Operations Manager',
+    email: 'amit.patel@croma.infiniti.com',
+    userId: 'usr_amit_01',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
   },
   {
     name: 'Pooja Iyer',
     role: 'Cardholder (Customer)',
+    email: 'pooja.iyer@gmail.com',
+    userId: 'usr_pooja_01',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
   }
 ];

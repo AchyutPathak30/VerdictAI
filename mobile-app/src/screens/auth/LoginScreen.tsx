@@ -19,6 +19,12 @@ import { AuthStackParamList, RootStackParamList } from '../../types';
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp as RootNavProp } from '@react-navigation/native-stack';
+import {
+  loginUser,
+  registerUser,
+  setCurrentUser,
+  DEFAULT_USER
+} from '../../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -52,15 +58,20 @@ export default function LoginScreen({ navigation }: Props) {
   const handleLogin = async () => {
     setLoginError(null);
     if (!email.trim() || !password.trim()) {
-      setLoginError('Please enter your email and password, or tap Quick Demo Fill.');
+      setLoginError('Please enter both email and password, or tap Quick Demo Fill.');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      // Validate credentials against backend database / registered users
+      await loginUser(email, password);
       setLoading(false);
-      // Direct authenticated session initialization — no dummy 2FA bluff
+      // Validated entry into main application
       rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
-    }, 400);
+    } catch (err: any) {
+      setLoading(false);
+      setLoginError(err.message || 'Invalid email or password. Please verify your credentials.');
+    }
   };
 
   const handleDemoAutofill = () => {
@@ -78,6 +89,7 @@ export default function LoginScreen({ navigation }: Props) {
       setTimeout(() => {
         setIsBiometricOpen(false);
         // Direct entry to main app via strong biometric authentication
+        setCurrentUser(DEFAULT_USER);
         rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
       }, 700);
     }, 1200);
@@ -89,7 +101,7 @@ export default function LoginScreen({ navigation }: Props) {
     setTimeout(() => setInfoBanner(null), 5000);
   };
 
-  const handleRegisterSubmit = () => {
+  const handleRegisterSubmit = async () => {
     setRegError(null);
     if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
       setRegError('Please complete all required fields to register.');
@@ -101,14 +113,22 @@ export default function LoginScreen({ navigation }: Props) {
     }
 
     setRegLoading(true);
-    setTimeout(() => {
+    try {
+      await registerUser({
+        fullName: regName,
+        email: regEmail,
+        password: regPassword,
+        cardLast4: regCard,
+      });
       setRegLoading(false);
       setIsRegisterOpen(false);
       setEmail(regEmail.trim());
-      setPassword(regPassword);
-      // Direct authenticated entry to main app
+      // Direct authenticated entry to main app under new user identity
       rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
-    }, 500);
+    } catch (err: any) {
+      setRegLoading(false);
+      setRegError(err.message || 'Registration failed. Please try again.');
+    }
   };
 
   return (

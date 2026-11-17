@@ -23,7 +23,7 @@ export interface UnifiedDisputeRecord {
   sha256Hash: string;
   courier: string;
   aiVerdict: string;
-  aiScore: number;
+  aiScore?: number;
   cardholderId: string;
   cardholderName: string;
   cardholderStatement: string;
@@ -413,24 +413,41 @@ export function subscribeToDisputeUpdates(callback: (disputes: UnifiedDisputeRec
 
 export function getCardholderDisputes(cardholderId: string = 'usr_pooja_01'): UnifiedDisputeRecord[] {
   const all = getMasterDisputes();
-  return all.filter((d) => d.cardholderId === cardholderId || d.id.startsWith('CHB-'));
+  const cIdLower = String(cardholderId || '').toLowerCase().trim();
+  const isPooja = cIdLower === 'usr_pooja_01' || cIdLower.includes('pooja');
+  if (isPooja) {
+    return all.filter((d) => !d.cardholderId || d.cardholderId.toLowerCase() === 'usr_pooja_01' || d.cardholderId.toLowerCase().includes('pooja') || d.id.startsWith('DSP-') || d.id === 'CHB-1042-SW' || d.id === 'CHB-882941-DX');
+  }
+  return all.filter((d) => d.cardholderId && d.cardholderId.toLowerCase() === cIdLower);
 }
 
 export function getCaseQueueItems(): CaseQueueItem[] {
   const all = getMasterDisputes();
-  return all.map((d) => ({
-    id: d.id,
-    merchant: d.merchant,
-    amount: d.amount,
-    currency: d.currency,
-    status: (d.status === 'Submitted (SLA Active)' || d.status === 'In Investigation' ? 'Review Required' : d.status) as any,
-    riskLevel: d.riskLevel,
-    action: d.action,
-    reason: d.reason,
-    filedDate: d.date,
-    deadline: d.slaCountdown,
-    aiScore: d.aiScore
-  }));
+  return all.map((d) => {
+    let displayStatus: any = d.status;
+    const stLower = (d.status || '').toLowerCase();
+    if (stLower.includes('approv') || stLower.includes('accept')) {
+      displayStatus = 'Approved';
+    } else if (stLower.includes('refut') || stLower.includes('reject')) {
+      displayStatus = 'Refuted';
+    } else if (stLower === 'submitted (sla active)' || stLower === 'in investigation' || stLower.includes('pending review')) {
+      displayStatus = 'Review Required';
+    }
+
+    return {
+      id: d.id,
+      merchant: d.merchant,
+      amount: d.amount,
+      currency: d.currency,
+      status: displayStatus,
+      riskLevel: d.riskLevel,
+      action: d.action,
+      reason: d.reason,
+      filedDate: d.date,
+      deadline: d.slaCountdown,
+      aiScore: d.aiScore
+    };
+  });
 }
 
 export interface NewDisputeInput {
@@ -446,7 +463,7 @@ export interface NewDisputeInput {
 export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeRecord {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   const id = `CHB-${randomNum}-IN`;
-  const calculatedScore = computeStableScore(input.reason);
+  const calculatedScore = input.attachedFile ? computeStableScore(input.reason) : undefined;
 
   const newRecord: UnifiedDisputeRecord = {
     id,
@@ -456,16 +473,16 @@ export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeReco
     currency: '₹',
     reason: input.reason.replace(/_/g, ' '),
     date: 'Today',
-    status: 'Submitted (SLA Active)',
-    statusColor: 'bg-blue-100 text-blue-800 border-blue-200',
+    status: 'Review Required',
+    statusColor: 'bg-amber-100 text-amber-800 border-amber-200',
     riskLevel: input.amount > 10000 ? 'High' : 'Medium',
     action: 'Review',
     slaCountdown: '47h 59m remaining',
     sha256Hash: `sha256_${Date.now()}_simulated_hash_verdictai`,
-    courier: 'Awaiting Merchant Counter-Proof',
-    aiVerdict: calculatedScore >= 90
-      ? `High-confidence (${calculatedScore}%) automated member recommendation. Pattern matches known errata rubric.`
-      : 'Dispute ingested into Fair-Weighing ML queue. Merchant notified to supply delivery confirmation within 48-hour SLA.',
+    courier: input.attachedFile ? 'Carrier Telematics Ingested' : 'Awaiting Merchant Counter-Proof',
+    aiVerdict: calculatedScore
+      ? `Preliminary automated score (${calculatedScore}%) evaluated from uploaded evidence.`
+      : 'Dispute ingested into intake queue. Awaiting evidence upload and AI evaluation.',
     aiScore: calculatedScore,
     cardholderId: input.cardholderId || 'usr_pooja_01',
     cardholderName: input.cardholderName || 'Pooja Iyer',

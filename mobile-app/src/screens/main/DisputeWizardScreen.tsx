@@ -18,12 +18,11 @@ import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { getCardholderTransactions } from '../../services/transactionsService';
 import { createDispute } from '../../services/disputesService';
 import { uploadEvidence } from '../../services/evidenceService';
+import { getCurrentUser } from '../../services/authService';
 
 type Props = {
   navigation: NativeStackNavigationProp<FileDisputeStackParamList, 'DisputeWizard'>;
 };
-
-const DEMO_CARDHOLDER_ID = 'usr_pooja_01';
 
 const DEFAULT_STATEMENTS: Record<string, string> = {
   PRODUCT_NOT_RECEIVED: 'Ordered item was marked as delivered by courier, but package was never received at my residence address.',
@@ -69,7 +68,8 @@ export default function DisputeWizardScreen({ navigation }: Props) {
   const loadTransactions = async () => {
     setLoadingTxns(true);
     try {
-      const txns = await getCardholderTransactions(DEMO_CARDHOLDER_ID);
+      const activeUser = getCurrentUser();
+      const txns = await getCardholderTransactions(activeUser.userId || 'usr_pooja_01');
       setTransactions(txns.filter((t) => !t.is_disputed));
     } catch {
       setTransactions([]);
@@ -110,9 +110,11 @@ export default function DisputeWizardScreen({ navigation }: Props) {
     }
     setSubmitting(true);
     try {
+      const activeUser = getCurrentUser();
+      const cardholderId = activeUser.userId || 'usr_pooja_01';
       const caseFile = await createDispute({
         transaction_id: selectedTxn.id,
-        cardholder_id: DEMO_CARDHOLDER_ID,
+        cardholder_id: cardholderId,
         dispute_reason: selectedReason,
         disputed_amount: selectedTxn.amount,
         cardholder_statement: statement.trim() || undefined,
@@ -153,8 +155,8 @@ export default function DisputeWizardScreen({ navigation }: Props) {
             courier: 'Awaiting Merchant Counter-Proof',
             aiVerdict: 'Dispute ingested into Fair-Weighing ML queue.',
             aiScore: 88,
-            cardholderId: 'usr_pooja_01',
-            cardholderName: 'Pooja Iyer',
+            cardholderId: cardholderId,
+            cardholderName: activeUser.fullName || 'Cardholder',
             cardholderStatement: statement.trim(),
             attachedFile: evidenceFile?.name
           });
