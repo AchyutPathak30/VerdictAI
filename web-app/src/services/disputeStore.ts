@@ -451,6 +451,8 @@ export function getCaseQueueItems(): CaseQueueItem[] {
 }
 
 export interface NewDisputeInput {
+  id?: string;
+  caseFileId?: string;
   merchant: string;
   amount: number;
   reason: string;
@@ -462,12 +464,13 @@ export interface NewDisputeInput {
 
 export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeRecord {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
-  const id = `CHB-${randomNum}-IN`;
+  const id = input.id || `CHB-${randomNum}-IN`;
+  const caseFileId = input.caseFileId || `CF-${randomNum}`;
   const calculatedScore = input.attachedFile ? computeStableScore(input.reason) : undefined;
 
   const newRecord: UnifiedDisputeRecord = {
     id,
-    caseFileId: `CF-${randomNum}`,
+    caseFileId,
     merchant: input.merchant,
     amount: input.amount,
     currency: '₹',
@@ -491,7 +494,9 @@ export function createUnifiedDispute(input: NewDisputeInput): UnifiedDisputeReco
   };
 
   const current = getMasterDisputes();
-  const updated = [newRecord, ...current];
+  // Filter out any existing dispute with the same ID to prevent duplication
+  const filtered = current.filter(d => d.id.toLowerCase() !== id.toLowerCase());
+  const updated = [newRecord, ...filtered];
   saveMasterDisputes(updated);
 
   return newRecord;

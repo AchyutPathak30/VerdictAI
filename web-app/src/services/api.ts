@@ -184,8 +184,10 @@ export async function createDispute(payload: CreateDisputePayload): Promise<ApiR
     if (res.connected && res.data) {
       const header = res.data.header || {};
       const txn = res.data.transaction || {};
-      // Sync into client store
+      // Sync into client store with authoritative backend ID
       createUnifiedDispute({
+        id: header.dispute_id,
+        caseFileId: header.case_file_id,
         merchant: txn.merchant_name || merchantName,
         amount: header.disputed_amount || payload.disputed_amount,
         reason: (header.dispute_reason || payload.dispute_reason).replace(/_/g, ' '),

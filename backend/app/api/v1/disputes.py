@@ -102,8 +102,8 @@ async def list_disputes(
         if cardholder_id:
             query_cid = cardholder_id.lower()
             rec_cid = case_file.transaction.cardholder_id.lower()
-            is_pooja_query = query_cid in ("usr_pooja_01", "usr_pooja_iyer")
-            is_pooja_case = rec_cid in ("usr_pooja_01", "usr_pooja_iyer")
+            is_pooja_query = "pooja" in query_cid or query_cid == "usr_pooja_01"
+            is_pooja_case = "pooja" in rec_cid or rec_cid == "usr_pooja_01"
             if is_pooja_query:
                 if not is_pooja_case:
                     continue

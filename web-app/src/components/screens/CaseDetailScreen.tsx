@@ -214,6 +214,20 @@ export const CaseDetailScreen: React.FC<CaseDetailScreenProps> = ({
       };
     }
 
+    if (titleLower.includes('incorrect') || reasonLower.includes('incorrect') || titleLower.includes('amount') || reasonLower.includes('amount')) {
+      return {
+        score: 82,
+        favourText: 'FAVOUR MEMBER',
+        factors: [
+          { label: 'Tax Invoice Billed vs POS Deduction Discrepancy', value: 95, color: 'green' as const },
+          { label: 'Merchant POS Checkout Ledger Verification', value: 86, color: 'green' as const },
+          { label: 'Cardholder Statement Corroboration', value: 90, color: 'green' as const },
+          { label: 'Historical Pricing Parity on SKU', value: 78, color: 'blue' as const }
+        ],
+        rationale: 'POS transaction ledger confirms billing mismatch against original shelf price / authorized invoice. Cardholder was debited an excessive amount without consent. Refund adjustment recommended.'
+      };
+    }
+
     if (titleLower.includes('damage') || reasonLower.includes('damage') || titleLower.includes('9021')) {
       return {
         score: 84,

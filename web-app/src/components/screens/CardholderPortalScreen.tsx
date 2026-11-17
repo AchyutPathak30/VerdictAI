@@ -179,8 +179,8 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
         }
       }
 
-      // Re-read from master store
-      setMyDisputes(getCardholderDisputes(activeUserId));
+      // Re-read from live API and master store
+      await loadDisputes();
 
       onAddToast?.({
         type: 'success',
