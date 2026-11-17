@@ -20,20 +20,13 @@ declare const process: {
 
 const AUTH_TOKEN_KEY = 'verdictai_auth_token';
 
-// Dynamic Base URL Resolution (Android Emulator maps host loopback to 10.0.2.2)
+// Dynamic Base URL Resolution
 const resolveBaseUrl = (): string => {
   const envApiUrl = typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_API_URL : undefined;
   if (envApiUrl) {
     return envApiUrl;
   }
-  const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
-  if (win?.location?.hostname?.includes('onrender.com')) {
-    return 'https://verdictai-api-i4yd.onrender.com/api/v1';
-  }
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000/api/v1';
-  }
-  // Default to live production FastAPI gateway on Render for zero-config live backend integration
+  // Default to live production FastAPI gateway on Render for zero-config live backend integration across all devices (Physical phones & Web)
   return 'https://verdictai-api-i4yd.onrender.com/api/v1';
 };
 
