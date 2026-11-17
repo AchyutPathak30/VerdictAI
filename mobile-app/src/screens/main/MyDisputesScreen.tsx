@@ -110,10 +110,6 @@ export default function MyDisputesScreen({ navigation }: Props) {
         }
       }
 
-      if (items.length === 0) {
-        items.push(...getRuntimeDisputes());
-      }
-
       setDisputes(items);
       setIsLiveApi(getBackendReachable());
     } catch {

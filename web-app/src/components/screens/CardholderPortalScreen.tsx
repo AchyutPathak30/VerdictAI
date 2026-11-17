@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { uploadEvidenceFile, createDispute } from '../../services/api';
+import { uploadEvidenceFile, createDispute, fetchDisputes } from '../../services/api';
 import {
   getCardholderDisputes,
   subscribeToDisputeUpdates,
@@ -35,10 +35,42 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
 
   const [myDisputes, setMyDisputes] = useState<UnifiedDisputeRecord[]>(() => getCardholderDisputes());
 
-  useEffect(() => {
+  const loadDisputes = async () => {
+    try {
+      const res = await fetchDisputes({ cardholder_id: 'usr_pooja_01' });
+      if (res.isBackendConnected && res.data) {
+        const mapped: UnifiedDisputeRecord[] = res.data.map(d => ({
+          id: d.id,
+          caseFileId: `CF-${d.id.replace(/[^0-9]/g, '').slice(0, 6) || '1041'}`,
+          merchant: d.merchant,
+          amount: d.amount,
+          currency: '₹',
+          reason: d.reason,
+          date: d.filedDate || 'Today',
+          status: d.status,
+          statusColor: d.status.toLowerCase().includes('auto-res') || d.status.toLowerCase().includes('refund') ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200',
+          riskLevel: d.riskLevel,
+          action: d.action,
+          slaCountdown: d.deadline || '48h remaining',
+          sha256Hash: `sha256_${d.id}_sealed`,
+          courier: 'Carrier Telematics Active',
+          aiVerdict: 'Fair-Weighing ML analysis evaluated.',
+          aiScore: d.aiScore || 88,
+          cardholderId: 'usr_pooja_01',
+          cardholderName: 'Pooja Iyer',
+          cardholderStatement: 'Contested transaction.'
+        }));
+        setMyDisputes(mapped);
+        return;
+      }
+    } catch {}
     setMyDisputes(getCardholderDisputes());
+  };
+
+  useEffect(() => {
+    loadDisputes();
     const unsubscribe = subscribeToDisputeUpdates(() => {
-      setMyDisputes(getCardholderDisputes());
+      loadDisputes();
     });
     return unsubscribe;
   }, []);

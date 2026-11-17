@@ -64,6 +64,13 @@ class AuthenticatedUser(BaseModel):
 
 # Standard Enterprise Persona Registry
 ENTERPRISE_PERSONAS: Dict[str, AuthenticatedUser] = {
+    "usr_pooja_01": AuthenticatedUser(
+        user_id="usr_pooja_01",
+        email="pooja.iyer@gmail.com",
+        full_name="Pooja Iyer",
+        role=UserRole.CARDHOLDER,
+        scopes=list(ROLE_SCOPES[UserRole.CARDHOLDER])
+    ),
     "usr_pooja_iyer": AuthenticatedUser(
         user_id="usr_pooja_iyer",
         email="pooja.iyer@gmail.com",

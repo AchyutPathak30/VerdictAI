@@ -213,7 +213,18 @@ class CaseService:
     def get_unified_case_file(self, dispute_id: str) -> Optional[UnifiedCaseFile]:
         dispute_record = db_manager.get_pg_record("disputes", dispute_id)
         if not dispute_record:
-            return None
+            clean_search = (dispute_id or "").strip().lower()
+            for d in db_manager.pg_tables.get("disputes", {}).values():
+                d_id = str(d.get("id", "")).lower()
+                cf_id = f"cf-{d_id[:8]}".lower()
+                cas_ref = f"cas-{d_id[:8]}".lower()
+                tx_id = str(d.get("transaction_id", "")).lower()
+                if clean_search in (d_id, cf_id, cas_ref, tx_id) or d_id.startswith(clean_search):
+                    dispute_record = d
+                    dispute_id = d.get("id", "")
+                    break
+            if not dispute_record:
+                return None
 
         txn_id = dispute_record.get("transaction_id")
         txn_data = db_manager.get_pg_record("transactions", txn_id) or {}

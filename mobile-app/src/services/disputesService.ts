@@ -19,30 +19,16 @@ export const getDisputes = async (
   cardholder_id?: string
 ): Promise<DisputeListResponse> => {
   try {
-    const params: Record<string, string | number> = { page: 1, page_size: 20 };
+    const params: Record<string, string | number> = { page: 1, page_size: 50 };
     if (cardholder_id) params.cardholder_id = cardholder_id;
     const response = await apiClient.get('/disputes', { params });
     setBackendReachable(true);
 
-    if (response.data && Array.isArray(response.data.items) && response.data.items.length > 0) {
-      return response.data;
-    }
-
-    // Backend returned 0 items (e.g. fresh DB or ID variation) — fallback to runtime store
-    const all = getRuntimeDisputes();
-    const filtered = (cardholder_id && cardholder_id !== 'usr_pooja_01' && cardholder_id !== 'usr_pooja_iyer')
-      ? all.filter((d) => d.transaction.cardholder_id === cardholder_id)
-      : all;
-    return {
-      total_count: filtered.length,
-      page: 1,
-      page_size: 20,
-      total_pages: 1,
-      items: filtered,
-    };
+    // Authoritative live database response — no artificial data injection
+    return response.data;
   } catch (err: any) {
     console.warn(
-      `[VerdictAI] Disputes API offline (${err?.message || 'timeout'}). Using fallback store.`
+      `[VerdictAI] Disputes API offline (${err?.message || 'timeout'}). Using offline cache.`
     );
     setBackendReachable(false);
     const all = getRuntimeDisputes();

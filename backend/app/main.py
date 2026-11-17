@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
 
             c1 = case_service.create_dispute_case(
                 transaction_id="TXN-CROMA-1041",
-                cardholder_id="usr_pooja_iyer",
+                cardholder_id="usr_pooja_01",
                 dispute_reason=DisputeReason.PRODUCT_NOT_RECEIVED,
                 disputed_amount=18999.00,
                 cardholder_statement="Ordered OnePlus tablet from Croma online; Blue Dart tracking shows delivered but parcel was not received at Bengaluru residence.",
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
             )
             case_service.create_dispute_case(
                 transaction_id="TXN-SWIGGY-1042",
-                cardholder_id="usr_rahul_verma",
+                cardholder_id="usr_pooja_01",
                 dispute_reason=DisputeReason.DUPLICATE_PROCESSING,
                 disputed_amount=1499.00,
                 cardholder_statement="UPI payment debited twice on Swiggy Instamart order.",
@@ -60,11 +60,19 @@ async def lifespan(app: FastAPI):
             )
             case_service.create_dispute_case(
                 transaction_id="TXN-TATACLIQ-99281",
-                cardholder_id="usr_ananya_sen",
+                cardholder_id="usr_pooja_01",
                 dispute_reason=DisputeReason.FRAUD_UNRECOGNIZED_CHARGE,
                 disputed_amount=24999.00,
                 cardholder_statement="Unauthorized luxury apparel charge on RuPay Platinum card.",
                 merchant_sla_hours=24
+            )
+            case_service.create_dispute_case(
+                transaction_id="TXN-RELIANCE-9021",
+                cardholder_id="usr_rahul_verma",
+                dispute_reason=DisputeReason.PRODUCT_DAMAGED_OR_DEFECTIVE,
+                disputed_amount=14999.00,
+                cardholder_statement="Smart TV delivered with screen shattered upon unboxing courier parcel.",
+                merchant_sla_hours=48
             )
         except Exception:
             pass

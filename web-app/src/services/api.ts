@@ -5,6 +5,7 @@
 
 import {
   CaseQueueItem,
+  CaseStatus,
   EvidenceItem,
   AuditLogEntry,
   ReasoningFactor,
@@ -36,20 +37,11 @@ export { updateDisputeStatus, computeStableScore, getDisputeEvidenceList, saveDi
 
 const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
-  const isRenderHost = typeof window !== 'undefined' && window.location.hostname.includes('onrender.com');
-
-  if (isRenderHost) {
-    if (!envUrl || envUrl.includes('localhost') || (envUrl.includes('verdictai-api.onrender.com') && !envUrl.includes('verdictai-api-i4yd'))) {
-      return 'https://verdictai-api-i4yd.onrender.com/api/v1';
-    }
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('verdictai-api.onrender.com')) {
     return envUrl;
   }
-
-  if (envUrl && envUrl.includes('verdictai-api.onrender.com') && !envUrl.includes('verdictai-api-i4yd')) {
-    return 'https://verdictai-api-i4yd.onrender.com/api/v1';
-  }
-
-  return envUrl || 'http://localhost:8000/api/v1';
+  // Default to live production FastAPI gateway on Render so web app connects directly to the shared database
+  return 'https://verdictai-api-i4yd.onrender.com/api/v1';
 };
 
 export const BASE_URL = getApiBaseUrl();
@@ -175,7 +167,38 @@ export async function createDispute(payload: CreateDisputePayload): Promise<ApiR
     ? 'Flipkart India Pvt Ltd'
     : 'Croma Electronics India';
 
-  // 1. Immediately persist to Unified Master Store (localStorage + cross-screen sync)
+  // 1. Dispatch to live backend first for database consistency
+  try {
+    const res = await fetchApi<any>('/disputes', {
+      method: 'POST',
+      body: JSON.stringify({
+        transaction_id: payload.transaction_id,
+        cardholder_id: payload.cardholder_id || 'usr_pooja_01',
+        dispute_reason: payload.dispute_reason,
+        disputed_amount: payload.disputed_amount,
+        cardholder_statement: payload.cardholder_statement || '',
+        merchant_sla_hours: payload.merchant_sla_hours || 48
+      })
+    });
+    if (res.connected && res.data) {
+      const header = res.data.header || {};
+      const txn = res.data.transaction || {};
+      // Sync into client store
+      createUnifiedDispute({
+        merchant: txn.merchant_name || merchantName,
+        amount: header.disputed_amount || payload.disputed_amount,
+        reason: (header.dispute_reason || payload.dispute_reason).replace(/_/g, ' '),
+        statement: payload.cardholder_statement || '',
+        cardholderId: payload.cardholder_id || 'usr_pooja_01',
+        cardholderName: txn.cardholder_name || 'Pooja Iyer'
+      });
+      return { data: res.data, error: null, isBackendConnected: true };
+    }
+  } catch (e) {
+    console.warn('[VerdictAI] Failed to create dispute on live backend, saving locally:', e);
+  }
+
+  // 2. Offline fallback
   const unifiedRecord = createUnifiedDispute({
     merchant: merchantName,
     amount: payload.disputed_amount,
@@ -184,19 +207,6 @@ export async function createDispute(payload: CreateDisputePayload): Promise<ApiR
     cardholderId: payload.cardholder_id || 'usr_pooja_01',
     cardholderName: 'Pooja Iyer'
   });
-
-  // 2. Also dispatch to live backend if connected
-  try {
-    const res = await fetchApi<any>('/disputes', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-    if (res.connected && res.data) {
-      return { data: res.data, error: null, isBackendConnected: true };
-    }
-  } catch (e) {
-    // offline fallback
-  }
 
   return {
     data: {
@@ -222,10 +232,77 @@ export async function createDispute(payload: CreateDisputePayload): Promise<ApiR
   };
 }
 
-export async function fetchDisputes(filters: { status?: string; search?: string; reason?: string; page?: number } = {}): Promise<ApiResponse<CaseQueueItem[]>> {
-  // Always retrieve all items from unified store
-  const allCases = getCaseQueueItems();
+export function mapBackendCaseToQueueItem(item: any): CaseQueueItem {
+  const header = item.header || {};
+  const txn = item.transaction || {};
+  const statusStr = String(header.current_status || 'SUBMITTED');
 
+  let displayStatus: CaseStatus = 'Review Required';
+  let action = 'Review';
+
+  if (statusStr.includes('AUTO_RESOLVED') || statusStr.includes('RESOLVED')) {
+    displayStatus = 'Auto-Resolved';
+    action = 'Review';
+  } else if (statusStr.includes('ADMIN_OVERRIDDEN') || statusStr.includes('CLOSED')) {
+    displayStatus = 'Closed';
+    action = 'Override';
+  } else if (statusStr.includes('EVIDENCE_PENDING')) {
+    displayStatus = 'Evidence Pending';
+    action = 'Review';
+  } else if (statusStr.includes('SUBMITTED')) {
+    displayStatus = 'Pending';
+    action = 'Review';
+  }
+
+  const createdDate = header.created_at ? new Date(header.created_at) : new Date();
+  const dateFormatted = createdDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  let slaText = '24h remaining';
+  if (header.sla_deadline) {
+    const hoursLeft = Math.max(0, Math.floor((new Date(header.sla_deadline).getTime() - Date.now()) / 3600000));
+    slaText = `${hoursLeft} hours left`;
+  }
+
+  const amt = header.disputed_amount || txn.amount || 0;
+  const reasonText = (header.dispute_reason || 'PRODUCT_NOT_RECEIVED').replace(/_/g, ' ');
+
+  return {
+    id: header.dispute_id || header.case_reference_number || 'DSP-000',
+    filedDate: dateFormatted,
+    merchant: txn.merchant_name || 'Merchant Partner',
+    reason: reasonText,
+    amount: amt,
+    currency: '₹',
+    aiScore: computeStableScore(reasonText),
+    status: displayStatus,
+    riskLevel: amt > 20000 ? 'High' : amt > 5000 ? 'Medium' : 'Low',
+    deadline: slaText,
+    action
+  };
+}
+
+export async function fetchDisputes(filters: { status?: string; search?: string; reason?: string; page?: number; cardholder_id?: string } = {}): Promise<ApiResponse<CaseQueueItem[]>> {
+  try {
+    const params = new URLSearchParams();
+    if (filters.status && filters.status !== 'All') params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.reason) params.append('reason', filters.reason);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.cardholder_id) params.append('cardholder_id', filters.cardholder_id);
+
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetchApi<any>(`/disputes${qs}`);
+
+    if (res.connected && res.data && Array.isArray(res.data.items)) {
+      const liveItems: CaseQueueItem[] = res.data.items.map((item: any) => mapBackendCaseToQueueItem(item));
+      return { data: liveItems, error: null, isBackendConnected: true };
+    }
+  } catch (err) {
+    console.warn('[VerdictAI] Live disputes fetch failed, using offline fallback', err);
+  }
+
+  // Network offline fallback
+  const allCases = getCaseQueueItems();
   let filtered = [...allCases];
   if (filters.search) {
     const q = filters.search.toLowerCase();
@@ -235,7 +312,7 @@ export async function fetchDisputes(filters: { status?: string; search?: string;
     filtered = filtered.filter(c => c.status.toLowerCase().includes(filters.status!.toLowerCase()));
   }
 
-  return { data: filtered, error: null, isBackendConnected: true };
+  return { data: filtered, error: null, isBackendConnected: false };
 }
 
 export async function fetchAdminQueue(statusFilter: string = 'MANUAL_REVIEW_QUEUE'): Promise<ApiResponse<CaseQueueItem[]>> {
