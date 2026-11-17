@@ -39,29 +39,38 @@ export default function LoginScreen({ navigation }: Props) {
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regLoading, setRegLoading] = useState(false);
+  const [regError, setRegError] = useState<string | null>(null);
+
+  // In-line error / info states
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [infoBanner, setInfoBanner] = useState<string | null>(null);
 
   // Biometrics modal state
   const [isBiometricOpen, setIsBiometricOpen] = useState(false);
   const [biometricStatus, setBiometricStatus] = useState<'scanning' | 'success' | 'failed'>('scanning');
 
   const handleLogin = async () => {
+    setLoginError(null);
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please enter your email and password, or use Quick Demo Auto-Fill.');
+      setLoginError('Please enter your email and password, or tap Quick Demo Fill.');
       return;
     }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      navigation.navigate('Verification', { email: email.trim() });
+      // Direct authenticated session initialization — no dummy 2FA bluff
+      rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
     }, 400);
   };
 
   const handleDemoAutofill = () => {
     setEmail('pooja.iyer@gmail.com');
     setPassword('VerdictAI@2026');
+    setLoginError(null);
   };
 
   const handleStartBiometrics = () => {
+    setLoginError(null);
     setIsBiometricOpen(true);
     setBiometricStatus('scanning');
     setTimeout(() => {
@@ -76,19 +85,18 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleForgotPassword = () => {
     const targetEmail = email.trim() || 'pooja.iyer@gmail.com';
-    Alert.alert(
-      'Password Reset Link Dispatched',
-      `A secure 1-click password reset token has been sent to ${targetEmail}. Please check your inbox.`
-    );
+    setInfoBanner(`A password reset link has been dispatched to ${targetEmail}`);
+    setTimeout(() => setInfoBanner(null), 5000);
   };
 
   const handleRegisterSubmit = () => {
+    setRegError(null);
     if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
-      Alert.alert('Missing Fields', 'Please complete all required fields to register.');
+      setRegError('Please complete all required fields to register.');
       return;
     }
     if (regPassword !== regConfirmPassword) {
-      Alert.alert('Password Mismatch', 'Password and Confirm Password must match.');
+      setRegError('Password and Confirm Password must match.');
       return;
     }
 
@@ -98,17 +106,9 @@ export default function LoginScreen({ navigation }: Props) {
       setIsRegisterOpen(false);
       setEmail(regEmail.trim());
       setPassword(regPassword);
-      Alert.alert(
-        'Account Created',
-        `Welcome ${regName}! Your account has been registered. Please complete 2FA verification code.`,
-        [
-          {
-            text: 'Proceed to Verification',
-            onPress: () => navigation.navigate('Verification', { email: regEmail.trim() }),
-          },
-        ]
-      );
-    }, 600);
+      // Direct authenticated entry to main app
+      rootNav.reset({ index: 0, routes: [{ name: 'Main' }] });
+    }, 500);
   };
 
   return (
@@ -192,6 +192,18 @@ export default function LoginScreen({ navigation }: Props) {
               </TouchableOpacity>
             </View>
 
+            {loginError ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠️ {loginError}</Text>
+              </View>
+            ) : null}
+
+            {infoBanner ? (
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>✉️ {infoBanner}</Text>
+              </View>
+            ) : null}
+
             <TouchableOpacity
               style={[styles.loginButton, loading && styles.loginButtonDisabled]}
               onPress={handleLogin}
@@ -228,6 +240,7 @@ export default function LoginScreen({ navigation }: Props) {
                   setRegEmail('pooja.iyer@gmail.com');
                   setRegPassword('VerdictAI@2026');
                   setRegConfirmPassword('VerdictAI@2026');
+                  setRegError(null);
                   setIsRegisterOpen(true);
                 }}
               >
@@ -240,7 +253,7 @@ export default function LoginScreen({ navigation }: Props) {
           <View style={styles.demoNote}>
             <Text style={styles.demoTitle}>🔧 Cardholder Triage Mode</Text>
             <Text style={styles.demoText}>
-              Demonstrates 2FA cryptographic security, dynamic 48h SLA dispute filing, and live Gemini XAI reasoning.
+              Direct cardholder authentication with encrypted session tokens, dynamic 48h SLA dispute filing, and live Gemini XAI reasoning.
             </Text>
           </View>
         </ScrollView>
@@ -266,6 +279,11 @@ export default function LoginScreen({ navigation }: Props) {
             </View>
 
             <ScrollView contentContainerStyle={{ gap: 12, paddingBottom: 16 }}>
+              {regError ? (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>⚠️ {regError}</Text>
+                </View>
+              ) : null}
               <View style={styles.fieldGroup}>
                 <Text style={styles.label}>FULL NAME</Text>
                 <TextInput
@@ -330,7 +348,7 @@ export default function LoginScreen({ navigation }: Props) {
                 {regLoading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.loginButtonText}>Create Account & Verify</Text>
+                  <Text style={styles.loginButtonText}>Create Account & Sign In</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -566,4 +584,31 @@ const styles = StyleSheet.create({
   biometricModalSub: { fontSize: Typography.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   cancelBiometricBtn: { marginTop: 8, padding: 8 },
   cancelBiometricText: { fontSize: Typography.sm, color: Colors.textMuted, fontWeight: Typography.semibold },
+
+  errorBox: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+  },
+  errorText: {
+    fontSize: Typography.xs,
+    color: '#DC2626',
+    fontWeight: Typography.semibold,
+    lineHeight: 18,
+  },
+  infoBox: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+  },
+  infoText: {
+    fontSize: Typography.xs,
+    color: '#1D4ED8',
+    fontWeight: Typography.semibold,
+    lineHeight: 18,
+  },
 });

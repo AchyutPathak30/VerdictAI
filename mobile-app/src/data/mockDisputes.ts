@@ -71,6 +71,53 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
 
 export const FALLBACK_DISPUTES: UnifiedCaseFile[] = [
   {
+    case_hash_sha256: '1041abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345',
+    audit_chain_length: 5,
+    header: {
+      case_file_id: 'CF-1041',
+      dispute_id: 'DSP-1041',
+      case_reference_number: 'CAS-1041-IN',
+      dispute_reason: 'NON_DELIVERY_OF_GOODS' as any,
+      current_status: 'IN_ANALYSIS',
+      disputed_amount: 18999.00,
+      currency: 'INR',
+      sla_deadline: new Date(Date.now() + 22 * 3600 * 1000).toISOString(),
+      created_at: new Date(Date.now() - 26 * 3600 * 1000).toISOString(),
+      is_sealed: false,
+      sealed_at: null,
+    },
+    transaction: {
+      transaction_id: 'txn_croma_18999',
+      cardholder_id: 'usr_pooja_01',
+      merchant_id: 'm_croma_004',
+      merchant_name: 'Croma Electronics India',
+      amount: 18999.00,
+      currency: 'INR',
+      cardholder_name: 'Pooja Iyer',
+      payment_method: 'HDFC RuPay **** 4492',
+      transaction_timestamp: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+    },
+    evidence_items: [
+      {
+        evidence_id: 'evi_invoice_1041',
+        dispute_id: 'DSP-1041',
+        evidence_type: 'RECEIPT',
+        source: 'CARDHOLDER',
+        file_name: 'croma_tax_invoice_1041.pdf',
+        raw_payload: {
+          merchant: 'Croma Electronics India',
+          total: 18999.00,
+          tracking_number: 'BLUEDART-88192034',
+        },
+        sha256_checksum: '1041b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        submitted_at: new Date(Date.now() - 25 * 3600 * 1000).toISOString(),
+      },
+    ],
+    cardholder_statement: 'The package containing the OnePlus Tablet was never delivered to my residence at Indiranagar, Bengaluru. Blue Dart tracking marks it as Delivered, but society security logs and gate CCTV show no courier delivery occurred.',
+    merchant_response_statement: 'Carrier delivery confirmation received from Blue Dart Express.',
+    resolution: null,
+  },
+  {
     case_hash_sha256: 'a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0',
     audit_chain_length: 4,
     header: {

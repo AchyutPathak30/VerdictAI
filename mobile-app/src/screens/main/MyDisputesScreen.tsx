@@ -16,6 +16,7 @@ import { HomeStackParamList, UnifiedCaseFile, DisputeStatus } from '../../types'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme';
 import { getDisputes } from '../../services/disputesService';
 import { getBackendReachable } from '../../services/apiClient';
+import { getRuntimeDisputes } from '../../data/mockDisputes';
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'MyDisputes'>;
@@ -107,6 +108,10 @@ export default function MyDisputesScreen({ navigation }: Props) {
         } catch {
           // ignore web localStorage parse error
         }
+      }
+
+      if (items.length === 0) {
+        items.push(...getRuntimeDisputes());
       }
 
       setDisputes(items);
