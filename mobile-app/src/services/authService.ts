@@ -28,6 +28,20 @@ export const DEFAULT_USER: AppUser = {
   memberSince: 'March 2021',
 };
 
+export const DEFAULT_DEMO_USERS: AppUser[] = [
+  DEFAULT_USER,
+  {
+    userId: 'usr_nk3_48bf8d',
+    fullName: 'nk',
+    email: 'nk3@gmail.com',
+    password: 'nk3@gmail.com',
+    cardLast4: '',
+    cardType: '',
+    creditScore: '780 (Good)',
+    memberSince: 'Nov 2026',
+  }
+];
+
 const STORAGE_SESSION_KEY = 'verdictai_active_session_v1';
 const STORAGE_USERS_KEY = 'verdictai_registered_users_v1';
 
@@ -45,12 +59,19 @@ export const getRegisteredUsers = (): AppUser[] => {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Merge default demo users if not present
+          const merged = [...parsed];
+          for (const d of DEFAULT_DEMO_USERS) {
+            if (!merged.some(u => u.email.toLowerCase() === d.email.toLowerCase())) {
+              merged.push(d);
+            }
+          }
+          return merged;
         }
       }
     } catch {}
   }
-  return [DEFAULT_USER];
+  return DEFAULT_DEMO_USERS;
 };
 
 export const saveRegisteredUsers = (users: AppUser[]) => {
@@ -162,7 +183,7 @@ export const registerUser = async (payload: {
   const fullName = payload.fullName.trim();
   const email = payload.email.trim().toLowerCase();
   const password = payload.password.trim();
-  const cardLast4 = payload.cardLast4?.trim() || '4492';
+  const cardLast4 = payload.cardLast4?.trim() || '';
 
   if (!fullName || !email || !password) {
     throw new Error('Please fill in all required registration fields.');
@@ -180,7 +201,7 @@ export const registerUser = async (payload: {
     email,
     password,
     cardLast4,
-    cardType: `RuPay Platinum •••• ${cardLast4}`,
+    cardType: cardLast4 ? `RuPay Platinum •••• ${cardLast4}` : '',
     creditScore: '780 (Good)',
     memberSince: 'Nov 2026',
   };

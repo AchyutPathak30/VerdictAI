@@ -59,7 +59,7 @@ export interface ApiResponse<T> {
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<{ data: T | null; error: string | null; connected: boolean }> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout for cloud backend spin-up
 
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       ...options,
@@ -941,6 +941,14 @@ export const getRegisteredWebUsers = (): RegisteredWebUser[] => {
       password: 'VerdictAI@2026',
       role: 'Admin Lead',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
+    },
+    {
+      userId: 'usr_nk3_48bf8d',
+      name: 'nk',
+      email: 'nk3@gmail.com',
+      password: 'nk3@gmail.com',
+      role: 'Cardholder (Customer)',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
     }
   ];
 };

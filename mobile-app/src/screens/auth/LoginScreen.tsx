@@ -41,7 +41,7 @@ export default function LoginScreen({ navigation }: Props) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regCard, setRegCard] = useState('4492');
+  const [regCard, setRegCard] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regLoading, setRegLoading] = useState(false);
@@ -327,10 +327,10 @@ export default function LoginScreen({ navigation }: Props) {
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>PRIMARY CARD LAST 4 DIGITS</Text>
+                <Text style={styles.label}>PRIMARY CARD LAST 4 DIGITS (OPTIONAL)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="4492"
+                  placeholder="e.g. 4492"
                   keyboardType="number-pad"
                   maxLength={4}
                   value={regCard}

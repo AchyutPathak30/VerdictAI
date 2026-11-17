@@ -4,8 +4,12 @@ Author: Nirav Kachhiya (Project Lead / Backend Engineer)
 """
 
 import os
+import json
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+
+DB_STORE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "db_store.json"
 
 
 @dataclass
@@ -42,6 +46,38 @@ class DualDatabaseManager:
             "case_documents": {},
             "evidence_payloads": {}
         }
+        self._load_from_disk()
+
+    def _save_to_disk(self):
+        try:
+            DB_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(DB_STORE_PATH, "w", encoding="utf-8") as f:
+                json.dump({
+                    "pg_tables": self.pg_tables,
+                    "mongo_collections": self.mongo_collections
+                }, f, indent=2, default=str)
+        except Exception:
+            pass
+
+    def _load_from_disk(self):
+        try:
+            if DB_STORE_PATH.exists():
+                with open(DB_STORE_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if "pg_tables" in data:
+                        for table, records in data["pg_tables"].items():
+                            if table in self.pg_tables:
+                                self.pg_tables[table].update(records)
+                            else:
+                                self.pg_tables[table] = records
+                    if "mongo_collections" in data:
+                        for col, docs in data["mongo_collections"].items():
+                            if col in self.mongo_collections:
+                                self.mongo_collections[col].update(docs)
+                            else:
+                                self.mongo_collections[col] = docs
+        except Exception:
+            pass
 
     def reset_in_memory_stores(self):
         """Clears all in-memory mock tables and collections."""
@@ -49,12 +85,14 @@ class DualDatabaseManager:
             table.clear()
         for col in self.mongo_collections.values():
             col.clear()
+        self._save_to_disk()
 
     # --- PostgreSQL Operations ---
     def insert_pg_record(self, table_name: str, record_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         if table_name not in self.pg_tables:
             self.pg_tables[table_name] = {}
         self.pg_tables[table_name][record_id] = data
+        self._save_to_disk()
         return data
 
     def get_pg_record(self, table_name: str, record_id: str) -> Optional[Dict[str, Any]]:
@@ -82,6 +120,7 @@ class DualDatabaseManager:
             rec_id = record.get("id")
             if rec_id and table_name in self.pg_tables and rec_id in self.pg_tables[table_name]:
                 self.pg_tables[table_name][rec_id].update(updates)
+            self._save_to_disk()
         return record
 
     def query_pg_records(self, table_name: str, filter_fn=None) -> List[Dict[str, Any]]:
@@ -96,6 +135,7 @@ class DualDatabaseManager:
         table = self.pg_tables.get(table_name, {})
         if record_id in table:
             del table[record_id]
+            self._save_to_disk()
             return True
         return False
 
@@ -104,6 +144,7 @@ class DualDatabaseManager:
         if collection_name not in self.mongo_collections:
             self.mongo_collections[collection_name] = {}
         self.mongo_collections[collection_name][doc_id] = data
+        self._save_to_disk()
         return data
 
     def get_mongo_doc(self, collection_name: str, doc_id: str) -> Optional[Dict[str, Any]]:
@@ -113,6 +154,7 @@ class DualDatabaseManager:
         doc = self.get_mongo_doc(collection_name, doc_id)
         if doc:
             doc.update(updates)
+            self._save_to_disk()
         return doc
 
     def query_mongo_docs(self, collection_name: str, filter_fn=None) -> List[Dict[str, Any]]:

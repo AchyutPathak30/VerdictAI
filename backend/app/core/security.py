@@ -98,6 +98,13 @@ ENTERPRISE_PERSONAS: Dict[str, AuthenticatedUser] = {
         full_name="Priya Sharma (Admin Lead)",
         role=UserRole.ADMIN,
         scopes=list(ROLE_SCOPES[UserRole.ADMIN])
+    ),
+    "usr_nk3_48bf8d": AuthenticatedUser(
+        user_id="usr_nk3_48bf8d",
+        email="nk3@gmail.com",
+        full_name="nk",
+        role=UserRole.CARDHOLDER,
+        scopes=list(ROLE_SCOPES[UserRole.CARDHOLDER])
     )
 }
 

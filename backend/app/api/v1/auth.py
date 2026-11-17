@@ -55,6 +55,8 @@ USER_PASSWORDS: Dict[str, str] = {
     "priya.sharma@verdictai-bank.com": "VerdictAI@2026",
     "amit.patel@croma.infiniti.com": "VerdictAI@2026",
     "rohan.mehta@verdictai-bank.com": "VerdictAI@2026",
+    "nk3@gmail.com": "nk3@gmail.com",
+    "usr_nk3_48bf8d": "nk3@gmail.com",
 }
 
 

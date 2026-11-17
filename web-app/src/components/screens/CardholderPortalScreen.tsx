@@ -111,7 +111,11 @@ export const CardholderPortalScreen: React.FC<CardholderPortalScreenProps> = ({ 
     name: activeUserName,
     accountId: activeUserId,
     email: activeUserEmail,
-    card: isPooja ? 'HDFC Bank RuPay Platinum **** 4492' : 'HDFC Bank RuPay Platinum **** 1011',
+    card: isPooja 
+      ? 'HDFC Bank RuPay Platinum **** 4492' 
+      : (currentUser && 'cardType' in currentUser && (currentUser as any).cardType 
+          ? (currentUser as any).cardType 
+          : 'No Active Card Linked'),
     memberSince: isPooja ? 'March 2021' : 'November 2026',
     creditScore: isPooja ? 812 : 790,
     activeDisputesCount: activeDisputesCount,

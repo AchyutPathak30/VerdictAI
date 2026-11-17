@@ -108,7 +108,7 @@ export const getAuthToken = async (): Promise<string | null> => {
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 3500, // Fast 3.5s timeout for seamless offline demo fallback
+  timeout: 12000, // 12s timeout for cloud backend spin-up and live integration
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

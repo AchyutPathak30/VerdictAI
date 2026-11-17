@@ -58,31 +58,73 @@ const DEFAULT_CARDS: PaymentCard[] = [
   },
 ];
 
-const DEMO_USER = {
-  name: 'Pooja Iyer',
-  cardholderID: 'usr_pooja_01',
-  email: 'pooja.iyer@gmail.com',
-  creditScore: '812 (Excellent)',
-  memberSince: 'March 2021',
+const getCardsStorageKey = (user: AppUser) => {
+  const cleanId = (user.userId || user.email || 'guest').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  return `verdictai_mobile_cards_${cleanId}`;
 };
 
-const STORAGE_CARDS_KEY = 'verdictai_mobile_payment_cards_v1';
+const resolveCardsForUser = (user: AppUser): PaymentCard[] => {
+  const isPooja = user.userId === 'usr_pooja_01' || user.email.toLowerCase().includes('pooja');
+  const storageKey = getCardsStorageKey(user);
+
+  const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
+  if (win && win.localStorage) {
+    try {
+      const stored = win.localStorage.getItem(storageKey);
+      if (stored !== null) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+    } catch {}
+  }
+
+  // If user is Pooja Iyer, provide the demo cards
+  if (isPooja) {
+    return DEFAULT_CARDS;
+  }
+
+  // If user registered with a card and not pooja
+  if (user.cardLast4 && user.cardLast4.trim() && user.cardLast4 !== '4492') {
+    return [
+      {
+        id: `card_${user.userId}_init`,
+        bankName: 'HDFC Bank',
+        cardholderName: user.fullName || 'Cardholder',
+        cardType: `RuPay Platinum •••• ${user.cardLast4}`,
+        cardNumber: `•••• •••• •••• ${user.cardLast4}`,
+        rawLast4: user.cardLast4,
+        expiry: '12/29',
+        network: 'RuPay',
+        isPrimary: true,
+        bgColor: '#0F172A',
+      }
+    ];
+  }
+
+  // For any new user with no cards: return empty list!
+  return [];
+};
 
 export default function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [currentUser, setCurrentUser] = useState<AppUser>(() => getCurrentUser());
 
-  useEffect(() => {
-    setCurrentUser(getCurrentUser());
-  }, []);
-
-  // Cards State
-  const [cards, setCards] = useState<PaymentCard[]>(DEFAULT_CARDS);
+  // Cards State scoped to active user
+  const [cards, setCards] = useState<PaymentCard[]>(() => resolveCardsForUser(getCurrentUser()));
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+    setCards(resolveCardsForUser(user));
+    setNewCardholder(user.fullName || 'Cardholder');
+  }, []);
 
   // Add Card Modal State
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
-  const [newCardholder, setNewCardholder] = useState(() => getCurrentUser().fullName);
+  const [newCardholder, setNewCardholder] = useState(() => getCurrentUser().fullName || 'Cardholder');
   const [newBank, setNewBank] = useState('State Bank of India');
   const [newNetwork, setNewNetwork] = useState<'RuPay' | 'Visa' | 'Mastercard' | 'Amex'>('Visa');
   const [newCardNumber, setNewCardNumber] = useState('');
@@ -112,30 +154,13 @@ export default function ProfileScreen() {
 
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
 
-  // Load persisted cards from localStorage on web
-  useEffect(() => {
-    const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
-    if (win && win.localStorage) {
-      try {
-        const stored = win.localStorage.getItem(STORAGE_CARDS_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCards(parsed);
-          }
-        }
-      } catch {
-        // ignore storage parse error
-      }
-    }
-  }, []);
-
   const saveCards = (updated: PaymentCard[]) => {
     setCards(updated);
     const win = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
     if (win && win.localStorage) {
       try {
-        win.localStorage.setItem(STORAGE_CARDS_KEY, JSON.stringify(updated));
+        const key = getCardsStorageKey(currentUser);
+        win.localStorage.setItem(key, JSON.stringify(updated));
       } catch {
         // ignore
       }
@@ -160,12 +185,10 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteCard = (cardId: string) => {
-    const target = cards.find((c) => c.id === cardId);
-    if (target?.isPrimary) {
-      showToast('Cannot delete primary card. Please set another card as primary first.');
-      return;
+    let updated = cards.filter((c) => c.id !== cardId);
+    if (updated.length > 0 && !updated.some(c => c.isPrimary)) {
+      updated[0].isPrimary = true;
     }
-    const updated = cards.filter((c) => c.id !== cardId);
     saveCards(updated);
     showToast('Payment method removed.');
   };
@@ -221,7 +244,7 @@ export default function ProfileScreen() {
     const newCard: PaymentCard = {
       id: `card_${Date.now()}`,
       bankName: newBank.trim(),
-      cardholderName: newCardholder.trim() || 'Pooja Iyer',
+      cardholderName: newCardholder.trim() || currentUser.fullName || 'Cardholder',
       cardType: `${newBank.trim()} ${newNetwork}`,
       cardNumber: `•••• •••• •••• ${last4}`,
       rawLast4: last4,
@@ -273,13 +296,13 @@ export default function ProfileScreen() {
     navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
   };
 
-  const userInitials = (currentUser.fullName || 'Pooja Iyer')
+  const userInitials = (currentUser.fullName || 'User')
     .split(' ')
     .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase() || 'PI';
+    .toUpperCase() || 'U';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -348,46 +371,71 @@ export default function ProfileScreen() {
 
           {/* Cards List */}
           <View style={{ gap: Spacing.md }}>
-            {cards.map((card) => (
-              <View key={card.id} style={[styles.cardItem, { backgroundColor: card.bgColor }]}>
-                <View style={styles.cardItemTop}>
-                  <View style={{ gap: 2 }}>
-                    <Text style={styles.cardItemBank}>{card.bankName.toUpperCase()}</Text>
-                    <Text style={styles.cardItemType}>{card.cardType}</Text>
-                  </View>
-                  <View style={styles.networkBadge}>
-                    <Text style={styles.networkBadgeText}>{card.network}</Text>
-                  </View>
+            {cards.length === 0 ? (
+              <View style={styles.emptyCardBox}>
+                <View style={styles.emptyCardIconCircle}>
+                  <Text style={{ fontSize: 24 }}>💳</Text>
                 </View>
-
-                <Text style={styles.cardItemNumber}>{card.cardNumber}</Text>
-
-                <View style={styles.cardItemBottom}>
-                  <View>
-                    <Text style={styles.cardItemLabel}>EXPIRES</Text>
-                    <Text style={styles.cardItemVal}>{card.expiry}</Text>
+                <Text style={styles.emptyCardTitle}>No Payment Cards Added</Text>
+                <Text style={styles.emptyCardDesc}>
+                  You haven't added any cards to this account yet. Link a debit or credit card to receive instant chargeback refunds directly into your bank.
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyCardAddBtn}
+                  onPress={() => {
+                    setCardError(null);
+                    setNewCardholder(currentUser.fullName || 'Cardholder');
+                    setNewCardNumber('');
+                    setNewExpiry('');
+                    setNewCvv('');
+                    setNewSetPrimary(true);
+                    setIsAddCardOpen(true);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.emptyCardAddBtnText}>+ Add First Card</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              cards.map((card) => (
+                <View key={card.id} style={[styles.cardItem, { backgroundColor: card.bgColor }]}>
+                  <View style={styles.cardItemTop}>
+                    <View style={{ gap: 2 }}>
+                      <Text style={styles.cardItemBank}>{card.bankName.toUpperCase()}</Text>
+                      <Text style={styles.cardItemType}>{card.cardType}</Text>
+                    </View>
+                    <View style={styles.networkBadge}>
+                      <Text style={styles.networkBadgeText}>{card.network}</Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.cardItemLabel}>CARDHOLDER</Text>
-                    <Text style={styles.cardItemVal}>{card.cardholderName}</Text>
-                  </View>
 
-                  <View style={styles.cardItemActions}>
-                    {card.isPrimary ? (
-                      <View style={styles.primaryPill}>
-                        <Text style={styles.primaryPillText}>★ PRIMARY</Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.setPrimaryBtn}
-                        onPress={() => handleSetPrimary(card.id)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.setPrimaryBtnText}>Set Primary</Text>
-                      </TouchableOpacity>
-                    )}
+                  <Text style={styles.cardItemNumber}>{card.cardNumber}</Text>
 
-                    {!card.isPrimary && (
+                  <View style={styles.cardItemBottom}>
+                    <View>
+                      <Text style={styles.cardItemLabel}>EXPIRES</Text>
+                      <Text style={styles.cardItemVal}>{card.expiry}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.cardItemLabel}>CARDHOLDER</Text>
+                      <Text style={styles.cardItemVal}>{card.cardholderName}</Text>
+                    </View>
+
+                    <View style={styles.cardItemActions}>
+                      {card.isPrimary ? (
+                        <View style={styles.primaryPill}>
+                          <Text style={styles.primaryPillText}>★ PRIMARY</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.setPrimaryBtn}
+                          onPress={() => handleSetPrimary(card.id)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.setPrimaryBtnText}>Set Primary</Text>
+                        </TouchableOpacity>
+                      )}
+
                       <TouchableOpacity
                         style={styles.deleteCardBtn}
                         onPress={() => handleDeleteCard(card.id)}
@@ -395,11 +443,11 @@ export default function ProfileScreen() {
                       >
                         <Text style={styles.deleteCardBtnText}>✕</Text>
                       </TouchableOpacity>
-                    )}
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
 
           <Text style={styles.cardMeta}>
@@ -594,7 +642,7 @@ export default function ProfileScreen() {
                 <Text style={styles.label}>CARDHOLDER NAME</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Pooja Iyer"
+                  placeholder={currentUser.fullName || "Cardholder Name"}
                   value={newCardholder}
                   onChangeText={setNewCardholder}
                 />
@@ -1468,4 +1516,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmSignOutBtnText: { fontSize: Typography.sm, fontWeight: Typography.bold, color: '#FFFFFF' },
+
+  // Empty Card State
+  emptyCardBox: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderStyle: 'dashed',
+    borderRadius: Radius.lg,
+    padding: 24,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyCardIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  emptyCardTitle: {
+    fontSize: Typography.md,
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
+  },
+  emptyCardDesc: {
+    fontSize: Typography.xs,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 320,
+    marginBottom: 6,
+  },
+  emptyCardAddBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+  },
+  emptyCardAddBtnText: {
+    fontSize: Typography.xs,
+    fontWeight: Typography.bold,
+    color: '#FFFFFF',
+  },
 });
