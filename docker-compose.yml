@@ -8,6 +8,8 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      - VERDICTAI_SCORING_ENGINE=ml
     ports:
       - "8000:8000"
     restart: unless-stopped

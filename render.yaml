@@ -11,6 +11,8 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: VERDICTAI_SCORING_ENGINE
+        value: ml
       - key: JWT_SECRET
         generateValue: true
       - key: GEMINI_API_KEY
