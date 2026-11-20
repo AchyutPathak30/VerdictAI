@@ -25,6 +25,11 @@ from akshay_ml_fairweighing.phase3_model.fair_weighing_model import (
     FairWeighingModel,
     PRIMARY_EVIDENCE_MAP,
 )
+try:
+    from akshay_ml_fairweighing.serving import TrainedFairWeighingModel
+    _DEFAULT_ML_AVAILABLE = True
+except Exception:
+    _DEFAULT_ML_AVAILABLE = False
 
 logger = logging.getLogger("FairWeighingScoringService")
 
@@ -68,8 +73,19 @@ class FairWeighingScoringService:
     Fulfills SRS FR-15 to FR-21, SIR-07, and AC-08 to AC-11.
     """
 
-    def __init__(self, model: Optional[FairWeighingModel] = None):
-        self.model = model or FairWeighingModel()
+    def __init__(self, model: Optional[Any] = None):
+        import os
+        if model is not None:
+            self.model = model
+        elif os.environ.get("VERDICTAI_SCORING_ENGINE", "rule").lower() == "ml" and _DEFAULT_ML_AVAILABLE:
+            try:
+                self.model = TrainedFairWeighingModel()
+                logger.info("Initialized FairWeighingScoringService with production TrainedFairWeighingModel (Calibrated XGBoost).")
+            except Exception as e:
+                logger.warning(f"Could not load TrainedFairWeighingModel ({e}). Falling back to rule-based FairWeighingModel.")
+                self.model = FairWeighingModel()
+        else:
+            self.model = FairWeighingModel()
 
     def build_scoring_payload(self, case_file: UnifiedCaseFile) -> Dict[str, Any]:
         """
