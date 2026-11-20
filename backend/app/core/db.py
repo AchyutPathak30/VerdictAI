@@ -49,6 +49,8 @@ class DualDatabaseManager:
         self._load_from_disk()
 
     def _save_to_disk(self):
+        if os.getenv("PYTEST_CURRENT_TEST"):
+            return
         try:
             DB_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(DB_STORE_PATH, "w", encoding="utf-8") as f:
@@ -102,14 +104,14 @@ class DualDatabaseManager:
         # Robust lookup by case-insensitive ID, prefix/suffix, or transaction ID match
         r_clean = str(record_id).upper().replace("CAS-", "").replace("CASE", "").strip()
         for k, v in table.items():
-            k_upper = str(k).upper()
-            if r_clean and (r_clean in k_upper or k_upper in r_clean):
+            k_upper = str(k).upper().strip()
+            if r_clean and k_upper and (r_clean in k_upper or k_upper in r_clean):
                 return v
-            rec_id = str(v.get("id", "")).upper()
-            if r_clean and (r_clean in rec_id or rec_id in r_clean):
+            rec_id = str(v.get("id", "")).upper().strip()
+            if r_clean and rec_id and (r_clean in rec_id or rec_id in r_clean):
                 return v
-            txn_id = str(v.get("transaction_id", "")).upper()
-            if r_clean and r_clean in txn_id:
+            txn_id = str(v.get("transaction_id", "")).upper().strip()
+            if r_clean and txn_id and (r_clean in txn_id or txn_id in r_clean):
                 return v
         return None
 

@@ -69,9 +69,11 @@ class CaseService:
                 m_name = "Merchant Partner India"
 
             user_rec = db_manager.get_pg_record("users", cardholder_id)
-            c_name = user_rec.get("full_name") if user_rec else (
+            c_name = (user_rec.get("full_name") or user_rec.get("name")) if user_rec else (
                 "Pooja Iyer" if "pooja" in str(cardholder_id).lower() else "Cardholder Member"
             )
+            if not c_name:
+                c_name = "Cardholder Member"
 
             txn_data = {
                 "id": transaction_id,

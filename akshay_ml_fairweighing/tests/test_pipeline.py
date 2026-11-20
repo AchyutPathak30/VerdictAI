@@ -8,7 +8,10 @@ import sys
 # Ensure workspace root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 import pytest
-import numpy as np
+np = pytest.importorskip("numpy")
+joblib = pytest.importorskip("joblib")
+xgboost = pytest.importorskip("xgboost")
+shap = pytest.importorskip("shap")
 
 from akshay_ml_fairweighing.feature_extractor import (
     extract_features_from_case,
